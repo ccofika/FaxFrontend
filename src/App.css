@@ -123,6 +123,7 @@ body {
   cursor: pointer;
   transition: all 0.15s ease;
   margin-bottom: 4px;
+  text-decoration: none;
 }
 
 .sidebar-icon:hover {

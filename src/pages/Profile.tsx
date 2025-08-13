@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Profile.css';
 
 interface ProfileData {
@@ -19,6 +20,7 @@ interface BillingPlan {
 }
 
 const Profile: React.FC = () => {
+  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<'profile' | 'appearance' | 'account' | 'privacy' | 'billing'>('profile');
   const [profileData, setProfileData] = useState<ProfileData>({
     name: 'Raf Petrović',
@@ -354,7 +356,7 @@ const Profile: React.FC = () => {
     <div className="profile-page">
       <div className="profile-sidebar">
         <div className="profile-header">
-          <button className="back-button" onClick={() => window.history.back()}>
+          <button className="back-button" onClick={() => navigate('/')}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M19 12H5m7-7l-7 7 7 7"/>
             </svg>

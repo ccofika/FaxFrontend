@@ -1,19 +1,20 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import './App.css';
 import { Home, Profile } from './pages';
 
-function App() {
-  const [currentPage, setCurrentPage] = useState<'home' | 'profile'>('home');
+const Sidebar: React.FC = () => {
+  const location = useLocation();
 
-  const renderSidebar = () => (
+  return (
     <div className="sidebar">
       <div className="logo"></div>
       
-      <button className={`sidebar-icon ${currentPage === 'home' ? 'active' : ''}`} onClick={() => setCurrentPage('home')}>
+      <Link to="/" className={`sidebar-icon ${location.pathname === '/' ? 'active' : ''}`}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>
-      </button>
+      </Link>
       
       <button className="sidebar-icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -37,12 +38,12 @@ function App() {
       
       <div className="sidebar-spacer"></div>
       
-      <button className={`sidebar-icon ${currentPage === 'profile' ? 'active' : ''}`} onClick={() => setCurrentPage('profile')}>
+      <Link to="/profile" className={`sidebar-icon ${location.pathname === '/profile' ? 'active' : ''}`}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
           <circle cx="12" cy="7" r="4"/>
         </svg>
-      </button>
+      </Link>
       
       <button className="sidebar-icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -52,16 +53,25 @@ function App() {
       </button>
     </div>
   );
+};
 
-  if (currentPage === 'profile') {
-    return <Profile />;
-  }
-
+const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className="App">
-      {renderSidebar()}
-      <Home onProfileClick={() => setCurrentPage('profile')} />
+      <Sidebar />
+      {children}
     </div>
+  );
+};
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Layout><Home /></Layout>} />
+        <Route path="/profile" element={<Profile />} />
+      </Routes>
+    </Router>
   );
 }
 

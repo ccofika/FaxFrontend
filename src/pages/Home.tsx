@@ -17,11 +17,7 @@ const chatModes: ModeConfig[] = [
   { id: 'learning', name: 'Learning', description: 'Interactive learning assistance', color: '#3B82F6' },
 ];
 
-interface HomeProps {
-  onProfileClick: () => void;
-}
-
-const Home: React.FC<HomeProps> = ({ onProfileClick }) => {
+const Home: React.FC = () => {
   const [message, setMessage] = useState('');
   const [charCount, setCharCount] = useState(0);
   const [selectedMode, setSelectedMode] = useState<ChatMode>('explain');
