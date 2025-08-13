@@ -2,6 +2,15 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import './App.css';
 import { Home, Profile, Dashboard } from './pages';
+import { 
+  MainHome, 
+  HowItWorks, 
+  SupportedFaculties, 
+  Demo, 
+  Pricing, 
+  FAQ, 
+  Contact 
+} from './pages/main';
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
@@ -71,6 +80,14 @@ function App() {
         <Route path="/" element={<Layout><Home /></Layout>} />
         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         <Route path="/profile" element={<Profile />} />
+        
+        <Route path="/main/pocetna" element={<MainHome />} />
+        <Route path="/main/kako-funkcionise" element={<HowItWorks />} />
+        <Route path="/main/podrzani-fakulteti" element={<SupportedFaculties />} />
+        <Route path="/main/demonstracija" element={<Demo />} />
+        <Route path="/main/cene" element={<Pricing />} />
+        <Route path="/main/faq" element={<FAQ />} />
+        <Route path="/main/kontakt" element={<Contact />} />
       </Routes>
     </Router>
   );
