@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import './App.css';
-import { Home, Profile } from './pages';
+import { Home, Profile, Dashboard } from './pages';
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
@@ -16,12 +16,12 @@ const Sidebar: React.FC = () => {
         </svg>
       </Link>
       
-      <button className="sidebar-icon">
+      <Link to="/dashboard" className={`sidebar-icon ${location.pathname === '/dashboard' ? 'active' : ''}`}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
           <polyline points="9,22 9,12 15,12 15,22"/>
         </svg>
-      </button>
+      </Link>
       
       <button className="sidebar-icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -69,6 +69,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Layout><Home /></Layout>} />
+        <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         <Route path="/profile" element={<Profile />} />
       </Routes>
     </Router>
