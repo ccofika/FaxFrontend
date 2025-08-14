@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import './App.css';
 import { Home, Profile, Dashboard } from './pages';
 import { 
@@ -81,6 +81,7 @@ function App() {
         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         <Route path="/profile" element={<Profile />} />
         
+        <Route path="/main" element={<Navigate to="/main/pocetna" replace />} />
         <Route path="/main/pocetna" element={<MainHome />} />
         <Route path="/main/kako-funkcionise" element={<HowItWorks />} />
         <Route path="/main/podrzani-fakulteti" element={<SupportedFaculties />} />
