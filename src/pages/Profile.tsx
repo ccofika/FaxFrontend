@@ -7,6 +7,7 @@ interface ProfileData {
   email: string;
   university: string;
   year: string;
+  semester: string;
   major: string;
   joinDate: string;
 }
@@ -27,6 +28,7 @@ const Profile: React.FC = () => {
     email: 'raf@example.com',
     university: 'Fakultet organizacionih nauka',
     year: '3. godina',
+    semester: '1. semestar',
     major: 'Informacioni sistemi',
     joinDate: 'Januar 2024'
   });
@@ -164,6 +166,20 @@ const Profile: React.FC = () => {
               <option value="PhD">PhD</option>
             </select>
           </div>
+          <div className="form-group">
+            <label htmlFor="semester">Semester</label>
+            <select
+              id="semester"
+              value={profileData.semester}
+              onChange={(e) => handleInputChange('semester', e.target.value)}
+              className="profile-select"
+            >
+              <option value="1. semestar">1. semestar</option>
+              <option value="2. semestar">2. semestar</option>
+            </select>
+          </div>
+        </div>
+        <div className="form-row">
           <div className="form-group">
             <label htmlFor="major">Major</label>
             <input
