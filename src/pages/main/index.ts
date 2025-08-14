@@ -5,3 +5,5 @@ export { default as Demo } from './Demo';
 export { default as Pricing } from './Pricing';
 export { default as FAQ } from './FAQ';
 export { default as Contact } from './Contact';
+export { default as Login } from './Login';
+export { default as Register } from './Register';

@@ -1,0 +1,543 @@
+/* Register Page Styles - Matching Pricing Page Theme */
+
+/* Register Section */
+.registerSection {
+  padding: 40px 24px;
+  min-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.registerContainer {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Progress Indicator */
+.progressIndicator {
+  margin-bottom: 48px;
+}
+
+.progressBar {
+  width: 100%;
+  height: 4px;
+  background: rgba(78, 60, 250, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(135deg, #4E3CFA 0%, #6A5ACD 100%);
+  transition: width 0.3s ease;
+  border-radius: 2px;
+}
+
+.stepNumbers {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.stepNumber {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(78, 60, 250, 0.1);
+  border: 2px solid rgba(78, 60, 250, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: #9C9AA9;
+  transition: all 0.3s ease;
+  font-size: 16px;
+}
+
+.stepNumber.active {
+  background: linear-gradient(135deg, #4E3CFA 0%, #6A5ACD 100%);
+  border-color: #4E3CFA;
+  color: #FFFFFF;
+}
+
+.stepNumber.current {
+  box-shadow: 0 0 0 4px rgba(78, 60, 250, 0.2);
+}
+
+.stepLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #9C9AA9;
+  font-weight: 500;
+}
+
+.activeLabel {
+  color: #4E3CFA !important;
+}
+
+/* Form Wrapper */
+.formWrapper {
+  background: linear-gradient(135deg, rgba(78, 60, 250, 0.08) 0%, rgba(2, 1, 23, 0.6) 100%);
+  border: 1px solid rgba(78, 60, 250, 0.2);
+  border-radius: 24px;
+  padding: 48px;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(78, 60, 250, 0.1);
+}
+
+.stepContent {
+  min-height: 400px;
+}
+
+.stepHeader {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.stepTitle {
+  font-size: 32px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0 0 16px 0;
+  line-height: 1.2;
+}
+
+.stepSubtitle {
+  font-size: 16px;
+  color: #B8BCC8;
+  margin: 0;
+  line-height: 1.5;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Form Elements */
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.formColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.formLabel {
+  margin-bottom: 8px;
+  color: #FFFFFF;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.formInput,
+.formSelect {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(78, 60, 250, 0.05) 0%, rgba(2, 1, 23, 0.4) 100%);
+  border: 1px solid rgba(78, 60, 250, 0.2);
+  border-radius: 12px;
+  color: #FFFFFF;
+  font-size: 15px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.formInput:focus,
+.formSelect:focus {
+  outline: none;
+  border-color: rgba(78, 60, 250, 0.6);
+  box-shadow: 0 0 0 3px rgba(78, 60, 250, 0.1);
+  background: linear-gradient(135deg, rgba(78, 60, 250, 0.08) 0%, rgba(2, 1, 23, 0.6) 100%);
+}
+
+.formInput::placeholder {
+  color: #9C9AA9;
+}
+
+.formSelect {
+  cursor: pointer;
+}
+
+.formSelect option {
+  background: #020117;
+  color: #FFFFFF;
+}
+
+.errorText {
+  color: #EF4444;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Plan Selection */
+.plansGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.planCard {
+  background: linear-gradient(135deg, rgba(78, 60, 250, 0.05) 0%, rgba(2, 1, 23, 0.4) 100%);
+  border: 2px solid rgba(78, 60, 250, 0.2);
+  border-radius: 20px;
+  padding: 32px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  backdrop-filter: blur(20px);
+}
+
+.planCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(78, 60, 250, 0.15);
+  border-color: rgba(78, 60, 250, 0.4);
+}
+
+.planCard.selected {
+  border-color: #4E3CFA;
+  background: linear-gradient(135deg, rgba(78, 60, 250, 0.12) 0%, rgba(2, 1, 23, 0.6) 100%);
+  box-shadow: 0 8px 24px rgba(78, 60, 250, 0.2);
+}
+
+.planCard.popular {
+  border-color: #4E3CFA;
+}
+
+.popularBadge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #4E3CFA 0%, #6A5ACD 100%);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.planName {
+  font-size: 24px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0 0 16px 0;
+  text-align: center;
+}
+
+.planPrice {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.price {
+  font-size: 32px;
+  font-weight: 700;
+  color: #4E3CFA;
+  display: block;
+}
+
+.period {
+  font-size: 14px;
+  color: #9C9AA9;
+}
+
+.planFeatures {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.planFeatures li {
+  padding: 8px 0;
+  color: #B8BCC8;
+  position: relative;
+  padding-left: 24px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.planFeatures li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #10B981;
+  font-weight: 600;
+}
+
+/* Weak Points Selection */
+.weakPointsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.weakPointCard {
+  background: linear-gradient(135deg, rgba(78, 60, 250, 0.05) 0%, rgba(2, 1, 23, 0.4) 100%);
+  border: 1px solid rgba(78, 60, 250, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  backdrop-filter: blur(20px);
+  font-size: 14px;
+  color: #B8BCC8;
+}
+
+.weakPointCard:hover {
+  border-color: rgba(78, 60, 250, 0.4);
+  background: linear-gradient(135deg, rgba(78, 60, 250, 0.08) 0%, rgba(2, 1, 23, 0.6) 100%);
+}
+
+.weakPointCard.selected {
+  border-color: #4E3CFA;
+  background: linear-gradient(135deg, rgba(78, 60, 250, 0.12) 0%, rgba(2, 1, 23, 0.6) 100%);
+  color: #FFFFFF;
+}
+
+.weakPointCheck {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(78, 60, 250, 0.4);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.weakPointCard.selected .weakPointCheck {
+  background: linear-gradient(135deg, #4E3CFA 0%, #6A5ACD 100%);
+  border-color: #4E3CFA;
+  color: #FFFFFF;
+}
+
+/* Navigation Buttons */
+.navigationButtons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 48px;
+  gap: 16px;
+}
+
+.prevButton,
+.nextButton,
+.submitButton {
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  border: none;
+}
+
+.prevButton {
+  background: linear-gradient(135deg, rgba(78, 60, 250, 0.05) 0%, rgba(2, 1, 23, 0.4) 100%);
+  border: 1px solid rgba(78, 60, 250, 0.2);
+  color: #B8BCC8;
+  backdrop-filter: blur(10px);
+}
+
+.prevButton:hover {
+  border-color: rgba(78, 60, 250, 0.4);
+  background: linear-gradient(135deg, rgba(78, 60, 250, 0.08) 0%, rgba(2, 1, 23, 0.6) 100%);
+  color: #FFFFFF;
+}
+
+.nextButton,
+.submitButton {
+  background: linear-gradient(135deg, #4E3CFA 0%, #6A5ACD 100%);
+  color: white;
+  box-shadow: 0 4px 20px rgba(78, 60, 250, 0.3);
+  margin-left: auto;
+}
+
+.nextButton:hover:not(:disabled),
+.submitButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(78, 60, 250, 0.4);
+}
+
+.nextButton:disabled,
+.submitButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.loadingSpinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Login Prompt */
+.loginPrompt {
+  text-align: center;
+  padding-top: 32px;
+  margin-top: 32px;
+  border-top: 1px solid rgba(78, 60, 250, 0.2);
+  color: #B8BCC8;
+  font-size: 15px;
+}
+
+.loginLink {
+  background: none;
+  border: none;
+  color: #4E3CFA;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 15px;
+}
+
+.loginLink:hover {
+  color: #6A5ACD;
+  text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .registerSection {
+    padding: 20px;
+    min-height: calc(100vh - 80px);
+  }
+  
+  .formWrapper {
+    padding: 32px;
+  }
+  
+  .stepTitle {
+    font-size: 28px;
+  }
+  
+  .formGrid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .plansGrid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .weakPointsGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .navigationButtons {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .nextButton,
+  .submitButton {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .prevButton {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .stepNumbers {
+    margin-bottom: 12px;
+  }
+  
+  .stepNumber {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+  
+  .stepLabels {
+    font-size: 12px;
+  }
+  
+  .stepContent {
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .registerSection {
+    padding: 16px;
+    min-height: calc(100vh - 80px);
+  }
+  
+  .formWrapper {
+    padding: 24px;
+  }
+  
+  .stepTitle {
+    font-size: 24px;
+  }
+  
+  .stepContent {
+    min-height: 250px;
+  }
+  
+  .formInput,
+  .formSelect {
+    padding: 14px 16px;
+  }
+  
+  .planCard {
+    padding: 24px;
+  }
+  
+  .planName {
+    font-size: 20px;
+  }
+  
+  .price {
+    font-size: 28px;
+  }
+  
+  .weakPointsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .weakPointCard {
+    padding: 12px;
+    font-size: 13px;
+  }
+  
+  .progressIndicator {
+    margin-bottom: 24px;
+  }
+}

@@ -9,7 +9,9 @@ import {
   Demo, 
   Pricing, 
   FAQ, 
-  Contact 
+  Contact,
+  Login,
+  Register
 } from './pages/main';
 
 const Sidebar: React.FC = () => {
@@ -223,6 +225,8 @@ function App() {
         <Route path="/main/cene" element={<Pricing />} />
         <Route path="/main/faq" element={<FAQ />} />
         <Route path="/main/kontakt" element={<Contact />} />
+        <Route path="/main/login" element={<Login />} />
+        <Route path="/main/register" element={<Register />} />
       </Routes>
     </Router>
   );

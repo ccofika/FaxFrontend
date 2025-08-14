@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import styles from './Home.module.css';
 
 type ChatMode = 'explain' | 'solve' | 'summary' | 'tests' | 'learning';
 
@@ -195,7 +196,7 @@ const Home: React.FC = () => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      if (!target.closest('.mode-selector')) {
+      if (!target.closest(`[class*="modeSelector"]`)) {
         setShowModeDropdown(false);
       }
     };
@@ -210,28 +211,28 @@ const Home: React.FC = () => {
   }, [showModeDropdown]);
 
   return (
-    <div className="main-content">
-      <div className="chat-interface">
+    <div className={styles.homePage}>
+      <div className={styles.chatInterface}>
         {/* Hero Section */}
-        <div className="hero-section">
-          <h1 className="greeting">Hey! Vanja Gayanovic</h1>
-          <p className="subtitle">Necu ti pusim kurac pedercino</p>
+        <div className={styles.heroSection}>
+          <h1 className={styles.greeting}>Hey! Vanja Gayanovic</h1>
+          <p className={styles.subtitle}>Necu ti pusim kurac pedercino</p>
         </div>
 
         {/* Input Section */}
-        <div className="input-section">
-          <div className={`input-container mode-${selectedMode}`}>
+        <div className={styles.inputSection}>
+          <div className={`${styles.inputContainer} ${styles[`mode${selectedMode.charAt(0).toUpperCase() + selectedMode.slice(1)}`]}`}>
             <textarea
-              className="chat-input"
+              className={styles.chatInput}
               placeholder="Filip pedercina"
               value={message}
               onChange={handleInputChange}
               onKeyPress={handleKeyPress}
             />
-            <div className="input-toolbar">
-              <div className="input-actions">
+            <div className={styles.inputToolbar}>
+              <div className={styles.inputActions}>
                 <button 
-                  className="subject-selector-btn"
+                  className={styles.subjectSelectorBtn}
                   onClick={handleOpenSubjectModal}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -239,16 +240,16 @@ const Home: React.FC = () => {
                     <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
                   </svg>
                   {selectedContent ? (
-                    <span className="subject-selector-text">
+                    <span className={styles.subjectSelectorText}>
                       {selectedContent.subject.name} ({selectedContent.lessons.length} lekcija)
                     </span>
                   ) : (
-                    <span className="subject-selector-text">Izaberi predmet</span>
+                    <span className={styles.subjectSelectorText}>Izaberi predmet</span>
                   )}
                 </button>
-                <div className="mode-selector">
+                <div className={styles.modeSelector}>
                   <button 
-                    className={`mode-button ${showModeDropdown ? 'active' : ''}`}
+                    className={`${styles.modeButton} ${showModeDropdown ? styles.active : ''}`}
                     onClick={() => setShowModeDropdown(!showModeDropdown)}
                   >
                     {selectedModeConfig?.name}
@@ -257,29 +258,29 @@ const Home: React.FC = () => {
                     </svg>
                   </button>
                   {showModeDropdown && (
-                    <div className="mode-dropdown">
+                    <div className={styles.modeDropdown}>
                       {chatModes.map((mode) => (
                         <button
                           key={mode.id}
-                          className={`mode-option ${mode.id === selectedMode ? 'selected' : ''}`}
+                          className={`${styles.modeOption} ${mode.id === selectedMode ? styles.selected : ''}`}
                           onClick={() => handleModeSelect(mode.id)}
                         >
-                          <div className="mode-details">
-                            <div className="mode-name">{mode.name}</div>
-                            <div className="mode-description">{mode.description}</div>
+                          <div className={styles.modeDetails}>
+                            <div className={styles.modeName}>{mode.name}</div>
+                            <div className={styles.modeDescription}>{mode.description}</div>
                           </div>
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
-                <button className="input-action">
+                <button className={styles.inputAction}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
                   </svg>
                   Add Attachment
                 </button>
-                <button className="input-action">
+                <button className={styles.inputAction}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                     <circle cx="8.5" cy="8.5" r="1.5"/>
@@ -288,10 +289,10 @@ const Home: React.FC = () => {
                   Use Image
                 </button>
               </div>
-              <div className="send-section">
-                <span className="character-count">{charCount}/{maxChars}</span>
+              <div className={styles.sendSection}>
+                <span className={styles.characterCount}>{charCount}/{maxChars}</span>
                 <button 
-                  className="send-button" 
+                  className={styles.sendButton} 
                   onClick={handleSendMessage}
                   disabled={isInputEmpty}
                 >
@@ -306,53 +307,53 @@ const Home: React.FC = () => {
         </div>
 
         {/* Recent Chats */}
-        <div className="recent-chats">
-          <h2 className="recent-chats-title">Tvoje dosadasnje gej konverzacije</h2>
-          <div className="recent-chats-grid">
-            <div className="chat-card">
-              <div className="chat-card-header">
-                <svg className="chat-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <div className={styles.recentChats}>
+          <h2 className={styles.recentChatsTitle}>Tvoje dosadasnje gej konverzacije</h2>
+          <div className={styles.recentChatsGrid}>
+            <div className={styles.chatCard}>
+              <div className={styles.chatCardHeader}>
+                <svg className={styles.chatCardIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <circle cx="12" cy="12" r="10"/>
                   <polyline points="12,6 12,12 16,14"/>
                 </svg>
-                <span className="chat-card-time">6 Hours</span>
+                <span className={styles.chatCardTime}>6 Hours</span>
               </div>
-              <h3 className="chat-card-title">Da li su gej pornici dobri za testosteron?</h3>
+              <h3 className={styles.chatCardTitle}>Da li su gej pornici dobri za testosteron?</h3>
             </div>
             
-            <div className="chat-card">
-              <div className="chat-card-header">
-                <svg className="chat-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <div className={styles.chatCard}>
+              <div className={styles.chatCardHeader}>
+                <svg className={styles.chatCardIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <circle cx="12" cy="12" r="10"/>
                   <polyline points="12,6 12,12 16,14"/>
                 </svg>
-                <span className="chat-card-time">12 Hours</span>
+                <span className={styles.chatCardTime}>12 Hours</span>
               </div>
-              <h3 className="chat-card-title">Kako da smuvam Sophie Rain 2025 easy guide?</h3>
+              <h3 className={styles.chatCardTitle}>Kako da smuvam Sophie Rain 2025 easy guide?</h3>
             </div>
             
-            <div className="chat-card">
-              <div className="chat-card-header">
-                <svg className="chat-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <div className={styles.chatCard}>
+              <div className={styles.chatCardHeader}>
+                <svg className={styles.chatCardIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <circle cx="12" cy="12" r="10"/>
                   <polyline points="12,6 12,12 16,14"/>
                 </svg>
-                <span className="chat-card-time">18 Hours</span>
+                <span className={styles.chatCardTime}>18 Hours</span>
               </div>
-              <h3 className="chat-card-title">Cao, napisi mi esej o kidnapovanju male dece iz studentskog parka</h3>
+              <h3 className={styles.chatCardTitle}>Cao, napisi mi esej o kidnapovanju male dece iz studentskog parka</h3>
             </div>
           </div>
         </div>
 
         {/* Subject/Lesson Selection Modal */}
         {showSubjectModal && (
-          <div className="modal-overlay" onClick={handleCloseSubjectModal}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
+          <div className={styles.modalOverlay} onClick={handleCloseSubjectModal}>
+            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
                 <h2>
                   {modalStep === 'subject' ? 'Izaberi predmet' : `Izaberi lekcije - ${tempSelectedSubject?.name}`}
                 </h2>
-                <button className="modal-close" onClick={handleCloseSubjectModal}>
+                <button className={styles.modalClose} onClick={handleCloseSubjectModal}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <line x1="18" y1="6" x2="6" y2="18"/>
                     <line x1="6" y1="6" x2="18" y2="18"/>
@@ -360,33 +361,33 @@ const Home: React.FC = () => {
                 </button>
               </div>
 
-              <div className="modal-body">
+              <div className={styles.modalBody}>
                 {modalStep === 'subject' ? (
-                  <div className="subjects-list">
+                  <div className={styles.subjectsList}>
                     {demoSubjects.map(subject => (
                       <div 
                         key={subject.id} 
-                        className="subject-item"
+                        className={styles.subjectItem}
                         onClick={() => handleSubjectSelect(subject)}
                       >
-                        <h3 className="subject-name">{subject.name}</h3>
-                        <span className="subject-code">{subject.code}</span>
-                        <span className="subject-info">{subject.year}. godina • {subject.semester}. semestar</span>
-                        <span className="lessons-count">{subject.lessons.length} lekcija</span>
+                        <h3 className={styles.subjectName}>{subject.name}</h3>
+                        <span className={styles.subjectCode}>{subject.code}</span>
+                        <span className={styles.subjectInfo}>{subject.year}. godina • {subject.semester}. semestar</span>
+                        <span className={styles.lessonsCount}>{subject.lessons.length} lekcija</span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="lessons-selection">
-                    <div className="lessons-list">
+                  <div className={styles.lessonsSelection}>
+                    <div className={styles.lessonsList}>
                       {tempSelectedSubject?.lessons.map(lesson => (
                         <div 
                           key={lesson.id}
-                          className={`lesson-item ${tempSelectedLessons.some(l => l.id === lesson.id) ? 'selected' : ''}`}
+                          className={`${styles.lessonItem} ${tempSelectedLessons.some(l => l.id === lesson.id) ? styles.selected : ''}`}
                           onClick={() => handleLessonToggle(lesson)}
                         >
-                          <div className="lesson-checkbox">
-                            <div className="checkbox">
+                          <div className={styles.lessonCheckbox}>
+                            <div className={styles.checkbox}>
                               {tempSelectedLessons.some(l => l.id === lesson.id) && (
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                                   <polyline points="20,6 9,17 4,12"/>
@@ -394,9 +395,9 @@ const Home: React.FC = () => {
                               )}
                             </div>
                           </div>
-                          <div className="lesson-content">
-                            <h4 className="lesson-title">{lesson.title}</h4>
-                            <p className="lesson-description">{lesson.description}</p>
+                          <div className={styles.lessonContent}>
+                            <h4 className={styles.lessonTitle}>{lesson.title}</h4>
+                            <p className={styles.lessonDescription}>{lesson.description}</p>
                           </div>
                         </div>
                       ))}
@@ -405,20 +406,20 @@ const Home: React.FC = () => {
                 )}
               </div>
 
-              <div className="modal-footer">
+              <div className={styles.modalFooter}>
                 {modalStep === 'lessons' && (
-                  <button className="btn-secondary" onClick={handleBackToSubjects}>
+                  <button className={styles.btnSecondary} onClick={handleBackToSubjects}>
                     Nazad
                   </button>
                 )}
-                <div className="modal-footer-right">
+                <div className={styles.modalFooterRight}>
                   {modalStep === 'lessons' && (
                     <>
-                      <span className="selected-count">
+                      <span className={styles.selectedCount}>
                         {tempSelectedLessons.length} od {tempSelectedSubject?.lessons.length} lekcija izabrano
                       </span>
                       <button 
-                        className="btn-primary"
+                        className={styles.btnPrimary}
                         onClick={handleConfirmSelection}
                         disabled={tempSelectedLessons.length === 0}
                       >

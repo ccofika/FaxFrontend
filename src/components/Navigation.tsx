@@ -45,10 +45,10 @@ const Navigation: React.FC = () => {
         </div>
 
         <div className="nav-actions">
-          <Link to="/login" className="nav-login">
+          <Link to="/main/login" className="nav-login">
             Prijava
           </Link>
-          <Link to="/register" className="nav-cta">
+          <Link to="/main/register" className="nav-cta">
             Započni
           </Link>
         </div>

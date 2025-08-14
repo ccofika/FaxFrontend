@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './Notes.module.css';
 
 interface Note {
   id: string;
@@ -70,15 +71,15 @@ const Notes: React.FC = () => {
   });
 
   return (
-    <div className="main-content">
-      <div className="notes-container">
+    <div className={styles.notesPage}>
+      <div className={styles.notesContainer}>
         {/* Header */}
-        <div className="notes-header">
-          <div className="notes-title-section">
-            <h1 className="notes-title">Beleške</h1>
-            <p className="notes-subtitle">Organizuj svoje učenje kroz strukturirane beleške</p>
+        <div className={styles.notesHeader}>
+          <div className={styles.notesTitleSection}>
+            <h1 className={styles.notesTitle}>Beleške</h1>
+            <p className={styles.notesSubtitle}>Organizuj svoje učenje kroz strukturirane beleške</p>
           </div>
-          <button className="notes-create-btn">
+          <button className={styles.notesCreateBtn}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 5v14m-7-7h14"/>
             </svg>
@@ -87,8 +88,8 @@ const Notes: React.FC = () => {
         </div>
 
         {/* Filters */}
-        <div className="notes-filters">
-          <div className="notes-search">
+        <div className={styles.notesFilters}>
+          <div className={styles.notesSearch}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="8"/>
               <path d="m21 21-4.35-4.35"/>
@@ -98,13 +99,13 @@ const Notes: React.FC = () => {
               placeholder="Pretraži beleške..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="notes-search-input"
+              className={styles.notesSearchInput}
             />
           </div>
           <select
             value={selectedSubject}
             onChange={(e) => setSelectedSubject(e.target.value)}
-            className="notes-subject-filter"
+            className={styles.notesSubjectFilter}
           >
             {subjects.map(subject => (
               <option key={subject} value={subject}>{subject}</option>
@@ -113,18 +114,18 @@ const Notes: React.FC = () => {
         </div>
 
         {/* Notes Grid */}
-        <div className="notes-grid">
+        <div className={styles.notesGrid}>
           {filteredNotes.map(note => (
-            <div key={note.id} className="note-card">
-              <div className="note-card-header">
-                <h3 className="note-title">{note.title}</h3>
-                <div className="note-actions">
-                  <button className="note-action-btn">
+            <div key={note.id} className={styles.noteCard}>
+              <div className={styles.noteCardHeader}>
+                <h3 className={styles.noteTitle}>{note.title}</h3>
+                <div className={styles.noteActions}>
+                  <button className={styles.noteActionBtn}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
                     </svg>
                   </button>
-                  <button className="note-action-btn">
+                  <button className={styles.noteActionBtn}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="3,6 5,6 21,6"/>
                       <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
@@ -133,23 +134,23 @@ const Notes: React.FC = () => {
                 </div>
               </div>
               
-              <div className="note-content-preview">
+              <div className={styles.noteContentPreview}>
                 {note.content.substring(0, 120)}...
               </div>
               
-              <div className="note-meta">
-                <div className="note-subject-lesson">
-                  <span className="note-subject">{note.subject}</span>
-                  <span className="note-lesson">{note.lesson}</span>
+              <div className={styles.noteMeta}>
+                <div className={styles.noteSubjectLesson}>
+                  <span className={styles.noteSubject}>{note.subject}</span>
+                  <span className={styles.noteLesson}>{note.lesson}</span>
                 </div>
-                <div className="note-dates">
-                  <span className="note-updated">Ažurirano {note.updatedAt}</span>
+                <div className={styles.noteDates}>
+                  <span className={styles.noteUpdated}>Ažurirano {note.updatedAt}</span>
                 </div>
               </div>
               
-              <div className="note-tags">
+              <div className={styles.noteTags}>
                 {note.tags.map(tag => (
-                  <span key={tag} className="note-tag">#{tag}</span>
+                  <span key={tag} className={styles.noteTag}>#{tag}</span>
                 ))}
               </div>
             </div>
@@ -157,15 +158,15 @@ const Notes: React.FC = () => {
         </div>
 
         {filteredNotes.length === 0 && (
-          <div className="notes-empty-state">
-            <div className="empty-state-icon">
+          <div className={styles.notesEmptyState}>
+            <div className={styles.emptyStateIcon}>
               <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <circle cx="11" cy="11" r="8"/>
                 <path d="m21 21-4.35-4.35"/>
               </svg>
             </div>
-            <h3 className="empty-state-title">Nema rezultata</h3>
-            <p className="empty-state-description">
+            <h3 className={styles.emptyStateTitle}>Nema rezultata</h3>
+            <p className={styles.emptyStateDescription}>
               Pokušajte sa drugim pretraživanjem ili izaberite drugi predmet
             </p>
           </div>

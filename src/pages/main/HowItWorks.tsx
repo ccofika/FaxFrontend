@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navigation from '../../components/Navigation';
-import './MainHome.css';
+import styles from './HowItWorks.module.css';
 
 const HowItWorks: React.FC = () => {
   const [hoveredMode, setHoveredMode] = useState<string | null>(null);
@@ -163,33 +163,33 @@ const HowItWorks: React.FC = () => {
   ];
 
   return (
-    <div className="main-home">
+    <div className={styles.howItWorksPage}>
       <Navigation />
       
       {/* Hero Section */}
-      <section className="hero-section">
-        <div className="hero-background">
-          <div className="hero-particles"></div>
-          <div className="hero-grid"></div>
+      <section className={styles.heroSection}>
+        <div className={styles.heroBackground}>
+          <div className={styles.heroParticles}></div>
+          <div className={styles.heroGrid}></div>
         </div>
         
-        <div className="hero-content">
+        <div className={styles.heroContent}>
           <div className="hero-badge">
             🎯 Kako funkcioniše FAXit
           </div>
           
-          <h1 className="hero-title">
+          <h1 className={styles.heroTitle}>
             Tvoj AI tutor koji
             <br />razume tvoje knjige
           </h1>
           
-          <p className="hero-subtitle">
+          <p className={styles.heroSubtitle}>
             FAXit koristi naprednu AI tehnologiju da analizira tvoje udžbenike i materijale, 
             omogućavajući ti personalizovano učenje prilagođeno baš tvom kurikulumu
           </p>
 
           <div className="hero-actions">
-            <button className="hero-cta-primary">
+            <button className={styles.ctaButton}>
               Započni besplatno
             </button>
             <button className="hero-cta-secondary" onClick={() => {

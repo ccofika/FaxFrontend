@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Profile.css';
+import styles from './Profile.module.css';
 
 interface ProfileData {
   name: string;
@@ -116,47 +116,47 @@ const Profile: React.FC = () => {
   };
 
   const renderProfileSection = () => (
-    <div className="profile-section">
-      <h2 className="section-title">Profile Information</h2>
-      <div className="profile-form">
-        <div className="form-group">
-          <label htmlFor="name">Full Name</label>
+    <div className={styles.profileSection}>
+      <h2 className={styles.sectionTitle}>Profile Information</h2>
+      <div className={styles.profileForm}>
+        <div className={styles.formGroup}>
+          <label htmlFor="name" className={styles.formLabel}>Full Name</label>
           <input
             type="text"
             id="name"
             value={profileData.name}
             onChange={(e) => handleInputChange('name', e.target.value)}
-            className="profile-input"
+            className={styles.profileInput}
           />
         </div>
-        <div className="form-group">
-          <label htmlFor="email">Email</label>
+        <div className={styles.formGroup}>
+          <label htmlFor="email" className={styles.formLabel}>Email</label>
           <input
             type="email"
             id="email"
             value={profileData.email}
             onChange={(e) => handleInputChange('email', e.target.value)}
-            className="profile-input"
+            className={styles.profileInput}
           />
         </div>
-        <div className="form-group">
-          <label htmlFor="university">University</label>
+        <div className={styles.formGroup}>
+          <label htmlFor="university" className={styles.formLabel}>University</label>
           <input
             type="text"
             id="university"
             value={profileData.university}
             onChange={(e) => handleInputChange('university', e.target.value)}
-            className="profile-input"
+            className={styles.profileInput}
           />
         </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="year">Year</label>
+        <div className={styles.formRow}>
+          <div className={styles.formGroup}>
+            <label htmlFor="year" className={styles.formLabel}>Year</label>
             <select
               id="year"
               value={profileData.year}
               onChange={(e) => handleInputChange('year', e.target.value)}
-              className="profile-select"
+              className={styles.profileSelect}
             >
               <option value="1. godina">1. godina</option>
               <option value="2. godina">2. godina</option>
@@ -166,47 +166,47 @@ const Profile: React.FC = () => {
               <option value="PhD">PhD</option>
             </select>
           </div>
-          <div className="form-group">
-            <label htmlFor="semester">Semester</label>
+          <div className={styles.formGroup}>
+            <label htmlFor="semester" className={styles.formLabel}>Semester</label>
             <select
               id="semester"
               value={profileData.semester}
               onChange={(e) => handleInputChange('semester', e.target.value)}
-              className="profile-select"
+              className={styles.profileSelect}
             >
               <option value="1. semestar">1. semestar</option>
               <option value="2. semestar">2. semestar</option>
             </select>
           </div>
         </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="major">Major</label>
+        <div className={styles.formRow}>
+          <div className={styles.formGroup}>
+            <label htmlFor="major" className={styles.formLabel}>Major</label>
             <input
               type="text"
               id="major"
               value={profileData.major}
               onChange={(e) => handleInputChange('major', e.target.value)}
-              className="profile-input"
+              className={styles.profileInput}
             />
           </div>
         </div>
-        <div className="form-info">
-          <span className="join-date">Member since {profileData.joinDate}</span>
+        <div className={styles.formInfo}>
+          <span className={styles.joinDate}>Member since {profileData.joinDate}</span>
         </div>
       </div>
     </div>
   );
 
   const renderAppearanceSection = () => (
-    <div className="profile-section">
-      <h2 className="section-title">Appearance Settings</h2>
-      <div className="appearance-form">
-        <div className="form-group">
-          <label htmlFor="colorMode">Color Mode</label>
-          <div className="radio-group">
+    <div className={styles.profileSection}>
+      <h2 className={styles.sectionTitle}>Appearance Settings</h2>
+      <div className={styles.appearanceForm}>
+        <div className={styles.formGroup}>
+          <label htmlFor="colorMode" className={styles.formLabel}>Color Mode</label>
+          <div className={styles.radioGroup}>
             {['dark', 'light', 'auto'].map((mode) => (
-              <label key={mode} className="radio-option">
+              <label key={mode} className={styles.radioOption}>
                 <input
                   type="radio"
                   name="colorMode"
@@ -214,20 +214,20 @@ const Profile: React.FC = () => {
                   checked={colorMode === mode}
                   onChange={(e) => setColorMode(e.target.value as any)}
                 />
-                <span className="radio-label">{mode.charAt(0).toUpperCase() + mode.slice(1)}</span>
+                <span className={styles.radioLabel}>{mode.charAt(0).toUpperCase() + mode.slice(1)}</span>
               </label>
             ))}
           </div>
         </div>
-        <div className="form-group">
-          <label htmlFor="chatFont">Chat Font</label>
-          <div className="radio-group">
+        <div className={styles.formGroup}>
+          <label htmlFor="chatFont" className={styles.formLabel}>Chat Font</label>
+          <div className={styles.radioGroup}>
             {[
               { value: 'system', label: 'System Font' },
               { value: 'mono', label: 'Monospace' },
               { value: 'serif', label: 'Serif' }
             ].map((font) => (
-              <label key={font.value} className="radio-option">
+              <label key={font.value} className={styles.radioOption}>
                 <input
                   type="radio"
                   name="chatFont"
@@ -235,7 +235,7 @@ const Profile: React.FC = () => {
                   checked={chatFont === font.value}
                   onChange={(e) => setChatFont(e.target.value as any)}
                 />
-                <span className="radio-label">{font.label}</span>
+                <span className={styles.radioLabel}>{font.label}</span>
               </label>
             ))}
           </div>
@@ -245,74 +245,74 @@ const Profile: React.FC = () => {
   );
 
   const renderAccountSection = () => (
-    <div className="profile-section">
-      <h2 className="section-title">Account Settings</h2>
-      <div className="account-form">
-        <div className="account-info">
-          <div className="info-card">
+    <div className={styles.profileSection}>
+      <h2 className={styles.sectionTitle}>Account Settings</h2>
+      <div className={styles.accountForm}>
+        <div className={styles.accountInfo}>
+          <div className={styles.infoCard}>
             <h3>Account Status</h3>
-            <span className="status active">Active</span>
+            <span className={`${styles.status} ${styles.active}`}>Active</span>
           </div>
-          <div className="info-card">
+          <div className={styles.infoCard}>
             <h3>Total Conversations</h3>
-            <span className="stat">247</span>
+            <span className={styles.stat}>247</span>
           </div>
-          <div className="info-card">
+          <div className={styles.infoCard}>
             <h3>Prompts Used This Month</h3>
-            <span className="stat">8 / 10</span>
+            <span className={styles.stat}>8 / 10</span>
           </div>
         </div>
-        <div className="account-actions">
-          <button className="profile-button secondary">Change Password</button>
-          <button className="profile-button secondary">Export Data</button>
-          <button className="profile-button danger">Logout</button>
+        <div className={styles.accountActions}>
+          <button className={`${styles.profileButton} ${styles.secondary}`}>Change Password</button>
+          <button className={`${styles.profileButton} ${styles.secondary}`}>Export Data</button>
+          <button className={`${styles.profileButton} ${styles.danger}`}>Logout</button>
         </div>
       </div>
     </div>
   );
 
   const renderPrivacySection = () => (
-    <div className="profile-section">
-      <h2 className="section-title">Privacy Settings</h2>
-      <div className="privacy-form">
-        <div className="privacy-option">
-          <div className="option-info">
+    <div className={styles.profileSection}>
+      <h2 className={styles.sectionTitle}>Privacy Settings</h2>
+      <div className={styles.privacyForm}>
+        <div className={styles.privacyOption}>
+          <div className={styles.optionInfo}>
             <h3>Data Collection</h3>
             <p>Allow collection of usage data to improve service</p>
           </div>
-          <label className="toggle">
+          <label className={styles.toggle}>
             <input type="checkbox" defaultChecked />
-            <span className="toggle-slider"></span>
+            <span className={styles.toggleSlider}></span>
           </label>
         </div>
-        <div className="privacy-option">
-          <div className="option-info">
+        <div className={styles.privacyOption}>
+          <div className={styles.optionInfo}>
             <h3>Chat History</h3>
             <p>Save conversation history for future reference</p>
           </div>
-          <label className="toggle">
+          <label className={styles.toggle}>
             <input type="checkbox" defaultChecked />
-            <span className="toggle-slider"></span>
+            <span className={styles.toggleSlider}></span>
           </label>
         </div>
-        <div className="privacy-option">
-          <div className="option-info">
+        <div className={styles.privacyOption}>
+          <div className={styles.optionInfo}>
             <h3>Analytics</h3>
             <p>Share anonymous usage analytics</p>
           </div>
-          <label className="toggle">
+          <label className={styles.toggle}>
             <input type="checkbox" />
-            <span className="toggle-slider"></span>
+            <span className={styles.toggleSlider}></span>
           </label>
         </div>
-        <div className="privacy-option">
-          <div className="option-info">
+        <div className={styles.privacyOption}>
+          <div className={styles.optionInfo}>
             <h3>Marketing Emails</h3>
             <p>Receive updates about new features and improvements</p>
           </div>
-          <label className="toggle">
+          <label className={styles.toggle}>
             <input type="checkbox" />
-            <span className="toggle-slider"></span>
+            <span className={styles.toggleSlider}></span>
           </label>
         </div>
       </div>
@@ -320,23 +320,23 @@ const Profile: React.FC = () => {
   );
 
   const renderBillingSection = () => (
-    <div className="profile-section">
-      <h2 className="section-title">Billing & Plans</h2>
-      <div className="billing-form">
-        <div className="current-plan">
+    <div className={styles.profileSection}>
+      <h2 className={styles.sectionTitle}>Billing & Plans</h2>
+      <div className={styles.billingForm}>
+        <div className={styles.currentPlan}>
           <h3>Current Plan: {billingPlans.find(p => p.id === currentPlan)?.name}</h3>
         </div>
-        <div className="plans-grid">
+        <div className={styles.plansGrid}>
           {billingPlans.map((plan) => (
-            <div key={plan.id} className={`plan-card ${currentPlan === plan.id ? 'current' : ''}`}>
-              <div className="plan-header">
+            <div key={plan.id} className={`${styles.planCard} ${currentPlan === plan.id ? styles.current : ''}`}>
+              <div className={styles.planHeader}>
                 <h3>{plan.name}</h3>
-                <div className="plan-price">{plan.price}</div>
-                <div className="plan-prompts">{plan.prompts}</div>
+                <div className={styles.planPrice}>{plan.price}</div>
+                <div className={styles.planPrompts}>{plan.prompts}</div>
               </div>
-              <div className="plan-features">
+              <div className={styles.planFeatures}>
                 {plan.features.map((feature, index) => (
-                  <div key={index} className="feature">
+                  <div key={index} className={styles.feature}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="20,6 9,17 4,12"/>
                     </svg>
@@ -345,7 +345,7 @@ const Profile: React.FC = () => {
                 ))}
               </div>
               <button 
-                className={`plan-button ${currentPlan === plan.id ? 'current' : 'upgrade'}`}
+                className={`${styles.planButton} ${currentPlan === plan.id ? styles.current : styles.upgrade}`}
                 onClick={() => currentPlan !== plan.id && setCurrentPlan(plan.id)}
               >
                 {currentPlan === plan.id ? 'Current Plan' : 'Upgrade'}
@@ -369,35 +369,43 @@ const Profile: React.FC = () => {
   };
 
   return (
-    <div className="profile-page">
-      <div className="profile-sidebar">
-        <div className="profile-header">
-          <button className="back-button" onClick={() => navigate('/')}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M19 12H5m7-7l-7 7 7 7"/>
-            </svg>
-            Back
-          </button>
-          <h1>Settings</h1>
-        </div>
-        <nav className="profile-nav">
-          {sections.map((section) => (
-            <button
-              key={section.id}
-              className={`nav-item ${activeSection === section.id ? 'active' : ''}`}
-              onClick={() => setActiveSection(section.id as any)}
-            >
-              <span className="nav-icon">{section.icon}</span>
-              <span className="nav-label">{section.name}</span>
+    <div className={styles.profilePage}>
+      <div className={styles.profileContainer}>
+        <div className={styles.profileSidebar}>
+          <div className={styles.profileHeader}>
+            <button className={styles.backButton} onClick={() => navigate('/')}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M19 12H5m7-7l-7 7 7 7"/>
+              </svg>
+              Back
             </button>
-          ))}
-        </nav>
-      </div>
-      <div className="profile-content">
-        {renderSection()}
-        <div className="profile-actions">
-          <button className="profile-button primary">Save Changes</button>
-          <button className="profile-button secondary">Cancel</button>
+            <h1 className={styles.settingsTitle}>Settings</h1>
+          </div>
+          <nav className={styles.profileNav}>
+            {sections.map((section) => (
+              <button
+                key={section.id}
+                className={`${styles.navItem} ${activeSection === section.id ? styles.active : ''}`}
+                onClick={() => setActiveSection(section.id as any)}
+              >
+                <span className={styles.navIcon}>{section.icon}</span>
+                <span className={styles.navLabel}>{section.name}</span>
+              </button>
+            ))}
+          </nav>
+        </div>
+        <div className={styles.profileContent}>
+          <div className={styles.contentHeader}>
+            <h1 className={styles.pageTitle}>{sections.find(s => s.id === activeSection)?.name}</h1>
+            <p className={styles.pageSubtitle}>Manage your account settings and preferences</p>
+          </div>
+          <div className={styles.contentBody}>
+            {renderSection()}
+          </div>
+          <div className={styles.profileActions}>
+            <button className={`${styles.profileButton} ${styles.primary}`}>Save Changes</button>
+            <button className={`${styles.profileButton} ${styles.secondary}`}>Cancel</button>
+          </div>
         </div>
       </div>
     </div>

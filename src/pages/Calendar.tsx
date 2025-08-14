@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './Calendar.module.css';
 
 interface CalendarEvent {
   id: string;
@@ -330,7 +331,7 @@ const Calendar: React.FC = () => {
 
     // Empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="calendar-day empty"></div>);
+      days.push(<div key={`empty-${i}`} className={`${styles.calendarDay} ${styles.empty}`}></div>);
     }
 
     // Days of the month
@@ -343,19 +344,19 @@ const Calendar: React.FC = () => {
       days.push(
         <div 
           key={day} 
-          className={`calendar-day ${isToday ? 'today' : ''} ${event ? 'has-event' : ''}`}
+          className={`${styles.calendarDay} ${isToday ? styles.today : ''} ${event ? styles.hasEvent : ''}`}
           onClick={() => setSelectedDate(new Date(currentYear, currentMonth, day))}
         >
-          <span className="day-number">{day}</span>
+          <span className={styles.dayNumber}>{day}</span>
           {event && (
             <div 
-              className={`event-indicator ${event.type}`}
+              className={`${styles.eventIndicator} ${styles[event.type]}`}
               style={{ backgroundColor: getEventTypeColor(event.type) }}
             >
-              <span className="event-title">{event.title}</span>
+              <span className={styles.eventTitle}>{event.title}</span>
               {userEvents.some(userEvent => userEvent.id === event.id) && (
                 <button
-                  className="delete-event-btn"
+                  className={styles.deleteEventBtn}
                   onClick={(e) => {
                     e.stopPropagation();
                     setUserEvents(prev => prev.filter(userEvent => userEvent.id !== event.id));
@@ -378,11 +379,11 @@ const Calendar: React.FC = () => {
   };
 
   return (
-    <div className="main-content">
+    <div className={styles.calendarPage}>
       {/* Success Notification */}
       {showNotification && (
-        <div className="success-notification">
-          <div className="notification-content">
+        <div className={styles.successNotification}>
+          <div className={styles.notificationContent}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
               <polyline points="22,4 12,14.01 9,11.01"/>
@@ -390,7 +391,7 @@ const Calendar: React.FC = () => {
             <span>Događaj je uspešno dodat!</span>
           </div>
           <button 
-            className="notification-close"
+            className={styles.notificationClose}
             onClick={() => setShowNotification(false)}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -401,15 +402,15 @@ const Calendar: React.FC = () => {
         </div>
       )}
       
-      <div className="calendar-container">
+      <div className={styles.calendarContainer}>
         {/* Header */}
-        <div className="calendar-header">
-          <div className="calendar-title-section">
-            <h1 className="calendar-title">Zadaci i rokovi</h1>
-            <p className="calendar-subtitle">Upravljajte svojim obavezama i rokovima</p>
+        <div className={styles.calendarHeader}>
+          <div className={styles.calendarTitleSection}>
+            <h1 className={styles.calendarTitle}>Zadaci i rokovi</h1>
+            <p className={styles.calendarSubtitle}>Upravljajte svojim obavezama i rokovima</p>
           </div>
           <button 
-            className="add-event-btn"
+            className={styles.addEventBtn}
             onClick={() => setIsAddEventModalOpen(true)}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -419,29 +420,29 @@ const Calendar: React.FC = () => {
           </button>
         </div>
 
-        <div className="calendar-layout">
+        <div className={styles.calendarLayout}>
           {/* Calendar Section */}
-          <div className="calendar-section">
-            <div className="calendar-nav">
-              <button className="nav-button" onClick={() => navigateMonth('prev')}>
+          <div className={styles.calendarSection}>
+            <div className={styles.calendarNav}>
+              <button className={styles.navButton} onClick={() => navigateMonth('prev')}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M15 18l-6-6 6-6"/>
                 </svg>
               </button>
-              <h2 className="calendar-month">
+              <h2 className={styles.calendarMonth}>
                 {currentDate.toLocaleDateString('sr-RS', { month: 'long', year: 'numeric' })}
               </h2>
-              <button className="nav-button" onClick={() => navigateMonth('next')}>
+              <button className={styles.navButton} onClick={() => navigateMonth('next')}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M9 18l6-6-6-6"/>
                 </svg>
               </button>
             </div>
 
-            <div className="calendar-grid">
+            <div className={styles.calendarGrid}>
               {/* Day headers */}
               {['Ned', 'Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub'].map(day => (
-                <div key={day} className="calendar-header-day">{day}</div>
+                <div key={day} className={styles.calendarHeaderDay}>{day}</div>
               ))}
               
               {/* Calendar days */}
@@ -449,53 +450,53 @@ const Calendar: React.FC = () => {
             </div>
 
             {/* Legend */}
-            <div className="calendar-legend">
-              <div className="legend-item">
-                <div className="legend-color kolokvijum" style={{ backgroundColor: getEventTypeColor('kolokvijum') }}></div>
+            <div className={styles.calendarLegend}>
+              <div className={styles.legendItem}>
+                <div className={`${styles.legendColor} ${styles.kolokvijum}`} style={{ backgroundColor: getEventTypeColor('kolokvijum') }}></div>
                 <span>Kolokvijumi</span>
               </div>
-              <div className="legend-item">
-                <div className="legend-color zadatak" style={{ backgroundColor: getEventTypeColor('zadatak') }}></div>
+              <div className={styles.legendItem}>
+                <div className={`${styles.legendColor} ${styles.zadatak}`} style={{ backgroundColor: getEventTypeColor('zadatak') }}></div>
                 <span>Zadaci</span>
               </div>
-              <div className="legend-item">
-                <div className="legend-color ispit" style={{ backgroundColor: getEventTypeColor('ispit') }}></div>
+              <div className={styles.legendItem}>
+                <div className={`${styles.legendColor} ${styles.ispit}`} style={{ backgroundColor: getEventTypeColor('ispit') }}></div>
                 <span>Ispiti</span>
               </div>
             </div>
           </div>
 
           {/* Side Panel - Upcoming Duties */}
-          <div className="duties-panel">
-            <h3 className="duties-title">Upcoming Duties</h3>
+          <div className={styles.dutiesPanel}>
+            <h3 className={styles.dutiesTitle}>Upcoming Duties</h3>
             
-            <div className="duties-list">
+            <div className={styles.dutiesList}>
               {upcomingEvents.map(event => (
-                <div key={event.id} className="duty-item">
-                  <div className="duty-header">
+                <div key={event.id} className={styles.dutyItem}>
+                  <div className={styles.dutyHeader}>
                     <div 
-                      className="duty-type-indicator"
+                      className={styles.dutyTypeIndicator}
                       style={{ backgroundColor: getEventTypeColor(event.type) }}
                     >
                       {getEventTypeLabel(event.type)}
                     </div>
-                    <span className="duty-time">{formatTimeUntil(event.date)}</span>
+                    <span className={styles.dutyTime}>{formatTimeUntil(event.date)}</span>
                   </div>
                   
-                  <h4 className="duty-title">{event.title}</h4>
-                  <p className="duty-subject">{event.subject}</p>
-                  <p className="duty-date">{formatDate(event.date)}</p>
+                  <h4 className={styles.dutyTitle}>{event.title}</h4>
+                  <p className={styles.dutySubject}>{event.subject}</p>
+                  <p className={styles.dutyDate}>{formatDate(event.date)}</p>
                   
                   {event.description && (
-                    <p className="duty-description">{event.description}</p>
+                    <p className={styles.dutyDescription}>{event.description}</p>
                   )}
                 </div>
               ))}
             </div>
 
             {upcomingEvents.length === 0 && (
-              <div className="duties-empty">
-                <div className="empty-icon">
+              <div className={styles.dutiesEmpty}>
+                <div className={styles.emptyIcon}>
                   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
                     <line x1="16" y1="2" x2="16" y2="6"/>
@@ -511,8 +512,8 @@ const Calendar: React.FC = () => {
 
         {/* Add Event Modal */}
         {isAddEventModalOpen && (
-          <div className="modal-overlay" onClick={() => setIsAddEventModalOpen(false)}>
-            <div className="add-event-modal" onClick={(e) => e.stopPropagation()}>
+          <div className={styles.modalOverlay} onClick={() => setIsAddEventModalOpen(false)}>
+            <div className={styles.addEventModal} onClick={(e) => e.stopPropagation()}>
               <AddEventForm 
                 onClose={() => setIsAddEventModalOpen(false)}
                 onAddEvent={(newEvent) => {
@@ -583,10 +584,10 @@ const AddEventForm: React.FC<AddEventFormProps> = ({ onClose, onAddEvent }) => {
   };
 
   return (
-    <div className="add-event-form">
-      <div className="modal-header">
+    <div className={styles.addEventForm}>
+      <div className={styles.modalHeader}>
         <h2>Dodaj novi događaj</h2>
-        <button className="modal-close-btn" onClick={onClose}>
+        <button className={styles.modalCloseBtn} onClick={onClose}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <line x1="18" y1="6" x2="6" y2="18"/>
             <line x1="6" y1="6" x2="18" y2="18"/>
@@ -594,25 +595,25 @@ const AddEventForm: React.FC<AddEventFormProps> = ({ onClose, onAddEvent }) => {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="event-form">
-        <div className="form-group">
-          <label className="form-label">Naziv događaja *</label>
+      <form onSubmit={handleSubmit} className={styles.eventForm}>
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Naziv događaja *</label>
           <input
             type="text"
             value={formData.title}
             onChange={(e) => handleChange('title', e.target.value)}
             placeholder="Unesite naziv zadatka, kolokvijuma ili ispita"
-            className="form-input"
+            className={styles.formInput}
             required
           />
         </div>
 
-        <div className="form-group">
-          <label className="form-label">Predmet *</label>
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Predmet *</label>
           <select
             value={formData.subject}
             onChange={(e) => handleChange('subject', e.target.value)}
-            className="form-select"
+            className={styles.formSelect}
             required
           >
             <option value="">Izaberite predmet</option>
@@ -622,12 +623,12 @@ const AddEventForm: React.FC<AddEventFormProps> = ({ onClose, onAddEvent }) => {
           </select>
         </div>
 
-        <div className="form-group">
-          <label className="form-label">Tip događaja *</label>
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Tip događaja *</label>
           <select
             value={formData.type}
             onChange={(e) => handleChange('type', e.target.value as CalendarEvent['type'])}
-            className="form-select"
+            className={styles.formSelect}
             required
           >
             <option value="zadatak">Zadatak</option>
@@ -636,15 +637,15 @@ const AddEventForm: React.FC<AddEventFormProps> = ({ onClose, onAddEvent }) => {
           </select>
         </div>
 
-        <div className="form-group">
-          <label className="form-label">Datum *</label>
-          <div className="date-picker-container">
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Datum *</label>
+          <div className={styles.datePickerContainer}>
             <input
               type="text"
               value={formData.date ? new Date(formData.date).toLocaleDateString('sr-RS') : ''}
               onClick={() => setIsCalendarPickerOpen(true)}
               placeholder="Kliknite da izaberete datum"
-              className="form-input date-picker-input"
+              className={`${styles.formInput} ${styles.datePickerInput}`}
               readOnly
               required
             />
@@ -655,7 +656,7 @@ const AddEventForm: React.FC<AddEventFormProps> = ({ onClose, onAddEvent }) => {
               fill="none" 
               stroke="currentColor" 
               strokeWidth="2"
-              className="date-picker-icon"
+              className={styles.datePickerIcon}
               onClick={() => setIsCalendarPickerOpen(true)}
             >
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
@@ -665,8 +666,8 @@ const AddEventForm: React.FC<AddEventFormProps> = ({ onClose, onAddEvent }) => {
             </svg>
             
             {isCalendarPickerOpen && (
-              <div className="mini-calendar-overlay" onClick={() => setIsCalendarPickerOpen(false)}>
-                <div className="mini-calendar" onClick={(e) => e.stopPropagation()}>
+              <div className={styles.miniCalendarOverlay} onClick={() => setIsCalendarPickerOpen(false)}>
+                <div className={styles.miniCalendar} onClick={(e) => e.stopPropagation()}>
                   <MiniCalendar 
                     onDateSelect={(date) => {
                       handleChange('date', date.toISOString().split('T')[0]);
@@ -680,22 +681,22 @@ const AddEventForm: React.FC<AddEventFormProps> = ({ onClose, onAddEvent }) => {
           </div>
         </div>
 
-        <div className="form-group">
-          <label className="form-label">Opis (opciono)</label>
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Opis (opciono)</label>
           <textarea
             value={formData.description}
             onChange={(e) => handleChange('description', e.target.value)}
             placeholder="Dodajte opis zadatka, teme kolokvijuma ili detalje ispita"
-            className="form-textarea"
+            className={styles.formTextarea}
             rows={3}
           />
         </div>
 
-        <div className="form-actions">
-          <button type="button" onClick={onClose} className="cancel-btn">
+        <div className={styles.formActions}>
+          <button type="button" onClick={onClose} className={styles.cancelBtn}>
             Otkaži
           </button>
-          <button type="submit" className="submit-btn">
+          <button type="submit" className={styles.submitBtn}>
             Dodaj događaj
           </button>
         </div>
@@ -737,7 +738,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ onDateSelect, onClose }) =>
     
     // Empty cells for days before the first day of the month
     for (let i = 0; i < firstDayOfMonth; i++) {
-      days.push(<div key={`empty-${i}`} className="mini-calendar-day empty"></div>);
+      days.push(<div key={`empty-${i}`} className={`${styles.miniCalendarDay} ${styles.empty}`}></div>);
     }
     
     // Days of the month
@@ -749,7 +750,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ onDateSelect, onClose }) =>
       days.push(
         <div
           key={day}
-          className={`mini-calendar-day ${isToday ? 'today' : ''} ${isPast ? 'past' : ''}`}
+          className={`${styles.miniCalendarDay} ${isToday ? styles.today : ''} ${isPast ? styles.past : ''}`}
           onClick={() => onDateSelect(date)}
         >
           {day}
@@ -761,26 +762,26 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ onDateSelect, onClose }) =>
   };
   
   return (
-    <div className="mini-calendar-popup">
-      <div className="mini-calendar-header">
-        <button onClick={() => navigateMonth('prev')} className="mini-nav-btn">
+    <div className={styles.miniCalendarPopup}>
+      <div className={styles.miniCalendarHeader}>
+        <button onClick={() => navigateMonth('prev')} className={styles.miniNavBtn}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M15 18l-6-6 6-6"/>
           </svg>
         </button>
-        <h3 className="mini-calendar-title">
+        <h3 className={styles.miniCalendarTitle}>
           {currentMonth.toLocaleDateString('sr-RS', { month: 'long', year: 'numeric' })}
         </h3>
-        <button onClick={() => navigateMonth('next')} className="mini-nav-btn">
+        <button onClick={() => navigateMonth('next')} className={styles.miniNavBtn}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M9 18l6-6-6-6"/>
           </svg>
         </button>
       </div>
       
-      <div className="mini-calendar-grid">
+      <div className={styles.miniCalendarGrid}>
         {['N', 'P', 'U', 'S', 'Č', 'P', 'S'].map(day => (
-          <div key={day} className="mini-calendar-header-day">{day}</div>
+          <div key={day} className={styles.miniCalendarHeaderDay}>{day}</div>
         ))}
         {renderDays()}
       </div>

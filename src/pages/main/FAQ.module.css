@@ -1,0 +1,353 @@
+/* FAQ Page Styles - Matching Pricing Page Theme */
+
+/* Search Section */
+.searchSection {
+  padding: 40px 24px;
+  background: rgba(2, 1, 23, 0.8);
+}
+
+.searchContainer {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.searchBox {
+  position: relative;
+  width: 100%;
+}
+
+.searchBox svg {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9C9AA9;
+  z-index: 1;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 16px 20px 16px 48px;
+  background: linear-gradient(135deg, rgba(78, 60, 250, 0.08) 0%, rgba(2, 1, 23, 0.6) 100%);
+  border: 1px solid rgba(78, 60, 250, 0.2);
+  border-radius: 12px;
+  color: #FFFFFF;
+  font-size: 16px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(20px);
+  box-sizing: border-box;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: rgba(78, 60, 250, 0.6);
+  box-shadow: 0 0 0 3px rgba(78, 60, 250, 0.1);
+  background: linear-gradient(135deg, rgba(78, 60, 250, 0.12) 0%, rgba(2, 1, 23, 0.8) 100%);
+}
+
+.searchInput::placeholder {
+  color: #9C9AA9;
+}
+
+/* Categories Section */
+.categoriesSection {
+  padding: 40px 24px 60px;
+}
+
+.categoriesContainer {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.categoriesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.categoryCard {
+  background: linear-gradient(135deg, rgba(78, 60, 250, 0.08) 0%, rgba(2, 1, 23, 0.6) 100%);
+  border: 1px solid rgba(78, 60, 250, 0.2);
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.categoryCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(78, 60, 250, 0.15);
+  border-color: rgba(78, 60, 250, 0.4);
+}
+
+.categoryCard.active {
+  background: linear-gradient(135deg, #4E3CFA 0%, #6A5ACD 100%);
+  border-color: rgba(78, 60, 250, 0.8);
+  color: #FFFFFF;
+  box-shadow: 0 8px 24px rgba(78, 60, 250, 0.3);
+}
+
+.categoryIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4E3CFA;
+  flex-shrink: 0;
+}
+
+.categoryCard.active .categoryIcon {
+  color: #FFFFFF;
+}
+
+.categoryName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #B8BCC8;
+}
+
+.categoryCard.active .categoryName {
+  color: #FFFFFF;
+}
+
+/* FAQ Container */
+.faqContainer {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.faqItem {
+  background: linear-gradient(135deg, rgba(78, 60, 250, 0.08) 0%, rgba(2, 1, 23, 0.6) 100%);
+  border: 1px solid rgba(78, 60, 250, 0.2);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  margin-bottom: 16px;
+  backdrop-filter: blur(20px);
+}
+
+.faqItem:hover {
+  border-color: rgba(78, 60, 250, 0.4);
+}
+
+.faqQuestion {
+  width: 100%;
+  padding: 24px;
+  background: transparent;
+  border: none;
+  color: #FFFFFF;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.2s ease;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.faqQuestion:hover {
+  color: #4E3CFA;
+  background: rgba(78, 60, 250, 0.05);
+}
+
+.faqQuestion:hover .faqIcon {
+  color: #4E3CFA;
+}
+
+.faqIcon {
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  color: #9C9AA9;
+}
+
+.faqQuestion.expanded .faqIcon {
+  transform: rotate(180deg);
+  color: #4E3CFA;
+}
+
+.faqAnswer {
+  padding: 0 24px 24px;
+  border-top: 1px solid rgba(78, 60, 250, 0.2);
+  animation: slideDown 0.2s ease;
+}
+
+.faqAnswer p {
+  color: #B8BCC8;
+  line-height: 1.6;
+  margin: 16px 0 0 0;
+  font-size: 15px;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* No Results */
+.noResults {
+  text-align: center;
+  padding: 80px 20px;
+  color: #9C9AA9;
+}
+
+.noResults svg {
+  margin-bottom: 24px;
+  color: #4E3CFA;
+}
+
+.noResults h3 {
+  font-size: 24px;
+  color: #FFFFFF;
+  margin: 0 0 12px 0;
+  font-weight: 600;
+}
+
+.noResults p {
+  font-size: 16px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Contact CTA */
+.contactCta {
+  padding: 80px 24px;
+  text-align: center;
+}
+
+.ctaContent {
+  max-width: 600px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, rgba(78, 60, 250, 0.08) 0%, rgba(2, 1, 23, 0.6) 100%);
+  border: 1px solid rgba(78, 60, 250, 0.2);
+  border-radius: 24px;
+  padding: 48px 32px;
+  backdrop-filter: blur(20px);
+}
+
+.ctaContent h3 {
+  font-size: 28px;
+  color: #FFFFFF;
+  margin: 0 0 16px 0;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ctaContent p {
+  color: #B8BCC8;
+  font-size: 16px;
+  margin: 0 0 32px 0;
+  line-height: 1.5;
+}
+
+.ctaButton {
+  background: linear-gradient(135deg, #4E3CFA 0%, #6A5ACD 100%);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  box-shadow: 0 4px 20px rgba(78, 60, 250, 0.3);
+}
+
+.ctaButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(78, 60, 250, 0.4);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .searchSection {
+    padding: 32px 20px;
+  }
+  
+  .categoriesSection {
+    padding: 32px 20px 48px;
+  }
+  
+  .categoriesGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .categoryCard {
+    padding: 16px;
+  }
+  
+  .faqContainer {
+    padding: 0 20px;
+  }
+  
+  .faqQuestion {
+    padding: 20px;
+    font-size: 15px;
+  }
+  
+  .faqAnswer {
+    padding: 0 20px 20px;
+  }
+  
+  .ctaContent {
+    padding: 32px 24px;
+  }
+  
+  .ctaContent h3 {
+    font-size: 24px;
+  }
+  
+  .contactCta {
+    padding: 60px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .searchInput {
+    padding: 14px 16px 14px 44px;
+  }
+  
+  .categoriesGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .categoryCard {
+    padding: 12px;
+    gap: 8px;
+  }
+  
+  .categoryName {
+    font-size: 13px;
+  }
+  
+  .faqQuestion {
+    padding: 16px;
+  }
+  
+  .faqAnswer {
+    padding: 0 16px 16px;
+  }
+  
+  .ctaContent {
+    padding: 24px 20px;
+  }
+}
