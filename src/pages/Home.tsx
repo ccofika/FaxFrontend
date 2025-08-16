@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 import styles from './Home.module.css';
 
 type ChatMode = 'explain' | 'solve' | 'summary' | 'tests' | 'learning';
@@ -41,6 +42,7 @@ const chatModes: ModeConfig[] = [
 
 // Demo data - filter by user's faculty, year, semester in real implementation
 const demoSubjects: Subject[] = [
+  // Elektrotehnički fakultet
   {
     id: 'math1',
     name: 'Matematika 1',
@@ -98,10 +100,71 @@ const demoSubjects: Subject[] = [
       { id: 's3', title: 'Stabla', description: 'Binarna stabla i AVL stabla' },
       { id: 's4', title: 'Hash tabele', description: 'Algoritmi heširanja' }
     ]
+  },
+  
+  // Fakultet organizacionih nauka
+  {
+    id: 'info_sys1',
+    name: 'Informacioni sistemi 1',
+    code: 'IS101',
+    faculty: 'Fakultet organizacionih nauka',
+    year: 1,
+    semester: 1,
+    lessons: [
+      { id: 'is1', title: 'Uvod u informacione sisteme', description: 'Osnovi IS i njihova uloga' },
+      { id: 'is2', title: 'Modelovanje sistema', description: 'UML dijagrami i modelovanje' },
+      { id: 'is3', title: 'Baze podataka', description: 'Relacione baze i SQL' },
+      { id: 'is4', title: 'Sistemska analiza', description: 'Analiza zahteva sistema' }
+    ]
+  },
+  {
+    id: 'management1',
+    name: 'Osnove menadžmenta',
+    code: 'MNG101',
+    faculty: 'Fakultet organizacionih nauka',
+    year: 1,
+    semester: 1,
+    lessons: [
+      { id: 'm1', title: 'Funkcije menadžmenta', description: 'Planiranje, organizovanje, vođenje, kontrola' },
+      { id: 'm2', title: 'Organizacione strukture', description: 'Tipovi organizacionih struktura' },
+      { id: 'm3', title: 'Liderstvo', description: 'Stilovi liderstva i motivacija' },
+      { id: 'm4', title: 'Donošenje odluka', description: 'Proces donošenja odluka' }
+    ]
+  },
+
+  // Ekonomski fakultet
+  {
+    id: 'microecon1',
+    name: 'Mikroekonomija',
+    code: 'ECON101',
+    faculty: 'Ekonomski fakultet',
+    year: 1,
+    semester: 1,
+    lessons: [
+      { id: 'me1', title: 'Ponuda i tražnja', description: 'Osnovi tržišnih mehanizama' },
+      { id: 'me2', title: 'Elastičnost', description: 'Cenovne i dohodovne elastičnosti' },
+      { id: 'me3', title: 'Teorija potrošnje', description: 'Korisnost i potrošačko ponašanje' },
+      { id: 'me4', title: 'Teorija proizvodnje', description: 'Proizvodni faktori i troškovi' }
+    ]
+  },
+  {
+    id: 'accounting1',
+    name: 'Osnove računovodstva',
+    code: 'ACC101',
+    faculty: 'Ekonomski fakultet',
+    year: 1,
+    semester: 1,
+    lessons: [
+      { id: 'ac1', title: 'Računovodstvena jednačina', description: 'Aktiva = Pasiva + Kapital' },
+      { id: 'ac2', title: 'Dvostruko knjigovodstvo', description: 'Duguje i Potražuje' },
+      { id: 'ac3', title: 'Bilans stanja', description: 'Struktura i analiza bilansa' },
+      { id: 'ac4', title: 'Bilans uspeha', description: 'Prihodi i rashodi' }
+    ]
   }
 ];
 
 const Home: React.FC = () => {
+  const { user, fetchProfile } = useAuth();
   const [message, setMessage] = useState('');
   const [charCount, setCharCount] = useState(0);
   const [selectedMode, setSelectedMode] = useState<ChatMode>('explain');
@@ -111,6 +174,7 @@ const Home: React.FC = () => {
   const [modalStep, setModalStep] = useState<'subject' | 'lessons'>('subject');
   const [tempSelectedSubject, setTempSelectedSubject] = useState<Subject | null>(null);
   const [tempSelectedLessons, setTempSelectedLessons] = useState<Lesson[]>([]);
+  const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([]);
   const maxChars = 1000;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -192,6 +256,35 @@ const Home: React.FC = () => {
   const selectedModeConfig = chatModes.find(mode => mode.id === selectedMode);
   const isInputEmpty = message.trim().length === 0;
 
+  // Load user profile data and filter subjects
+  useEffect(() => {
+    const loadData = async () => {
+      if (user) {
+        try {
+          await fetchProfile();
+        } catch (error) {
+          console.error('Failed to fetch profile:', error);
+        }
+      }
+    };
+    
+    loadData();
+  }, []);
+
+  // Filter subjects based on user's faculty and academic year
+  useEffect(() => {
+    if (user?.faculty && user?.academicYear) {
+      const userYear = parseInt(user.academicYear.match(/\d+/)?.[0] || '1');
+      const filtered = demoSubjects.filter(subject => 
+        subject.faculty === user.faculty && subject.year === userYear
+      );
+      setFilteredSubjects(filtered);
+    } else {
+      // If no user data, show all subjects
+      setFilteredSubjects(demoSubjects);
+    }
+  }, [user?.faculty, user?.academicYear]);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -210,13 +303,48 @@ const Home: React.FC = () => {
     };
   }, [showModeDropdown]);
 
+  // Helper function to get user's display name
+  const getUserDisplayName = (): string => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    if (user?.username) {
+      return user.username;
+    }
+    return 'Korisnik';
+  };
+
+  // Helper function to get personalized greeting based on time of day
+  const getPersonalizedGreeting = (): string => {
+    const hour = new Date().getHours();
+    const name = getUserDisplayName();
+    
+    if (hour < 12) {
+      return `Dobro jutro, ${name}!`;
+    } else if (hour < 18) {
+      return `Dobar dan, ${name}!`;
+    } else {
+      return `Dobro veče, ${name}!`;
+    }
+  };
+
+  // Helper function to get personalized subtitle
+  const getPersonalizedSubtitle = (): string => {
+    if (user?.faculty) {
+      const facultyShort = user.faculty.replace('Fakultet', '').trim();
+      const year = user.academicYear || 'godina';
+      return `${facultyShort} • ${year} • Spremni za učenje?`;
+    }
+    return 'Šta želite da naučite danas?';
+  };
+
   return (
     <div className={styles.homePage}>
       <div className={styles.chatInterface}>
         {/* Hero Section */}
         <div className={styles.heroSection}>
-          <h1 className={styles.greeting}>Hey! Vanja Gayanovic</h1>
-          <p className={styles.subtitle}>Necu ti pusim kurac pedercino</p>
+          <h1 className={styles.greeting}>{getPersonalizedGreeting()}</h1>
+          <p className={styles.subtitle}>{getPersonalizedSubtitle()}</p>
         </div>
 
         {/* Input Section */}
@@ -224,7 +352,7 @@ const Home: React.FC = () => {
           <div className={`${styles.inputContainer} ${styles[`mode${selectedMode.charAt(0).toUpperCase() + selectedMode.slice(1)}`]}`}>
             <textarea
               className={styles.chatInput}
-              placeholder="Filip pedercina"
+              placeholder="Postavite pitanje ili opišite problem koji vas zanima..."
               value={message}
               onChange={handleInputChange}
               onKeyPress={handleKeyPress}
@@ -308,40 +436,54 @@ const Home: React.FC = () => {
 
         {/* Recent Chats */}
         <div className={styles.recentChats}>
-          <h2 className={styles.recentChatsTitle}>Tvoje dosadasnje gej konverzacije</h2>
+          <h2 className={styles.recentChatsTitle}>Nedavne konverzacije</h2>
           <div className={styles.recentChatsGrid}>
-            <div className={styles.chatCard}>
-              <div className={styles.chatCardHeader}>
-                <svg className={styles.chatCardIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12,6 12,12 16,14"/>
-                </svg>
-                <span className={styles.chatCardTime}>6 Hours</span>
+            {user?.totalConversations && user.totalConversations > 0 ? (
+              <>
+                <div className={styles.chatCard}>
+                  <div className={styles.chatCardHeader}>
+                    <svg className={styles.chatCardIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12,6 12,12 16,14"/>
+                    </svg>
+                    <span className={styles.chatCardTime}>6 sati</span>
+                  </div>
+                  <h3 className={styles.chatCardTitle}>Objašnjenje diferencijalnih jednačina</h3>
+                </div>
+                
+                <div className={styles.chatCard}>
+                  <div className={styles.chatCardHeader}>
+                    <svg className={styles.chatCardIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12,6 12,12 16,14"/>
+                    </svg>
+                    <span className={styles.chatCardTime}>12 sati</span>
+                  </div>
+                  <h3 className={styles.chatCardTitle}>Algoritmi sortiranja - analiza složenosti</h3>
+                </div>
+                
+                <div className={styles.chatCard}>
+                  <div className={styles.chatCardHeader}>
+                    <svg className={styles.chatCardIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12,6 12,12 16,14"/>
+                    </svg>
+                    <span className={styles.chatCardTime}>1 dan</span>
+                  </div>
+                  <h3 className={styles.chatCardTitle}>Priprema za ispit iz fizike</h3>
+                </div>
+              </>
+            ) : (
+              <div className={styles.noChatsMessage}>
+                <div className={styles.noChatsIcon}>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                </div>
+                <h3>Još nema konverzacija</h3>
+                <p>Započnite svoju prvу konverzaciju postavljanjem pitanja gore!</p>
               </div>
-              <h3 className={styles.chatCardTitle}>Da li su gej pornici dobri za testosteron?</h3>
-            </div>
-            
-            <div className={styles.chatCard}>
-              <div className={styles.chatCardHeader}>
-                <svg className={styles.chatCardIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12,6 12,12 16,14"/>
-                </svg>
-                <span className={styles.chatCardTime}>12 Hours</span>
-              </div>
-              <h3 className={styles.chatCardTitle}>Kako da smuvam Sophie Rain 2025 easy guide?</h3>
-            </div>
-            
-            <div className={styles.chatCard}>
-              <div className={styles.chatCardHeader}>
-                <svg className={styles.chatCardIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12,6 12,12 16,14"/>
-                </svg>
-                <span className={styles.chatCardTime}>18 Hours</span>
-              </div>
-              <h3 className={styles.chatCardTitle}>Cao, napisi mi esej o kidnapovanju male dece iz studentskog parka</h3>
-            </div>
+            )}
           </div>
         </div>
 
@@ -364,7 +506,8 @@ const Home: React.FC = () => {
               <div className={styles.modalBody}>
                 {modalStep === 'subject' ? (
                   <div className={styles.subjectsList}>
-                    {demoSubjects.map(subject => (
+                    {filteredSubjects.length > 0 ? (
+                      filteredSubjects.map(subject => (
                       <div 
                         key={subject.id} 
                         className={styles.subjectItem}
@@ -375,7 +518,23 @@ const Home: React.FC = () => {
                         <span className={styles.subjectInfo}>{subject.year}. godina • {subject.semester}. semestar</span>
                         <span className={styles.lessonsCount}>{subject.lessons.length} lekcija</span>
                       </div>
-                    ))}
+                      ))
+                    ) : (
+                      <div className={styles.noSubjectsMessage}>
+                        <div className={styles.noSubjectsIcon}>
+                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                          </svg>
+                        </div>
+                        <h3>Nema dostupnih predmeta</h3>
+                        <p>
+                          {user?.faculty && user?.academicYear 
+                            ? `Nema predmeta za ${user.faculty}, ${user.academicYear}.` 
+                            : 'Molimo ažurirajte informacije o fakultetu u profilu.'}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className={styles.lessonsSelection}>
