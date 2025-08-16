@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Navigation from '../../components/Navigation';
+import { useAuth } from '../../context/AuthContext';
 import './MainHome.css';
 import styles from './Login.module.css';
 
@@ -12,6 +13,8 @@ interface LoginFormData {
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login, isAuthenticated, isLoading } = useAuth();
   const [formData, setFormData] = useState<LoginFormData>({
     emailOrUsername: '',
     password: '',
@@ -19,6 +22,14 @@ const Login: React.FC = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string>('');
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const from = (location.state as any)?.from?.pathname || '/';
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, location]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -26,20 +37,24 @@ const Login: React.FC = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+    if (error) setError('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError('');
     
-    // Simulate login process
-    setTimeout(() => {
-      console.log('Login attempt:', formData);
-      // Here would be actual login logic
+    try {
+      await login({
+        login: formData.emailOrUsername,
+        password: formData.password
+      });
+    } catch (error: any) {
+      setError(error.message || 'Login failed. Please try again.');
+    } finally {
       setIsSubmitting(false);
-      // Redirect to dashboard or main app
-      navigate('/dashboard');
-    }, 2000);
+    }
   };
 
   const handleGoogleLogin = () => {
@@ -63,6 +78,12 @@ const Login: React.FC = () => {
             </div>
 
             <form onSubmit={handleSubmit} className={styles.loginForm}>
+              {error && (
+                <div className={styles.errorMessage}>
+                  {error}
+                </div>
+              )}
+              
               <div className={styles.formGroup}>
                 <label htmlFor="emailOrUsername" className={styles.formLabel}>
                   Email ili korisničko ime

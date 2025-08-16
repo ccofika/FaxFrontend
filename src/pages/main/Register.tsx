@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '../../components/Navigation';
+import { useAuth } from '../../context/AuthContext';
 import './MainHome.css';
 import styles from './Register.module.css';
 
@@ -41,8 +42,11 @@ interface RegistrationData {
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
+  const { register, isAuthenticated } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string>('');
+  const [username, setUsername] = useState<string>('');
   
   const [registrationData, setRegistrationData] = useState<RegistrationData>({
     personal: {
@@ -166,6 +170,19 @@ const Register: React.FC = () => {
     'Prezentacijske veštine'
   ];
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (registrationData.personal.firstName && registrationData.personal.lastName) {
+      const generatedUsername = `${registrationData.personal.firstName.toLowerCase()}.${registrationData.personal.lastName.toLowerCase()}`;
+      setUsername(generatedUsername);
+    }
+  }, [registrationData.personal.firstName, registrationData.personal.lastName]);
+
   const updatePersonalData = (field: keyof PersonalInfoData, value: string) => {
     setRegistrationData(prev => ({
       ...prev,
@@ -174,6 +191,7 @@ const Register: React.FC = () => {
         [field]: value
       }
     }));
+    if (error) setError('');
   };
 
   const updateAcademicData = (field: keyof AcademicData, value: string) => {
@@ -220,15 +238,27 @@ const Register: React.FC = () => {
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
+    setError('');
     
-    // Simulate registration process
-    setTimeout(() => {
-      console.log('Registration data:', registrationData);
-      // Here would be actual registration logic
+    try {
+      await register({
+        username,
+        email: registrationData.personal.email,
+        password: registrationData.personal.password,
+        firstName: registrationData.personal.firstName,
+        lastName: registrationData.personal.lastName,
+        dateOfBirth: registrationData.personal.dateOfBirth || undefined,
+        phone: registrationData.personal.phone || undefined,
+        faculty: registrationData.academic.faculty || undefined,
+        academicYear: registrationData.academic.year || undefined,
+        major: registrationData.academic.major || undefined,
+        selectedPlan: registrationData.plan.selectedPlan || undefined,
+        weakPoints: registrationData.weakPoints.weakPoints.length > 0 ? registrationData.weakPoints.weakPoints : undefined
+      });
+    } catch (error: any) {
+      setError(error.message || 'Registration failed. Please try again.');
       setIsSubmitting(false);
-      // Redirect to login or dashboard
-      navigate('/main/login');
-    }, 3000);
+    }
   };
 
   const isStepValid = (step: number): boolean => {
@@ -237,6 +267,7 @@ const Register: React.FC = () => {
         return !!(
           registrationData.personal.firstName &&
           registrationData.personal.lastName &&
+          username &&
           registrationData.personal.email &&
           registrationData.personal.password &&
           registrationData.personal.confirmPassword &&
@@ -303,6 +334,12 @@ const Register: React.FC = () => {
                   </p>
                 </div>
 
+                {error && (
+                  <div className={styles.errorMessage}>
+                    {error}
+                  </div>
+                )}
+
                 <div className={styles.formGrid}>
                   <div className={styles.formGroup}>
                     <label className={styles.formLabel}>Ime *</label>
@@ -324,6 +361,18 @@ const Register: React.FC = () => {
                       onChange={(e) => updatePersonalData('lastName', e.target.value)}
                       className={styles.formInput}
                       placeholder="Unesite vaše prezime"
+                      required
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Korisničko ime *</label>
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      className={styles.formInput}
+                      placeholder="Korisničko ime"
                       required
                     />
                   </div>

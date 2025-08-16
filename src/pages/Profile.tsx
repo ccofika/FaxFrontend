@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import styles from './Profile.module.css';
 
 interface ProfileData {
@@ -22,20 +23,40 @@ interface BillingPlan {
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
+  const { user, fetchProfile, updateProfile, changePassword, exportData, logout } = useAuth();
   const [activeSection, setActiveSection] = useState<'profile' | 'appearance' | 'account' | 'privacy' | 'billing'>('profile');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string>('');
+  const [successMessage, setSuccessMessage] = useState<string>('');
+  
+  // Profile form state
   const [profileData, setProfileData] = useState<ProfileData>({
-    name: 'Raf Petrović',
-    email: 'raf@example.com',
-    university: 'Fakultet organizacionih nauka',
-    year: '3. godina',
-    semester: '1. semestar',
-    major: 'Informacioni sistemi',
-    joinDate: 'Januar 2024'
+    name: '',
+    email: '',
+    university: '',
+    year: '',
+    semester: '',
+    major: '',
+    joinDate: ''
   });
 
+  // Settings state
   const [colorMode, setColorMode] = useState<'dark' | 'light' | 'auto'>('dark');
   const [chatFont, setChatFont] = useState<'system' | 'mono' | 'serif'>('system');
   const [currentPlan, setCurrentPlan] = useState<'free' | 'pro' | 'max'>('free');
+  
+  // Privacy settings state
+  const [dataCollection, setDataCollection] = useState(true);
+  const [chatHistory, setChatHistory] = useState(true);
+  const [analytics, setAnalytics] = useState(false);
+  const [marketingEmails, setMarketingEmails] = useState(false);
+  
+  // Password change state
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const billingPlans: BillingPlan[] = [
     {
@@ -111,8 +132,157 @@ const Profile: React.FC = () => {
     }
   ];
 
+  // Load user data when component mounts
+  useEffect(() => {
+    const loadProfileData = async () => {
+      if (!user) return;
+      
+      setIsLoading(true);
+      try {
+        await fetchProfile();
+      } catch (error) {
+        setError('Failed to load profile data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProfileData();
+  }, []);
+
+  // Update local state when user data changes
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        name: `${user.firstName} ${user.lastName}`,
+        email: user.email,
+        university: user.faculty || '',
+        year: user.academicYear || '',
+        semester: user.semester || '',
+        major: user.major || '',
+        joinDate: new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      });
+      
+      setColorMode(user.colorMode || 'dark');
+      setChatFont(user.chatFont || 'system');
+      setCurrentPlan((user.selectedPlan as 'free' | 'pro' | 'max') || 'free');
+      setDataCollection(user.dataCollection ?? true);
+      setChatHistory(user.chatHistory ?? true);
+      setAnalytics(user.analytics ?? false);
+      setMarketingEmails(user.marketingEmails ?? false);
+    }
+  }, [user]);
+
   const handleInputChange = (field: keyof ProfileData, value: string) => {
     setProfileData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveChanges = async () => {
+    if (!user) return;
+    
+    setIsSaving(true);
+    setError('');
+    setSuccessMessage('');
+    
+    try {
+      const updates: any = {};
+      
+      // Only include changed fields
+      if (profileData.email !== user.email) {
+        updates.email = profileData.email;
+      }
+      
+      if (colorMode !== user.colorMode) {
+        updates.colorMode = colorMode;
+      }
+      
+      if (chatFont !== user.chatFont) {
+        updates.chatFont = chatFont;
+      }
+      
+      if (currentPlan !== user.selectedPlan) {
+        updates.selectedPlan = currentPlan;
+      }
+      
+      if (dataCollection !== user.dataCollection) {
+        updates.dataCollection = dataCollection;
+      }
+      
+      if (chatHistory !== user.chatHistory) {
+        updates.chatHistory = chatHistory;
+      }
+      
+      if (analytics !== user.analytics) {
+        updates.analytics = analytics;
+      }
+      
+      if (marketingEmails !== user.marketingEmails) {
+        updates.marketingEmails = marketingEmails;
+      }
+      
+      if (Object.keys(updates).length > 0) {
+        await updateProfile(updates);
+        setSuccessMessage('Profile updated successfully!');
+      } else {
+        setSuccessMessage('No changes to save.');
+      }
+    } catch (error: any) {
+      setError(error.message || 'Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setError('All password fields are required');
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      setError('New passwords do not match');
+      return;
+    }
+    
+    if (newPassword.length < 6) {
+      setError('New password must be at least 6 characters long');
+      return;
+    }
+    
+    setIsSaving(true);
+    setError('');
+    
+    try {
+      await changePassword(currentPassword, newPassword);
+      setSuccessMessage('Password changed successfully!');
+      setShowPasswordChange(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error: any) {
+      setError(error.message || 'Failed to change password');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleExportData = async () => {
+    setIsLoading(true);
+    setError('');
+    
+    try {
+      await exportData();
+      setSuccessMessage('Data exported successfully!');
+    } catch (error: any) {
+      setError(error.message || 'Failed to export data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/main/login');
   };
 
   const renderProfileSection = () => (
@@ -125,9 +295,11 @@ const Profile: React.FC = () => {
             type="text"
             id="name"
             value={profileData.name}
-            onChange={(e) => handleInputChange('name', e.target.value)}
-            className={styles.profileInput}
+            className={`${styles.profileInput} ${styles.readonly}`}
+            readOnly
+            title="Full name cannot be changed"
           />
+          <small className={styles.fieldNote}>Cannot be changed</small>
         </div>
         <div className={styles.formGroup}>
           <label htmlFor="email" className={styles.formLabel}>Email</label>
@@ -145,9 +317,11 @@ const Profile: React.FC = () => {
             type="text"
             id="university"
             value={profileData.university}
-            onChange={(e) => handleInputChange('university', e.target.value)}
-            className={styles.profileInput}
+            className={`${styles.profileInput} ${styles.readonly}`}
+            readOnly
+            title="University cannot be changed"
           />
+          <small className={styles.fieldNote}>Cannot be changed</small>
         </div>
         <div className={styles.formRow}>
           <div className={styles.formGroup}>
@@ -155,8 +329,9 @@ const Profile: React.FC = () => {
             <select
               id="year"
               value={profileData.year}
-              onChange={(e) => handleInputChange('year', e.target.value)}
-              className={styles.profileSelect}
+              className={`${styles.profileSelect} ${styles.readonly}`}
+              disabled
+              title="Academic year cannot be changed"
             >
               <option value="1. godina">1. godina</option>
               <option value="2. godina">2. godina</option>
@@ -165,18 +340,21 @@ const Profile: React.FC = () => {
               <option value="Master">Master</option>
               <option value="PhD">PhD</option>
             </select>
+            <small className={styles.fieldNote}>Cannot be changed</small>
           </div>
           <div className={styles.formGroup}>
             <label htmlFor="semester" className={styles.formLabel}>Semester</label>
             <select
               id="semester"
               value={profileData.semester}
-              onChange={(e) => handleInputChange('semester', e.target.value)}
-              className={styles.profileSelect}
+              className={`${styles.profileSelect} ${styles.readonly}`}
+              disabled
+              title="Semester cannot be changed"
             >
               <option value="1. semestar">1. semestar</option>
               <option value="2. semestar">2. semestar</option>
             </select>
+            <small className={styles.fieldNote}>Cannot be changed</small>
           </div>
         </div>
         <div className={styles.formRow}>
@@ -186,9 +364,11 @@ const Profile: React.FC = () => {
               type="text"
               id="major"
               value={profileData.major}
-              onChange={(e) => handleInputChange('major', e.target.value)}
-              className={styles.profileInput}
+              className={`${styles.profileInput} ${styles.readonly}`}
+              readOnly
+              title="Major cannot be changed"
             />
+            <small className={styles.fieldNote}>Cannot be changed</small>
           </div>
         </div>
         <div className={styles.formInfo}>
@@ -251,21 +431,99 @@ const Profile: React.FC = () => {
         <div className={styles.accountInfo}>
           <div className={styles.infoCard}>
             <h3>Account Status</h3>
-            <span className={`${styles.status} ${styles.active}`}>Active</span>
+            <span className={`${styles.status} ${styles.active}`}>
+              {user?.isVerified ? 'Verified' : 'Active'}
+            </span>
           </div>
           <div className={styles.infoCard}>
             <h3>Total Conversations</h3>
-            <span className={styles.stat}>247</span>
+            <span className={styles.stat}>{user?.totalConversations || 0}</span>
           </div>
           <div className={styles.infoCard}>
             <h3>Prompts Used This Month</h3>
-            <span className={styles.stat}>8 / 10</span>
+            <span className={styles.stat}>
+              {user?.promptsUsedThisMonth || 0} / {user?.monthlyPromptLimit === -1 ? '∞' : (user?.monthlyPromptLimit || 10)}
+            </span>
           </div>
         </div>
+        
+        {showPasswordChange && (
+          <div className={styles.passwordChangeForm}>
+            <h3>Change Password</h3>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Current Password</label>
+              <input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className={styles.profileInput}
+                placeholder="Enter current password"
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>New Password</label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className={styles.profileInput}
+                placeholder="Enter new password"
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Confirm New Password</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className={styles.profileInput}
+                placeholder="Confirm new password"
+              />
+            </div>
+            <div className={styles.passwordActions}>
+              <button 
+                className={`${styles.profileButton} ${styles.primary}`}
+                onClick={handlePasswordChange}
+                disabled={isSaving}
+              >
+                {isSaving ? 'Changing...' : 'Change Password'}
+              </button>
+              <button 
+                className={`${styles.profileButton} ${styles.secondary}`}
+                onClick={() => {
+                  setShowPasswordChange(false);
+                  setCurrentPassword('');
+                  setNewPassword('');
+                  setConfirmPassword('');
+                  setError('');
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+        
         <div className={styles.accountActions}>
-          <button className={`${styles.profileButton} ${styles.secondary}`}>Change Password</button>
-          <button className={`${styles.profileButton} ${styles.secondary}`}>Export Data</button>
-          <button className={`${styles.profileButton} ${styles.danger}`}>Logout</button>
+          <button 
+            className={`${styles.profileButton} ${styles.secondary}`}
+            onClick={() => setShowPasswordChange(!showPasswordChange)}
+          >
+            {showPasswordChange ? 'Cancel Password Change' : 'Change Password'}
+          </button>
+          <button 
+            className={`${styles.profileButton} ${styles.secondary}`}
+            onClick={handleExportData}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Exporting...' : 'Export Data'}
+          </button>
+          <button 
+            className={`${styles.profileButton} ${styles.danger}`}
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
         </div>
       </div>
     </div>
@@ -281,7 +539,11 @@ const Profile: React.FC = () => {
             <p>Allow collection of usage data to improve service</p>
           </div>
           <label className={styles.toggle}>
-            <input type="checkbox" defaultChecked />
+            <input 
+              type="checkbox" 
+              checked={dataCollection}
+              onChange={(e) => setDataCollection(e.target.checked)}
+            />
             <span className={styles.toggleSlider}></span>
           </label>
         </div>
@@ -291,7 +553,11 @@ const Profile: React.FC = () => {
             <p>Save conversation history for future reference</p>
           </div>
           <label className={styles.toggle}>
-            <input type="checkbox" defaultChecked />
+            <input 
+              type="checkbox" 
+              checked={chatHistory}
+              onChange={(e) => setChatHistory(e.target.checked)}
+            />
             <span className={styles.toggleSlider}></span>
           </label>
         </div>
@@ -301,7 +567,11 @@ const Profile: React.FC = () => {
             <p>Share anonymous usage analytics</p>
           </div>
           <label className={styles.toggle}>
-            <input type="checkbox" />
+            <input 
+              type="checkbox"
+              checked={analytics}
+              onChange={(e) => setAnalytics(e.target.checked)}
+            />
             <span className={styles.toggleSlider}></span>
           </label>
         </div>
@@ -311,7 +581,11 @@ const Profile: React.FC = () => {
             <p>Receive updates about new features and improvements</p>
           </div>
           <label className={styles.toggle}>
-            <input type="checkbox" />
+            <input 
+              type="checkbox"
+              checked={marketingEmails}
+              onChange={(e) => setMarketingEmails(e.target.checked)}
+            />
             <span className={styles.toggleSlider}></span>
           </label>
         </div>
@@ -399,13 +673,70 @@ const Profile: React.FC = () => {
             <h1 className={styles.pageTitle}>{sections.find(s => s.id === activeSection)?.name}</h1>
             <p className={styles.pageSubtitle}>Manage your account settings and preferences</p>
           </div>
+          
+          {/* Error and Success Messages */}
+          {error && (
+            <div className={styles.errorMessage}>
+              {error}
+            </div>
+          )}
+          {successMessage && (
+            <div className={styles.successMessage}>
+              {successMessage}
+            </div>
+          )}
+          
+          {/* Loading Indicator */}
+          {isLoading && (
+            <div className={styles.loadingMessage}>
+              Loading profile data...
+            </div>
+          )}
+          
           <div className={styles.contentBody}>
             {renderSection()}
           </div>
-          <div className={styles.profileActions}>
-            <button className={`${styles.profileButton} ${styles.primary}`}>Save Changes</button>
-            <button className={`${styles.profileButton} ${styles.secondary}`}>Cancel</button>
-          </div>
+          
+          {/* Save Changes Button - Only show for certain sections */}
+          {(activeSection === 'profile' || activeSection === 'appearance' || activeSection === 'privacy' || activeSection === 'billing') && (
+            <div className={styles.profileActions}>
+              <button 
+                className={`${styles.profileButton} ${styles.primary}`}
+                onClick={handleSaveChanges}
+                disabled={isSaving || isLoading}
+              >
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </button>
+              <button 
+                className={`${styles.profileButton} ${styles.secondary}`}
+                onClick={() => {
+                  setError('');
+                  setSuccessMessage('');
+                  // Reset form to original values
+                  if (user) {
+                    setProfileData({
+                      name: `${user.firstName} ${user.lastName}`,
+                      email: user.email,
+                      university: user.faculty || '',
+                      year: user.academicYear || '',
+                      semester: user.semester || '',
+                      major: user.major || '',
+                      joinDate: new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                    });
+                    setColorMode(user.colorMode || 'dark');
+                    setChatFont(user.chatFont || 'system');
+                    setCurrentPlan((user.selectedPlan as 'free' | 'pro' | 'max') || 'free');
+                    setDataCollection(user.dataCollection ?? true);
+                    setChatHistory(user.chatHistory ?? true);
+                    setAnalytics(user.analytics ?? false);
+                    setMarketingEmails(user.marketingEmails ?? false);
+                  }
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

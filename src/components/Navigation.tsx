@@ -1,9 +1,11 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './Navigation.css';
 
 const Navigation: React.FC = () => {
   const location = useLocation();
+  const { isAuthenticated, user, logout } = useAuth();
 
   const navigationItems = [
     { name: 'Početna', path: '/main', exact: true },
@@ -45,12 +47,28 @@ const Navigation: React.FC = () => {
         </div>
 
         <div className="nav-actions">
-          <Link to="/main/login" className="nav-login">
-            Prijava
-          </Link>
-          <Link to="/main/register" className="nav-cta">
-            Započni
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <span className="nav-user-greeting">
+                Zdravo, {user?.firstName}!
+              </span>
+              <Link to="/dashboard" className="nav-login">
+                Dashboard
+              </Link>
+              <button onClick={logout} className="nav-cta">
+                Odjava
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/main/login" className="nav-login">
+                Prijava
+              </Link>
+              <Link to="/main/register" className="nav-cta">
+                Započni
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>
