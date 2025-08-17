@@ -3,3 +3,4 @@ export { default as Home } from './Home';
 export { default as Dashboard } from './Dashboard';
 export { default as Notes } from './Notes';
 export { default as Calendar } from './Calendar';
+export { default as Chat } from './Chat';

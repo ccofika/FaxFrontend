@@ -391,8 +391,41 @@
   font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0;
+  margin: 0 0 8px 0;
   line-height: 1.4;
+}
+
+.chatCardSubject {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+  font-style: italic;
+}
+
+/* Recent chats loading state */
+.recentChatsLoading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  grid-column: 1 / -1;
+  color: var(--text-secondary);
+  gap: 16px;
+}
+
+.loadingSpinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border-primary);
+  border-top: 3px solid var(--accent-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* Modal Styles */

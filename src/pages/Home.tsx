@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { chatService } from '../services';
 import styles from './Home.module.css';
 
 type ChatMode = 'explain' | 'solve' | 'summary' | 'tests' | 'learning';
@@ -165,6 +167,7 @@ const demoSubjects: Subject[] = [
 
 const Home: React.FC = () => {
   const { user, fetchProfile } = useAuth();
+  const navigate = useNavigate();
   const [message, setMessage] = useState('');
   const [charCount, setCharCount] = useState(0);
   const [selectedMode, setSelectedMode] = useState<ChatMode>('explain');
@@ -175,6 +178,9 @@ const Home: React.FC = () => {
   const [tempSelectedSubject, setTempSelectedSubject] = useState<Subject | null>(null);
   const [tempSelectedLessons, setTempSelectedLessons] = useState<Lesson[]>([]);
   const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([]);
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
+  const [recentChats, setRecentChats] = useState<any[]>([]);
+  const [isLoadingRecentChats, setIsLoadingRecentChats] = useState(false);
   const maxChars = 1000;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -185,11 +191,44 @@ const Home: React.FC = () => {
     }
   };
 
-  const handleSendMessage = () => {
-    if (message.trim()) {
-      console.log('Sending message:', message);
+  const handleSendMessage = async () => {
+    if (!message.trim() || isCreatingChat) return;
+
+    try {
+      setIsCreatingChat(true);
+
+      // Generate chat title from message
+      const title = chatService.generateChatTitle(message.trim(), selectedMode);
+
+      // Prepare chat data
+      const chatData = {
+        title,
+        mode: selectedMode,
+        subject: selectedContent?.subject ? {
+          id: selectedContent.subject.id,
+          name: selectedContent.subject.name,
+          code: selectedContent.subject.code,
+          faculty: selectedContent.subject.faculty
+        } : undefined,
+        lessons: selectedContent?.lessons || [],
+        initialMessage: message.trim()
+      };
+
+      // Create chat
+      const response = await chatService.createChat(chatData);
+      
+      // Navigate to the new chat
+      navigate(`/chat/${response.chat.id}`);
+      
+      // Clear form
       setMessage('');
       setCharCount(0);
+      setSelectedContent(null);
+    } catch (error) {
+      console.error('Error creating chat:', error);
+      // You might want to show an error notification here
+    } finally {
+      setIsCreatingChat(false);
     }
   };
 
@@ -338,6 +377,40 @@ const Home: React.FC = () => {
     return 'Šta želite da naučite danas?';
   };
 
+  // Helper function to format chat timestamp
+  const formatChatTimestamp = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffHours < 1) return 'Pre manje od sata';
+    if (diffHours < 24) return `Pre ${diffHours} ${diffHours === 1 ? 'sat' : 'sati'}`;
+    if (diffDays === 1) return 'Juče';
+    if (diffDays < 7) return `Pre ${diffDays} dana`;
+    return date.toLocaleDateString('sr-RS');
+  };
+
+  // Load recent chats
+  useEffect(() => {
+    const loadRecentChats = async () => {
+      if (!user) return;
+      
+      try {
+        setIsLoadingRecentChats(true);
+        const response = await chatService.getUserChats(1, 3); // Get first 3 chats
+        setRecentChats(response.chats);
+      } catch (error) {
+        console.error('Error loading recent chats:', error);
+      } finally {
+        setIsLoadingRecentChats(false);
+      }
+    };
+
+    loadRecentChats();
+  }, [user]);
+
   return (
     <div className={styles.homePage}>
       <div className={styles.chatInterface}>
@@ -422,7 +495,7 @@ const Home: React.FC = () => {
                 <button 
                   className={styles.sendButton} 
                   onClick={handleSendMessage}
-                  disabled={isInputEmpty}
+                  disabled={isInputEmpty || isCreatingChat}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <line x1="22" y1="2" x2="11" y2="13"/>
@@ -438,41 +511,35 @@ const Home: React.FC = () => {
         <div className={styles.recentChats}>
           <h2 className={styles.recentChatsTitle}>Nedavne konverzacije</h2>
           <div className={styles.recentChatsGrid}>
-            {user?.totalConversations && user.totalConversations > 0 ? (
-              <>
-                <div className={styles.chatCard}>
+            {isLoadingRecentChats ? (
+              <div className={styles.recentChatsLoading}>
+                <div className={styles.loadingSpinner}></div>
+                <p>Učitavam nedavne konverzacije...</p>
+              </div>
+            ) : recentChats.length > 0 ? (
+              recentChats.map((chat) => (
+                <div 
+                  key={chat.id} 
+                  className={styles.chatCard}
+                  onClick={() => navigate(`/chat/${chat.id}`)}
+                >
                   <div className={styles.chatCardHeader}>
                     <svg className={styles.chatCardIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <circle cx="12" cy="12" r="10"/>
                       <polyline points="12,6 12,12 16,14"/>
                     </svg>
-                    <span className={styles.chatCardTime}>6 sati</span>
+                    <span className={styles.chatCardTime}>
+                      {formatChatTimestamp(chat.lastMessageAt)}
+                    </span>
                   </div>
-                  <h3 className={styles.chatCardTitle}>Objašnjenje diferencijalnih jednačina</h3>
+                  <h3 className={styles.chatCardTitle}>{chat.title}</h3>
+                  {chat.subject && (
+                    <p className={styles.chatCardSubject}>
+                      {chat.subject.name} ({chat.subject.code})
+                    </p>
+                  )}
                 </div>
-                
-                <div className={styles.chatCard}>
-                  <div className={styles.chatCardHeader}>
-                    <svg className={styles.chatCardIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <circle cx="12" cy="12" r="10"/>
-                      <polyline points="12,6 12,12 16,14"/>
-                    </svg>
-                    <span className={styles.chatCardTime}>12 sati</span>
-                  </div>
-                  <h3 className={styles.chatCardTitle}>Algoritmi sortiranja - analiza složenosti</h3>
-                </div>
-                
-                <div className={styles.chatCard}>
-                  <div className={styles.chatCardHeader}>
-                    <svg className={styles.chatCardIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <circle cx="12" cy="12" r="10"/>
-                      <polyline points="12,6 12,12 16,14"/>
-                    </svg>
-                    <span className={styles.chatCardTime}>1 dan</span>
-                  </div>
-                  <h3 className={styles.chatCardTitle}>Priprema za ispit iz fizike</h3>
-                </div>
-              </>
+              ))
             ) : (
               <div className={styles.noChatsMessage}>
                 <div className={styles.noChatsIcon}>
@@ -481,7 +548,7 @@ const Home: React.FC = () => {
                   </svg>
                 </div>
                 <h3>Još nema konverzacija</h3>
-                <p>Započnite svoju prvу konverzaciju postavljanjem pitanja gore!</p>
+                <p>Započnite svoju prvю konverzaciju postavljanjem pitanja gore!</p>
               </div>
             )}
           </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import './App.css';
-import { Home, Profile, Dashboard, Notes, Calendar } from './pages';
+import { Home, Profile, Dashboard, Notes, Calendar, Chat } from './pages';
 import { 
   MainHome, 
   HowItWorks, 
@@ -21,25 +21,51 @@ const Sidebar: React.FC = () => {
   const { logout, user } = useAuth();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const [chats, setChats] = React.useState<any[]>([]);
+  const [isLoadingChats, setIsLoadingChats] = React.useState(false);
 
-  // Mock chat data - u buducnosti ce ovo doci iz backend-a
-  const mockChats = [
-    { id: 1, title: "Kako funkcioniše React Router?", timestamp: "Pre 2 sata", mode: "explain" },
-    { id: 2, title: "Objasni algoritme sortiranja", timestamp: "Pre 5 sati", mode: "learning" },
-    { id: 3, title: "Test iz matematike - integrali", timestamp: "Juče", mode: "tests" },
-    { id: 4, title: "Reši jednačinu drugog stepena", timestamp: "Pre 2 dana", mode: "solve" },
-    { id: 5, title: "Sažetak ove lekcije", timestamp: "Pre 3 dana", mode: "summary" },
-  ];
+  // Load user's chats
+  React.useEffect(() => {
+    const loadChats = async () => {
+      if (!user) return;
+      
+      try {
+        setIsLoadingChats(true);
+        const { chatService } = await import('./services');
+        const response = await chatService.getUserChats(1, 10); // Get first 10 chats
+        setChats(response.chats);
+      } catch (error) {
+        console.error('Error loading chats:', error);
+      } finally {
+        setIsLoadingChats(false);
+      }
+    };
 
-  const filteredChats = mockChats.filter(chat => 
+    loadChats();
+  }, [user]);
+
+  const filteredChats = chats.filter(chat => 
     chat.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const formatChatTimestamp = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffHours < 1) return 'Pre manje od sata';
+    if (diffHours < 24) return `Pre ${diffHours} ${diffHours === 1 ? 'sat' : 'sati'}`;
+    if (diffDays === 1) return 'Juče';
+    if (diffDays < 7) return `Pre ${diffDays} dana`;
+    return date.toLocaleDateString('sr-RS');
+  };
 
   const navigate = useNavigate();
 
   const handleNewChat = () => {
-    console.log('Kreiranje novog chat-a...');
-    navigate('/');
+    navigate('/dashboard');
   };
 
   const toggleSidebar = () => {
@@ -122,17 +148,27 @@ const Sidebar: React.FC = () => {
           <h3>Chats</h3>
         </div>
         <div className="chats-list">
-          {filteredChats.map((chat) => (
-            <div key={chat.id} className="chat-item-sidebar">
-              <div className="chat-content-sidebar">
-                <div className="chat-title-sidebar">{chat.title}</div>
-                <div className="chat-meta-sidebar">
-                  <span className={`chat-mode-badge ${chat.mode}`}>{chat.mode}</span>
-                  <span className="chat-timestamp">{chat.timestamp}</span>
+          {isLoadingChats ? (
+            <div className="chat-loading">Učitavam chatove...</div>
+          ) : filteredChats.length > 0 ? (
+            filteredChats.map((chat) => (
+              <div 
+                key={chat.id} 
+                className="chat-item-sidebar"
+                onClick={() => navigate(`/chat/${chat.id}`)}
+              >
+                <div className="chat-content-sidebar">
+                  <div className="chat-title-sidebar">{chat.title}</div>
+                  <div className="chat-meta-sidebar">
+                    <span className={`chat-mode-badge ${chat.mode}`}>{chat.mode}</span>
+                    <span className="chat-timestamp">{formatChatTimestamp(chat.lastMessageAt)}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <div className="no-chats">Još nema chatova</div>
+          )}
         </div>
       </div>
 
@@ -251,6 +287,11 @@ function App() {
           <Route path="/calendar" element={
             <ProtectedRoute>
               <Layout><Calendar /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/chat/:chatId" element={
+            <ProtectedRoute>
+              <Layout><Chat /></Layout>
             </ProtectedRoute>
           } />
           <Route path="/profile" element={
