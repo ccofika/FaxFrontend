@@ -67,10 +67,10 @@ body {
 
 .App {
   display: flex;
-  height: 100vh;
+  min-height: 100vh;
   background: var(--bg-primary);
   position: relative;
-  overflow: hidden;
+  overflow: auto;
 }
 
 /* Sidebar */

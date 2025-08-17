@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Input } from '../components/ui/input';
+import { Progress } from '../components/ui/progress';
+import { TooltipProvider } from '../components/ui/tooltip';
+import { 
+  Search, BookOpen, Zap, FileText, GraduationCap, 
+  MessageCircle, Monitor, Calculator, Code, TrendingUp,
+  ChevronRight, Clock
+} from 'lucide-react';
 import styles from './Dashboard.module.css';
 
 type ChatMode = 'explain' | 'solve' | 'summary' | 'tests' | 'learning';
@@ -15,66 +26,38 @@ interface ModeConfig {
 const chatModes: ModeConfig[] = [
   { 
     id: 'explain', 
-    name: 'Explain', 
-    description: 'Get detailed explanations', 
-    color: '#8B5CF6', 
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-      </svg>
-    )
+    name: 'Objasni', 
+    description: 'Detaljno objašnjavanje gradiva', 
+    color: '#4E3CFA', 
+    icon: <BookOpen className="w-6 h-6" />
   },
   { 
     id: 'solve', 
-    name: 'Solve', 
-    description: 'Find solutions to problems', 
+    name: 'Reši', 
+    description: 'Pronađi rešenja problema', 
     color: '#F59E0B', 
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-      </svg>
-    )
+    icon: <Zap className="w-6 h-6" />
   },
   { 
     id: 'summary', 
-    name: 'Summary', 
-    description: 'Get concise summaries', 
+    name: 'Sažmi', 
+    description: 'Kratak pregled gradiva', 
     color: '#10B981', 
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14,2 14,8 20,8"/>
-        <line x1="16" y1="13" x2="8" y2="13"/>
-        <line x1="16" y1="17" x2="8" y2="17"/>
-        <polyline points="10,9 9,9 8,9"/>
-      </svg>
-    )
+    icon: <FileText className="w-6 h-6" />
   },
   { 
     id: 'tests', 
-    name: 'Tests', 
-    description: 'Generate tests and quizzes', 
+    name: 'Testovi', 
+    description: 'Generiši testove i kvizove', 
     color: '#EF4444', 
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-        <path d="m9 14 2 2 4-4"/>
-      </svg>
-    )
+    icon: <GraduationCap className="w-6 h-6" />
   },
   { 
     id: 'learning', 
-    name: 'Learning', 
-    description: 'Interactive learning assistance', 
+    name: 'Učenje', 
+    description: 'Interaktivna pomoć u učenju', 
     color: '#3B82F6', 
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-        <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-      </svg>
-    )
+    icon: <TrendingUp className="w-6 h-6" />
   },
 ];
 
@@ -85,12 +68,12 @@ const Dashboard: React.FC = () => {
   const handleQuickSearch = () => {
     if (quickSearch.trim()) {
       console.log('Quick search:', quickSearch);
-      navigate('/', { state: { quickQuery: quickSearch } });
+      navigate('/home', { state: { quickQuery: quickSearch } });
     }
   };
 
   const handleModeClick = (mode: ChatMode) => {
-    navigate('/', { state: { selectedMode: mode } });
+    navigate('/home', { state: { selectedMode: mode } });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -101,195 +84,206 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className={styles.dashboardPage}>
-      <div className={styles.dashboardContainer}>
-        <div className={styles.dashboardHeader}>
-          <h1 className={styles.dashboardTitle}>Dashboard</h1>
-          <p className={styles.dashboardSubtitle}>Brz pristup svim funkcijama i pregled aktivnosti</p>
-        </div>
-
-        {/* Quick Search */}
-        <div className={styles.quickSearchSection}>
-          <h2 className={styles.sectionTitle}>Quick Search</h2>
-          <div className={styles.quickSearchContainer}>
-            <input
-              type="text"
-              className={styles.quickSearchInput}
-              placeholder="Pitaj AI bilo šta..."
-              value={quickSearch}
-              onChange={(e) => setQuickSearch(e.target.value)}
-              onKeyPress={handleKeyPress}
-            />
-            <button 
-              className={styles.quickSearchBtn}
-              onClick={handleQuickSearch}
-              disabled={!quickSearch.trim()}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="m21 21-4.35-4.35"/>
-              </svg>
-            </button>
+    <TooltipProvider>
+      <div className="w-full min-h-screen relative bg-background text-foreground font-inter">
+        {/* Background decorations */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-primary/2 -z-10" />
+        <div className="absolute inset-0 bg-[radial-gradient(2px_2px_at_20px_30px,rgba(78,60,250,0.3),transparent),radial-gradient(2px_2px_at_40px_70px,rgba(78,60,250,0.2),transparent)] bg-repeat bg-[length:150px_150px] pointer-events-none" />
+        
+        <div className={styles.dashboardContainer}>
+          {/* Header */}
+          <div className="flex justify-between items-center mb-12">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+                Dashboard
+              </h1>
+              <p className="text-lg text-muted-foreground">
+                Brz pristup svim funkcijama i pregled aktivnosti
+              </p>
+            </div>
           </div>
-        </div>
 
-        {/* Chat Mode Shortcuts */}
-        <div className={styles.modeShortcutsSection}>
-          <h2 className={styles.sectionTitle}>Chat Modes</h2>
-          <div className={styles.modeShortcutsGrid}>
-            {chatModes.map((mode) => (
-              <button
-                key={mode.id}
-                className={styles.modeShortcutCard}
-                onClick={() => handleModeClick(mode.id)}
-                style={{ '--mode-color': mode.color } as React.CSSProperties}
+          {/* Quick Search */}
+          <div className="mb-16">
+            <h2 className="text-2xl font-bold text-foreground mb-6">Brza pretraga</h2>
+            <div className="relative max-w-2xl">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+              <Input
+                type="text"
+                placeholder="Pitaj AI bilo šta..."
+                value={quickSearch}
+                onChange={(e) => setQuickSearch(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="pl-12 h-14 bg-white/5 border-white/20 hover:border-white/40 focus:border-primary/50 text-foreground placeholder:text-muted-foreground rounded-2xl backdrop-blur-xl text-lg"
+              />
+              <Button 
+                onClick={handleQuickSearch}
+                disabled={!quickSearch.trim()}
+                className="absolute right-2 top-2 h-10 w-10 p-0 bg-gradient-to-r from-primary via-primary to-primary/90 hover:from-primary/90 hover:via-primary hover:to-primary rounded-xl"
               >
-                <div className={styles.modeIcon}>{mode.icon}</div>
-                <div className={styles.modeInfo}>
-                  <h3 className={styles.modeName}>{mode.name}</h3>
-                  <p className={styles.modeDescription}>{mode.description}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className={styles.dashboardGrid}>
-          {/* Recent Chats */}
-          <div className={styles.dashboardSection}>
-            <h2 className={styles.sectionTitle}>Recent Chats</h2>
-            <div className={styles.recentChatsList}>
-              <div className={styles.chatItem}>
-                <div className={styles.chatIcon}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                  </svg>
-                </div>
-                <div className={styles.chatContent}>
-                  <div className={styles.chatTitle}>Kako funkcioniše React Router?</div>
-                  <div className={styles.chatMeta}>
-                    <span className={`${styles.chatMode} ${styles.explain}`}>Explain</span>
-                    <span className={styles.chatTime}>Pre 2 sata</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className={styles.chatItem}>
-                <div className={styles.chatIcon}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                  </svg>
-                </div>
-                <div className={styles.chatContent}>
-                  <div className={styles.chatTitle}>Objasni algoritme sortiranja</div>
-                  <div className={styles.chatMeta}>
-                    <span className={`${styles.chatMode} ${styles.learning}`}>Learning</span>
-                    <span className={styles.chatTime}>Pre 5 sati</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className={styles.chatItem}>
-                <div className={styles.chatIcon}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                  </svg>
-                </div>
-                <div className={styles.chatContent}>
-                  <div className={styles.chatTitle}>Test iz matematike - integrali</div>
-                  <div className={styles.chatMeta}>
-                    <span className={`${styles.chatMode} ${styles.tests}`}>Tests</span>
-                    <span className={styles.chatTime}>Juče</span>
-                  </div>
-                </div>
-              </div>
+                <Search className="w-5 h-5" />
+              </Button>
             </div>
           </div>
 
-          {/* Student Subjects */}
-          <div className={styles.dashboardSection}>
-            <h2 className={styles.sectionTitle}>Moji Predmeti</h2>
-            <div className={styles.subjectsList}>
-              <div className={styles.subjectItem}>
-                <div className={styles.subjectIcon}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-                    <line x1="8" y1="21" x2="16" y2="21"/>
-                    <line x1="12" y1="17" x2="12" y2="21"/>
-                  </svg>
-                </div>
-                <div className={styles.subjectContent}>
-                  <div className={styles.subjectName}>Informacioni sistemi</div>
-                  <div className={styles.subjectProgress}>
-                    <div className={styles.progressBar}>
-                      <div className={styles.progressFill} style={{width: '75%'}}></div>
+          {/* Chat Mode Shortcuts */}
+          <div className="mb-16">
+            <h2 className="text-2xl font-bold text-foreground mb-6">AI Modovi</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+              {chatModes.map((mode) => (
+                <Card
+                  key={mode.id}
+                  className="group cursor-pointer transition-all duration-700 text-center backdrop-blur-xl relative overflow-hidden hover:-translate-y-4 hover:scale-105 border-primary/20 shadow-xl shadow-primary/20 bg-gradient-to-br from-primary/8 via-primary/5 to-background/70"
+                  onClick={() => handleModeClick(mode.id)}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/5 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                  <CardContent className="p-6 relative z-10">
+                    <div className="mx-auto mb-4 p-4 bg-gradient-to-br from-primary/30 via-primary/20 to-primary/10 rounded-2xl w-fit shadow-lg group-hover:shadow-primary/40 group-hover:scale-110 transition-all duration-500 relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-2xl"></div>
+                      <div className="text-primary group-hover:text-primary/90 transition-colors duration-300 relative z-10">
+                        {mode.icon}
+                      </div>
                     </div>
-                    <span className={styles.progressText}>75% završeno</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className={styles.subjectItem}>
-                <div className={styles.subjectIcon}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14,2 14,8 20,8"/>
-                    <line x1="16" y1="13" x2="8" y2="13"/>
-                    <line x1="16" y1="17" x2="8" y2="17"/>
-                    <polyline points="10,9 9,9 8,9"/>
-                  </svg>
-                </div>
-                <div className={styles.subjectContent}>
-                  <div className={styles.subjectName}>Matematička analiza</div>
-                  <div className={styles.subjectProgress}>
-                    <div className={styles.progressBar}>
-                      <div className={styles.progressFill} style={{width: '60%'}}></div>
-                    </div>
-                    <span className={styles.progressText}>60% završeno</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className={styles.subjectItem}>
-                <div className={styles.subjectIcon}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
-                  </svg>
-                </div>
-                <div className={styles.subjectContent}>
-                  <div className={styles.subjectName}>Programiranje</div>
-                  <div className={styles.subjectProgress}>
-                    <div className={styles.progressBar}>
-                      <div className={styles.progressFill} style={{width: '90%'}}></div>
-                    </div>
-                    <span className={styles.progressText}>90% završeno</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className={styles.subjectItem}>
-                <div className={styles.subjectIcon}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="8" x2="12" y2="12"/>
-                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                  </svg>
-                </div>
-                <div className={styles.subjectContent}>
-                  <div className={styles.subjectName}>Statistika</div>
-                  <div className={styles.subjectProgress}>
-                    <div className={styles.progressBar}>
-                      <div className={styles.progressFill} style={{width: '45%'}}></div>
-                    </div>
-                    <span className={styles.progressText}>45% završeno</span>
-                  </div>
-                </div>
-              </div>
+                    <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-primary transition-colors duration-300">{mode.name}</h3>
+                    <p className="text-sm text-muted-foreground text-center leading-relaxed group-hover:text-muted-foreground/90 transition-colors duration-300">
+                      {mode.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
+          </div>
+
+          {/* Dashboard Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Recent Chats */}
+            <Card className="backdrop-blur-xl border-primary/20 shadow-xl shadow-primary/20 bg-gradient-to-br from-primary/8 via-primary/5 to-background/70">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <MessageCircle className="w-6 h-6 text-primary" />
+                  Nedavni razgovori
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors cursor-pointer">
+                  <div className="p-2 bg-primary/20 rounded-lg">
+                    <MessageCircle className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-foreground">Kako funkcioniše React Router?</h4>
+                    <div className="flex items-center gap-3 mt-1">
+                      <Badge variant="secondary" className="bg-primary/20 text-primary">Objasni</Badge>
+                      <span className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        Pre 2 sata
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                </div>
+                
+                <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors cursor-pointer">
+                  <div className="p-2 bg-blue-500/20 rounded-lg">
+                    <MessageCircle className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-foreground">Objasni algoritme sortiranja</h4>
+                    <div className="flex items-center gap-3 mt-1">
+                      <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">Učenje</Badge>
+                      <span className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        Pre 5 sati
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                </div>
+                
+                <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors cursor-pointer">
+                  <div className="p-2 bg-red-500/20 rounded-lg">
+                    <MessageCircle className="w-5 h-5 text-red-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-foreground">Test iz matematike - integrali</h4>
+                    <div className="flex items-center gap-3 mt-1">
+                      <Badge variant="secondary" className="bg-red-500/20 text-red-400">Testovi</Badge>
+                      <span className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        Juče
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Student Subjects */}
+            <Card className="backdrop-blur-xl border-primary/20 shadow-xl shadow-primary/20 bg-gradient-to-br from-primary/8 via-primary/5 to-background/70">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <GraduationCap className="w-6 h-6 text-primary" />
+                  Moji predmeti
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                  <div className="p-2 bg-primary/20 rounded-lg">
+                    <Monitor className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-foreground mb-2">Informacioni sistemi</h4>
+                    <div className="space-y-1">
+                      <Progress value={75} className="h-2" />
+                      <span className="text-sm text-muted-foreground">75% završeno</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                  <div className="p-2 bg-orange-500/20 rounded-lg">
+                    <Calculator className="w-5 h-5 text-orange-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-foreground mb-2">Matematička analiza</h4>
+                    <div className="space-y-1">
+                      <Progress value={60} className="h-2" />
+                      <span className="text-sm text-muted-foreground">60% završeno</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                  <div className="p-2 bg-green-500/20 rounded-lg">
+                    <Code className="w-5 h-5 text-green-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-foreground mb-2">Programiranje</h4>
+                    <div className="space-y-1">
+                      <Progress value={90} className="h-2" />
+                      <span className="text-sm text-muted-foreground">90% završeno</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                  <div className="p-2 bg-blue-500/20 rounded-lg">
+                    <TrendingUp className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-foreground mb-2">Statistika</h4>
+                    <div className="space-y-1">
+                      <Progress value={45} className="h-2" />
+                      <span className="text-sm text-muted-foreground">45% završeno</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };
 

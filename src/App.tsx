@@ -65,7 +65,7 @@ const Sidebar: React.FC = () => {
   const navigate = useNavigate();
 
   const handleNewChat = () => {
-    navigate('/dashboard');
+    navigate('/home');
   };
 
   const toggleSidebar = () => {
@@ -274,9 +274,14 @@ function App() {
           <Route path="/" element={<RootRedirect />} />
           
           {/* Protected authenticated routes */}
-          <Route path="/dashboard" element={
+          <Route path="/home" element={
             <ProtectedRoute>
               <Layout><Home /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Layout><Dashboard /></Layout>
             </ProtectedRoute>
           } />
           <Route path="/notes" element={
