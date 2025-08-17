@@ -35,7 +35,7 @@ interface ModeConfig {
 }
 
 const chatModes: ModeConfig[] = [
-  { id: 'explain', name: 'Explain', description: 'Get detailed explanations', color: '#8B5CF6' },
+  { id: 'explain', name: 'Explain', description: 'Get detailed explanations', color: '#4E3CFA' },
   { id: 'solve', name: 'Solve', description: 'Find solutions to problems', color: '#F59E0B' },
   { id: 'summary', name: 'Summary', description: 'Get concise summaries', color: '#10B981' },
   { id: 'tests', name: 'Tests', description: 'Generate tests and quizzes', color: '#EF4444' },
@@ -164,6 +164,7 @@ const demoSubjects: Subject[] = [
     ]
   }
 ];
+
 
 const Home: React.FC = () => {
   const { user, fetchProfile } = useAuth();

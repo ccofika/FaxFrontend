@@ -259,7 +259,7 @@ const RootRedirect: React.FC = () => {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/home" replace />;
   }
 
   return <Navigate to="/main/pocetna" replace />;
