@@ -19,8 +19,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 const Sidebar: React.FC = () => {
   const location = useLocation();
   const { logout, user } = useAuth();
+  const { isCollapsed, setIsCollapsed } = React.useContext(SidebarContext);
   const [searchTerm, setSearchTerm] = React.useState('');
-  const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [chats, setChats] = React.useState<any[]>([]);
   const [isLoadingChats, setIsLoadingChats] = React.useState(false);
 
@@ -73,20 +73,37 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <div className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
+    <div className={`fixed left-0 top-0 h-screen z-50 transition-all duration-300 ease-in-out bg-gradient-to-b from-background via-background/95 to-background/90 backdrop-blur-xl border-r border-primary/20 shadow-2xl shadow-primary/10 flex flex-col ${isCollapsed ? 'w-16' : 'w-72'} md:${isCollapsed ? 'w-16' : 'w-72'} ${isCollapsed ? '' : 'max-md:w-16'}`}>
       {/* Logo and Toggle */}
-      <div className="sidebar-header">
+      <div className="flex items-center justify-between p-4 border-b border-primary/10">
         {isCollapsed ? (
           // When collapsed, logo acts as expand button
-          <button className="logo-expand-btn" onClick={toggleSidebar}>
-            <div className="logo"></div>
+          <button 
+            className="w-8 h-8 bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 rounded-xl flex items-center justify-center hover:scale-110 transition-all duration-300 shadow-lg shadow-primary/20 border border-primary/20" 
+            onClick={toggleSidebar}
+          >
+            <div className="w-4 h-4 bg-gradient-to-br from-primary via-primary/90 to-primary/70 rounded-full relative">
+              <div className="absolute inset-1 bg-white rounded-full"></div>
+              <div className="absolute inset-2 bg-primary rounded-full"></div>
+            </div>
           </button>
         ) : (
           // When expanded, show logo and separate minimize button
           <>
-            <div className="logo"></div>
-            <button className="sidebar-minimize" onClick={toggleSidebar}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 border border-primary/20">
+                <div className="w-4 h-4 bg-gradient-to-br from-primary via-primary/90 to-primary/70 rounded-full relative">
+                  <div className="absolute inset-1 bg-white rounded-full"></div>
+                  <div className="absolute inset-2 bg-primary rounded-full"></div>
+                </div>
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-br from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent max-md:hidden">FAXit</span>
+            </div>
+            <button 
+              className="w-8 h-8 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-primary/30 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-all duration-300 max-md:hidden" 
+              onClick={toggleSidebar}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M15 18l-6-6 6-6"/>
               </svg>
             </button>
@@ -96,18 +113,26 @@ const Sidebar: React.FC = () => {
 
       {/* New Chat Button */}
       {!isCollapsed ? (
-        <div className="sidebar-actions">
-          <button className="new-chat-btn" onClick={handleNewChat}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <div className="p-4 max-md:hidden">
+          <button 
+            className="w-full bg-gradient-to-r from-primary via-primary to-primary/90 hover:from-primary/90 hover:via-primary hover:to-primary text-white rounded-xl px-4 py-3 font-semibold transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:-translate-y-1 hover:scale-105 relative overflow-hidden group flex items-center gap-3"
+            onClick={handleNewChat}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="relative z-10">
               <path d="M12 5v14m-7-7h14"/>
             </svg>
-            New Chat
+            <span className="relative z-10">Novi Chat</span>
           </button>
         </div>
       ) : (
-        <div className="sidebar-collapsed-actions">
-          <button className="collapsed-action-btn" onClick={handleNewChat} title="New Chat">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <div className="p-2 flex justify-center">
+          <button 
+            className="w-12 h-12 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 hover:from-primary/30 hover:via-primary/20 hover:to-primary/10 border border-primary/20 hover:border-primary/40 rounded-xl flex items-center justify-center text-primary hover:text-primary/80 transition-all duration-300 shadow-lg hover:shadow-primary/20 hover:scale-110" 
+            onClick={handleNewChat} 
+            title="Novi Chat"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 5v14m-7-7h14"/>
             </svg>
           </button>
@@ -116,25 +141,25 @@ const Sidebar: React.FC = () => {
 
       {/* Search Chats */}
       {!isCollapsed ? (
-        <div className="sidebar-search">
-          <div className="search-container">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <div className="px-4 pb-4 max-md:hidden">
+          <div className="relative">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
               <circle cx="11" cy="11" r="8"/>
               <path d="m21 21-4.35-4.35"/>
             </svg>
             <input
               type="text"
-              placeholder="Search chats..."
+              placeholder="Pretraži chatove..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
+              className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 hover:border-white/20 focus:border-primary/50 rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300"
             />
           </div>
         </div>
       ) : (
-        <div className="sidebar-collapsed-search">
-          <button className="collapsed-action-btn" title="Search chats">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <div className="p-2 flex justify-center">
+          <button className="w-12 h-12 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-primary/30 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground transition-all duration-300" title="Pretraži chatove">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="8"/>
               <path d="m21 21-4.35-4.35"/>
             </svg>
@@ -143,94 +168,150 @@ const Sidebar: React.FC = () => {
       )}
 
       {/* Chats Section */}
-      <div className="sidebar-chats">
-        <div className="chats-header">
-          <h3>Chats</h3>
-        </div>
-        <div className="chats-list">
-          {isLoadingChats ? (
-            <div className="chat-loading">Učitavam chatove...</div>
-          ) : filteredChats.length > 0 ? (
-            filteredChats.map((chat) => (
-              <div 
-                key={chat.id} 
-                className="chat-item-sidebar"
-                onClick={() => navigate(`/chat/${chat.id}`)}
-              >
-                <div className="chat-content-sidebar">
-                  <div className="chat-title-sidebar">{chat.title}</div>
-                  <div className="chat-meta-sidebar">
-                    <span className={`chat-mode-badge ${chat.mode}`}>{chat.mode}</span>
-                    <span className="chat-timestamp">{formatChatTimestamp(chat.lastMessageAt)}</span>
+      {!isCollapsed && (
+        <div className="flex-1 flex flex-col px-4 pb-4 overflow-hidden max-md:hidden min-h-0">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Chatovi</h3>
+            <div className="flex-1 overflow-y-auto space-y-2 max-h-[calc(100vh-300px)] scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20">
+              {isLoadingChats ? (
+                <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">Učitavam chatove...</div>
+              ) : filteredChats.length > 0 ? (
+                filteredChats.map((chat) => (
+                  <div 
+                    key={chat.id} 
+                    className="group cursor-pointer p-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-primary/30 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-primary/10"
+                    onClick={() => navigate(`/chat/${chat.id}`)}
+                  >
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium text-foreground group-hover:text-primary transition-colors duration-300 line-clamp-2">{chat.title}</div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${
+                          chat.mode === 'explain' ? 'bg-primary/10 text-primary border-primary/20' :
+                          chat.mode === 'solve' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' :
+                          chat.mode === 'summary' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                          chat.mode === 'tests' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                          chat.mode === 'learning' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                          'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                        }`}>
+                          {chat.mode === 'explain' ? 'Objasni' :
+                           chat.mode === 'solve' ? 'Reši' :
+                           chat.mode === 'summary' ? 'Sažmi' :
+                           chat.mode === 'tests' ? 'Testovi' :
+                           chat.mode === 'learning' ? 'Učenje' : chat.mode}
+                        </span>
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12,6 12,12 16,14"/>
+                          </svg>
+                          {formatChatTimestamp(chat.lastMessageAt)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mb-3 opacity-50">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  <p className="text-sm">Još nema chatova</p>
                 </div>
-              </div>
-            ))
-          ) : (
-            <div className="no-chats">Još nema chatova</div>
-          )}
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Existing Navigation Icons */}
-      <div className="sidebar-navigation">
-        <div className="sidebar-spacer"></div>
-        
-        <div className="nav-icons">
-          <Link to="/dashboard" className={`sidebar-icon ${location.pathname === '/dashboard' ? 'active' : ''}`}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      {/* Spacer */}
+      <div className="flex-1"></div>
+
+      {/* Navigation Icons - All at bottom */}
+      <div className="mt-auto pb-4 flex-shrink-0">
+        <div className={`${isCollapsed ? 'space-y-1 px-2' : 'space-y-1 px-4'} max-md:space-y-1 max-md:px-2`}>
+          <Link 
+            to="/dashboard" 
+            className={`group flex items-center gap-2 p-2 rounded-lg transition-all duration-300 hover:bg-white/10 hover:shadow-lg hover:shadow-primary/10 ${
+              location.pathname === '/dashboard' 
+                ? 'bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 text-primary border border-primary/30 shadow-lg shadow-primary/20' 
+                : 'text-muted-foreground hover:text-foreground'
+            } ${isCollapsed ? 'justify-center' : ''} max-md:justify-center`}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="flex-shrink-0">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
               <polyline points="9,22 9,12 15,12 15,22"/>
             </svg>
-            <span>Dashboard</span>
+            {!isCollapsed && <span className="text-sm font-medium max-md:hidden">Dashboard</span>}
           </Link>
           
-          <Link to="/notes" className={`sidebar-icon ${location.pathname === '/notes' ? 'active' : ''}`}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <Link 
+            to="/notes" 
+            className={`group flex items-center gap-2 p-2 rounded-lg transition-all duration-300 hover:bg-white/10 hover:shadow-lg hover:shadow-primary/10 ${
+              location.pathname === '/notes' 
+                ? 'bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 text-primary border border-primary/30 shadow-lg shadow-primary/20' 
+                : 'text-muted-foreground hover:text-foreground'
+            } ${isCollapsed ? 'justify-center' : ''} max-md:justify-center`}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="flex-shrink-0">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
               <polyline points="14,2 14,8 20,8"/>
               <line x1="16" y1="13" x2="8" y2="13"/>
               <line x1="16" y1="17" x2="8" y2="17"/>
               <polyline points="10,9 9,9 8,9"/>
             </svg>
-            <span>Beleške</span>
+            {!isCollapsed && <span className="text-sm font-medium max-md:hidden">Beleške</span>}
           </Link>
           
-          <button className="sidebar-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/>
-            </svg>
-            <span>Settings</span>
-          </button>
-          
-          <Link to="/calendar" className={`sidebar-icon ${location.pathname === '/calendar' ? 'active' : ''}`}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <Link 
+            to="/calendar" 
+            className={`group flex items-center gap-2 p-2 rounded-lg transition-all duration-300 hover:bg-white/10 hover:shadow-lg hover:shadow-primary/10 ${
+              location.pathname === '/calendar' 
+                ? 'bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 text-primary border border-primary/30 shadow-lg shadow-primary/20' 
+                : 'text-muted-foreground hover:text-foreground'
+            } ${isCollapsed ? 'justify-center' : ''} max-md:justify-center`}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="flex-shrink-0">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
               <line x1="16" y1="2" x2="16" y2="6"/>
               <line x1="8" y1="2" x2="8" y2="6"/>
               <line x1="3" y1="10" x2="21" y2="10"/>
             </svg>
-            <span>Zadaci i rokovi</span>
+            {!isCollapsed && <span className="text-sm font-medium max-md:hidden">Zadaci i rokovi</span>}
           </Link>
-        </div>
-        
-        <div className="bottom-icons">
-          <Link to="/profile" className={`sidebar-icon ${location.pathname === '/profile' ? 'active' : ''}`}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          
+          <Link 
+            to="/profile" 
+            className={`group flex items-center gap-2 p-2 rounded-lg transition-all duration-300 hover:bg-white/10 hover:shadow-lg hover:shadow-primary/10 ${
+              location.pathname === '/profile' 
+                ? 'bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 text-primary border border-primary/30 shadow-lg shadow-primary/20' 
+                : 'text-muted-foreground hover:text-foreground'
+            } ${isCollapsed ? 'justify-center' : ''} max-md:justify-center`}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="flex-shrink-0">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
               <circle cx="12" cy="7" r="4"/>
             </svg>
-            <span>Profile</span>
+            {!isCollapsed && <span className="text-sm font-medium max-md:hidden">Profile</span>}
           </Link>
           
-          <button className="sidebar-icon" onClick={logout}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <button className={`group flex items-center gap-2 p-2 rounded-lg transition-all duration-300 hover:bg-white/10 hover:shadow-lg hover:shadow-primary/10 text-muted-foreground hover:text-foreground ${isCollapsed ? 'justify-center' : ''} max-md:justify-center`}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="flex-shrink-0">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/>
+            </svg>
+            {!isCollapsed && <span className="text-sm font-medium max-md:hidden">Settings</span>}
+          </button>
+          
+          <button 
+            className={`group flex items-center gap-2 p-2 rounded-lg transition-all duration-300 hover:bg-red-500/10 hover:shadow-lg hover:shadow-red-500/10 text-muted-foreground hover:text-red-400 ${isCollapsed ? 'justify-center' : ''} max-md:justify-center`}
+            onClick={logout}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="flex-shrink-0">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
               <polyline points="16,17 21,12 16,7"/>
               <line x1="21" y1="12" x2="9" y2="12"/>
             </svg>
-            <span>Logout</span>
+            {!isCollapsed && <span className="text-sm font-medium max-md:hidden">Logout</span>}
           </button>
         </div>
       </div>
@@ -238,12 +319,36 @@ const Sidebar: React.FC = () => {
   );
 };
 
+const SidebarContext = React.createContext<{
+  isCollapsed: boolean;
+  setIsCollapsed: (collapsed: boolean) => void;
+}>({ isCollapsed: false, setIsCollapsed: () => {} });
+
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isCollapsed, setIsCollapsed] = React.useState(false);
+  
+  // Force collapsed state on mobile
+  React.useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setIsCollapsed(true);
+      }
+    };
+    
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
   return (
-    <div className="App">
-      <Sidebar />
-      {children}
-    </div>
+    <SidebarContext.Provider value={{ isCollapsed, setIsCollapsed }}>
+      <div className="min-h-screen bg-background text-foreground">
+        <Sidebar />
+        <div className={`transition-all duration-300 ease-in-out ${isCollapsed ? 'ml-16' : 'ml-72'} max-md:ml-16`}>
+          {children}
+        </div>
+      </div>
+    </SidebarContext.Provider>
   );
 };
 

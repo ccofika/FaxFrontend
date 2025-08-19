@@ -113,7 +113,7 @@ const Calendar: React.FC = () => {
 
     // Empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="p-2 min-h-[80px] bg-[rgba(241,242,243,0.08)] rounded-lg border border-[rgba(78,60,250,0.1)]"></div>);
+      days.push(<div key={`empty-${i}`} className="p-2 min-h-[80px] bg-white/5 rounded-lg border border-primary/10"></div>);
     }
 
     // Days of the month
@@ -126,13 +126,13 @@ const Calendar: React.FC = () => {
       days.push(
         <div 
           key={day} 
-          className={`p-3 min-h-[80px] bg-[rgba(241,242,243,0.12)] hover:bg-[rgba(241,242,243,0.2)] transition-colors duration-200 cursor-pointer rounded-lg flex flex-col items-center border ${
-            isToday ? 'border-[#4E3CFA] bg-[rgba(78,60,250,0.2)] shadow-lg shadow-[#4E3CFA]/30' : 'border-[rgba(78,60,250,0.3)]'
-          } ${event ? 'bg-[rgba(241,242,243,0.15)]' : ''}`}
+          className={`p-3 min-h-[80px] bg-white/10 hover:bg-white/15 transition-colors duration-200 cursor-pointer rounded-lg flex flex-col items-center border ${
+            isToday ? 'border-primary bg-primary/20 shadow-lg shadow-primary/30' : 'border-primary/20'
+          } ${event ? 'bg-white/15' : ''}`}
           onClick={() => setSelectedDate(new Date(currentYear, currentMonth, day))}
         >
           <span className={`text-lg font-bold mb-1 ${
-            isToday ? 'text-[#4E3CFA]' : 'text-white'
+            isToday ? 'text-primary' : 'text-foreground'
           }`}>{day}</span>
           {event && (
             <div 
@@ -168,7 +168,10 @@ const Calendar: React.FC = () => {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen w-full bg-[#020117] text-white overflow-x-hidden">
+      <div className="w-full min-h-screen relative overflow-hidden bg-background text-foreground font-inter">
+        {/* Background decorations */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-primary/2 -z-10" />
+        <div className="absolute inset-0 bg-[radial-gradient(2px_2px_at_20px_30px,rgba(78,60,250,0.3),transparent),radial-gradient(2px_2px_at_40px_70px,rgba(78,60,250,0.2),transparent)] bg-repeat bg-[length:150px_150px] pointer-events-none" />
         
         {/* Success Notification */}
         {showNotification && (
@@ -191,19 +194,22 @@ const Calendar: React.FC = () => {
           <div className="max-w-6xl mx-auto mb-12">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
               <div className="space-y-2">
-                <h1 className="text-4xl lg:text-5xl font-bold text-white tracking-tight">
+                <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-br from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent tracking-tight">
                   Zadaci i rokovi
                 </h1>
-                <p className="text-lg text-[#9C9AA9] font-medium">
+                <p className="text-lg text-muted-foreground font-medium">
                   Organizujte svoje akademske obaveze efikasno
                 </p>
               </div>
               <Button 
-                className="bg-[#4E3CFA] hover:bg-[#4E3CFA]/90 text-white rounded-lg px-6 py-3 font-semibold transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 self-start lg:self-auto"
+                className="group bg-gradient-to-r from-primary via-primary to-primary/90 hover:from-primary/90 hover:via-primary hover:to-primary text-white rounded-xl px-6 py-3 font-semibold transition-all duration-300 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-1 relative overflow-hidden self-start lg:self-auto"
                 onClick={() => setIsAddEventModalOpen(true)}
               >
-                <Plus className="w-5 h-5 mr-2" />
-                Novi događaj
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                <span className="relative z-10 flex items-center gap-2">
+                  <Plus className="w-5 h-5" />
+                  Novi događaj
+                </span>
               </Button>
             </div>
           </div>
@@ -212,24 +218,24 @@ const Calendar: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Calendar Section */}
               <div className="lg:col-span-2">
-                <Card className="bg-[rgba(241,242,243,0.05)] border border-[rgba(78,60,250,0.2)] shadow-xl backdrop-blur-sm">
+                <Card className="bg-white/5 border-primary/20 shadow-xl shadow-primary/20 backdrop-blur-xl">
                 <CardHeader className="pb-6">
                   <div className="flex items-center justify-between">
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="hover:bg-white/10 rounded-lg border border-[rgba(78,60,250,0.2)] text-white"
+                      className="hover:bg-white/10 rounded-lg border border-white/20 hover:border-primary/30 text-foreground"
                       onClick={() => navigateMonth('prev')}
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </Button>
-                    <CardTitle className="text-2xl font-bold text-white">
+                    <CardTitle className="text-2xl font-bold text-foreground">
                       {currentDate.toLocaleDateString('sr-RS', { month: 'long', year: 'numeric' })}
                     </CardTitle>
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="hover:bg-white/10 rounded-lg border border-[rgba(78,60,250,0.2)] text-white"
+                      className="hover:bg-white/10 rounded-lg border border-white/20 hover:border-primary/30 text-foreground"
                       onClick={() => navigateMonth('next')}
                     >
                       <ChevronRight className="w-4 h-4" />
@@ -240,29 +246,29 @@ const Calendar: React.FC = () => {
                 <CardContent>
                   <div className="grid grid-cols-7 gap-1 mb-4">
                     {['Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub', 'Ned'].map(day => (
-                      <div key={day} className="p-3 text-center text-sm font-bold text-white bg-[rgba(78,60,250,0.1)] rounded-lg uppercase tracking-wider">
+                      <div key={day} className="p-3 text-center text-sm font-bold text-foreground bg-primary/10 rounded-lg uppercase tracking-wider">
                         {day}
                       </div>
                     ))}
                   </div>
                   
-                  <div className="grid grid-cols-7 gap-2 bg-[rgba(2,1,23,0.98)] rounded-xl p-4 border border-[rgba(78,60,250,0.2)]">
+                  <div className="grid grid-cols-7 gap-2 bg-background/95 rounded-xl p-4 border border-primary/20">
                     {renderCalendarDays()}
                   </div>
                 </CardContent>
 
-                <div className="flex justify-center gap-6 mt-6 pt-6 border-t border-[rgba(78,60,250,0.2)]">
+                <div className="flex justify-center gap-6 mt-6 pt-6 border-t border-primary/20">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getEventTypeColor('kolokvijum') }}></div>
-                    <span className="text-sm text-[#9C9AA9]">Kolokvijumi</span>
+                    <span className="text-sm text-muted-foreground">Kolokvijumi</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getEventTypeColor('zadatak') }}></div>
-                    <span className="text-sm text-[#9C9AA9]">Zadaci</span>
+                    <span className="text-sm text-muted-foreground">Zadaci</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getEventTypeColor('ispit') }}></div>
-                    <span className="text-sm text-[#9C9AA9]">Ispiti</span>
+                    <span className="text-sm text-muted-foreground">Ispiti</span>
                   </div>
                 </div>
                 </Card>
@@ -270,16 +276,16 @@ const Calendar: React.FC = () => {
 
               {/* Side Panel - Upcoming Duties */}
               <div>
-                <Card className="bg-[rgba(241,242,243,0.05)] border border-[rgba(78,60,250,0.2)] shadow-xl">
+                <Card className="bg-white/5 border-primary/20 shadow-xl shadow-primary/20 backdrop-blur-xl">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-xl font-bold text-white">
-                      <Clock className="w-5 h-5 text-[#9C9AA9]" />
+                    <CardTitle className="flex items-center gap-2 text-xl font-bold text-foreground">
+                      <Clock className="w-5 h-5 text-muted-foreground" />
                       Nadolazeće obaveze
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {upcomingEvents.map(event => (
-                      <Card key={event.id} className="group cursor-pointer transition-all duration-300 border border-[rgba(78,60,250,0.2)] shadow-sm bg-[rgba(241,242,243,0.05)] hover:shadow-md hover:border-[#4E3CFA]/50">
+                      <Card key={event.id} className="group cursor-pointer transition-all duration-700 backdrop-blur-xl border border-primary/20 shadow-xl shadow-primary/20 bg-gradient-to-br from-primary/8 via-primary/5 to-background/70 hover:shadow-primary/40 hover:-translate-y-2">
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between mb-3">
                             <Badge 
@@ -288,24 +294,24 @@ const Calendar: React.FC = () => {
                             >
                               {getEventTypeLabel(event.type)}
                             </Badge>
-                            <span className="text-xs text-[#9C9AA9] flex items-center gap-1">
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
                               <Clock className="w-3 h-3" />
                               {formatTimeUntil(event.date)}
                             </span>
                           </div>
                           
-                          <h4 className="font-semibold text-white mb-2 group-hover:text-[#4E3CFA] transition-colors duration-300">
+                          <h4 className="font-semibold text-foreground mb-2 group-hover:text-primary transition-colors duration-300">
                             {event.title}
                           </h4>
-                          <p className="text-sm text-white font-medium mb-1">
+                          <p className="text-sm text-foreground font-medium mb-1">
                             {event.subject}
                           </p>
-                          <p className="text-xs text-[#9C9AA9] mb-2">
+                          <p className="text-xs text-muted-foreground mb-2">
                             {formatDate(event.date)}
                           </p>
                           
                           {event.description && (
-                            <p className="text-sm text-[#9C9AA9] leading-relaxed">
+                            <p className="text-sm text-muted-foreground leading-relaxed">
                               {event.description}
                             </p>
                           )}
@@ -315,8 +321,11 @@ const Calendar: React.FC = () => {
 
                     {upcomingEvents.length === 0 && (
                       <div className="text-center py-8">
-                        <CalendarIcon className="w-12 h-12 text-[#9C9AA9] mx-auto mb-4" />
-                        <p className="text-[#9C9AA9]">Nema nadolazećih obaveza</p>
+                        <div className="mx-auto mb-6 p-4 bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 rounded-2xl w-fit shadow-lg relative">
+                          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-2xl"></div>
+                          <CalendarIcon className="w-12 h-12 text-primary/70 relative z-10" />
+                        </div>
+                        <p className="text-muted-foreground">Nema nadolazećih obaveza</p>
                       </div>
                     )}
                   </CardContent>
@@ -327,8 +336,8 @@ const Calendar: React.FC = () => {
 
         {/* Add Event Modal */}
         {isAddEventModalOpen && (
-          <div className="fixed inset-0 bg-[rgba(2,1,23,0.9)] backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setIsAddEventModalOpen(false)}>
-            <div className="bg-[rgba(2,1,23,0.95)] border border-[rgba(78,60,250,0.3)] rounded-2xl w-full max-w-md shadow-2xl backdrop-blur-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setIsAddEventModalOpen(false)}>
+            <div className="bg-background/95 border border-primary/30 rounded-2xl w-full max-w-md shadow-2xl backdrop-blur-xl" onClick={(e) => e.stopPropagation()}>
               <AddEventForm 
                 onClose={() => setIsAddEventModalOpen(false)}
                 onAddEvent={(newEvent) => {
@@ -344,8 +353,8 @@ const Calendar: React.FC = () => {
 
         {/* Event Details Modal */}
         {isEventDetailsModalOpen && selectedEvent && (
-          <div className="fixed inset-0 bg-[rgba(2,1,23,0.9)] backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setIsEventDetailsModalOpen(false)}>
-            <div className="bg-[rgba(2,1,23,0.95)] border border-[rgba(78,60,250,0.3)] rounded-2xl w-full max-w-md shadow-2xl backdrop-blur-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setIsEventDetailsModalOpen(false)}>
+            <div className="bg-background/95 border border-primary/30 rounded-2xl w-full max-w-md shadow-2xl backdrop-blur-xl" onClick={(e) => e.stopPropagation()}>
               <EventDetailsModal 
                 event={selectedEvent}
                 onClose={() => setIsEventDetailsModalOpen(false)}
@@ -416,15 +425,15 @@ const AddEventForm: React.FC<AddEventFormProps> = ({ onClose, onAddEvent }) => {
   };
 
   return (
-    <Card className="bg-[rgba(2,1,23,0.95)] border border-[rgba(78,60,250,0.3)] shadow-xl backdrop-blur-xl">
+    <Card className="bg-background/95 border border-primary/30 shadow-xl backdrop-blur-xl">
       <CardHeader className="flex flex-row items-center justify-between pb-6">
-        <CardTitle className="text-xl font-bold text-white">
+        <CardTitle className="text-xl font-bold text-foreground">
           Dodaj novi događaj
         </CardTitle>
         <Button
           variant="ghost"
           size="sm"
-          className="hover:bg-white/10 rounded-lg text-white"
+          className="hover:bg-white/10 rounded-lg text-foreground"
           onClick={onClose}
         >
           <X className="w-4 h-4" />
@@ -434,22 +443,22 @@ const AddEventForm: React.FC<AddEventFormProps> = ({ onClose, onAddEvent }) => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-white">Naziv događaja *</label>
+            <label className="text-sm font-medium text-foreground">Naziv događaja *</label>
             <input
               type="text"
               value={formData.title}
               onChange={(e) => handleChange('title', e.target.value)}
               placeholder="Unesite naziv zadatka, kolokvijuma ili ispita"
-              className="w-full px-4 py-3 bg-[rgba(2,1,23,0.95)] border border-[rgba(78,60,250,0.2)] rounded-lg text-white placeholder:text-[#9C9AA9] focus:outline-none focus:ring-2 focus:ring-[#4E3CFA] focus:border-[#4E3CFA] transition-all duration-200"
+              className="w-full px-4 py-3 bg-white/5 border border-white/20 hover:border-primary/30 focus:border-primary/50 rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none transition-all duration-200"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-white">Predmet *</label>
+            <label className="text-sm font-medium text-foreground">Predmet *</label>
             <select
               value={formData.subject}
               onChange={(e) => handleChange('subject', e.target.value)}
-              className="w-full px-4 py-3 bg-[rgba(2,1,23,0.95)] border border-[rgba(78,60,250,0.2)] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#4E3CFA] focus:border-[#4E3CFA] transition-all duration-200"
+              className="w-full px-4 py-3 bg-white/5 border border-white/20 hover:border-primary/30 focus:border-primary/50 rounded-lg text-foreground focus:outline-none transition-all duration-200"
             >
               <option value="">Izaberite predmet</option>
               {subjects.map(subject => (
@@ -459,11 +468,11 @@ const AddEventForm: React.FC<AddEventFormProps> = ({ onClose, onAddEvent }) => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-white">Tip događaja *</label>
+            <label className="text-sm font-medium text-foreground">Tip događaja *</label>
             <select
               value={formData.type}
               onChange={(e) => handleChange('type', e.target.value as CalendarEvent['type'])}
-              className="w-full px-4 py-3 bg-[rgba(2,1,23,0.95)] border border-[rgba(78,60,250,0.2)] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#4E3CFA] focus:border-[#4E3CFA] transition-all duration-200"
+              className="w-full px-4 py-3 bg-white/5 border border-white/20 hover:border-primary/30 focus:border-primary/50 rounded-lg text-foreground focus:outline-none transition-all duration-200"
             >
               <option value="zadatak">Zadatak</option>
               <option value="kolokvijum">Kolokvijum</option>
@@ -472,24 +481,24 @@ const AddEventForm: React.FC<AddEventFormProps> = ({ onClose, onAddEvent }) => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-white">Datum *</label>
+            <label className="text-sm font-medium text-foreground">Datum *</label>
             <div className="relative">
               <input
                 type="text"
                 value={formData.date ? new Date(formData.date).toLocaleDateString('sr-RS') : ''}
                 onClick={() => setIsCalendarPickerOpen(true)}
                 placeholder="Kliknite da izaberete datum"
-                className="w-full px-4 py-3 bg-[rgba(2,1,23,0.95)] border border-[rgba(78,60,250,0.2)] rounded-lg text-white placeholder:text-[#9C9AA9] focus:outline-none focus:ring-2 focus:ring-[#4E3CFA] focus:border-[#4E3CFA] transition-all duration-200 cursor-pointer"
+                className="w-full px-4 py-3 bg-white/5 border border-white/20 hover:border-primary/30 focus:border-primary/50 rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none transition-all duration-200 cursor-pointer"
                 readOnly
               />
               <CalendarIcon 
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#9C9AA9] hover:text-[#4E3CFA] cursor-pointer transition-colors duration-200"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground hover:text-primary cursor-pointer transition-colors duration-200"
                 onClick={() => setIsCalendarPickerOpen(true)}
               />
               
               {isCalendarPickerOpen && (
-                <div className="fixed inset-0 bg-[rgba(2,1,23,0.9)] backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setIsCalendarPickerOpen(false)}>
-                  <div className="bg-[rgba(2,1,23,0.95)] border border-[rgba(78,60,250,0.3)] rounded-2xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setIsCalendarPickerOpen(false)}>
+                  <div className="bg-background/95 border border-primary/30 rounded-2xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
                     <MiniCalendar 
                       onDateSelect={(date) => {
                         // Fix timezone issue - use local date format instead of ISO
@@ -509,12 +518,12 @@ const AddEventForm: React.FC<AddEventFormProps> = ({ onClose, onAddEvent }) => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-white">Opis (opciono)</label>
+            <label className="text-sm font-medium text-foreground">Opis (opciono)</label>
             <textarea
               value={formData.description}
               onChange={(e) => handleChange('description', e.target.value)}
               placeholder="Dodajte opis zadatka, teme kolokvijuma ili detalje ispita"
-              className="w-full px-4 py-3 bg-[rgba(2,1,23,0.95)] border border-[rgba(78,60,250,0.2)] rounded-lg text-white placeholder:text-[#9C9AA9] focus:outline-none focus:ring-2 focus:ring-[#4E3CFA] focus:border-[#4E3CFA] transition-all duration-200 resize-vertical min-h-[80px]"
+              className="w-full px-4 py-3 bg-white/5 border border-white/20 hover:border-primary/30 focus:border-primary/50 rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none transition-all duration-200 resize-vertical min-h-[80px]"
               rows={3}
             />
           </div>
@@ -524,13 +533,13 @@ const AddEventForm: React.FC<AddEventFormProps> = ({ onClose, onAddEvent }) => {
               type="button" 
               variant="ghost"
               onClick={onClose} 
-              className="flex-1 hover:bg-white/10 border border-[rgba(78,60,250,0.2)] text-white rounded-lg"
+              className="flex-1 hover:bg-white/10 border border-white/20 hover:border-primary/30 text-foreground rounded-lg"
             >
               Otkaži
             </Button>
             <Button 
               type="submit" 
-              className="flex-1 bg-[#4E3CFA] hover:bg-[#4E3CFA]/90 text-white rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              className="flex-1 bg-gradient-to-r from-primary via-primary to-primary/90 hover:from-primary/90 hover:via-primary hover:to-primary text-white rounded-lg font-semibold transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:-translate-y-1"
             >
               Dodaj događaj
             </Button>
@@ -574,7 +583,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ onDateSelect, onClose }) =>
     
     // Empty cells for days before the first day of the month
     for (let i = 0; i < firstDayOfMonth; i++) {
-      days.push(<div key={`empty-${i}`} className="p-3 min-h-[48px] bg-[rgba(241,242,243,0.08)] rounded-lg border border-[rgba(78,60,250,0.1)]"></div>);
+      days.push(<div key={`empty-${i}`} className="p-3 min-h-[48px] bg-white/5 rounded-lg border border-primary/10"></div>);
     }
     
     // Days of the month
@@ -589,10 +598,10 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ onDateSelect, onClose }) =>
           type="button"
           className={`p-3 min-h-[48px] text-base font-semibold rounded-lg transition-all duration-200 flex items-center justify-center border ${
             isToday 
-              ? 'bg-[#4E3CFA] border-[#4E3CFA] text-white shadow-lg shadow-[#4E3CFA]/30' 
+              ? 'bg-primary border-primary text-white shadow-lg shadow-primary/30' 
               : isPast 
-                ? 'text-[#9C9AA9] cursor-not-allowed border-[rgba(78,60,250,0.1)] bg-[rgba(241,242,243,0.05)]' 
-                : 'text-white hover:bg-[#4E3CFA]/20 hover:border-[#4E3CFA]/50 cursor-pointer border-[rgba(78,60,250,0.2)] bg-[rgba(241,242,243,0.08)]'
+                ? 'text-muted-foreground cursor-not-allowed border-primary/10 bg-white/5' 
+                : 'text-foreground hover:bg-primary/20 hover:border-primary/50 cursor-pointer border-primary/20 bg-white/10'
           }`}
           onClick={() => !isPast && onDateSelect(date)}
           disabled={isPast}
@@ -606,7 +615,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ onDateSelect, onClose }) =>
   };
   
   return (
-    <Card className="bg-[rgba(2,1,23,0.95)] border border-[rgba(78,60,250,0.3)] shadow-xl w-96">
+    <Card className="bg-background/95 border border-primary/30 shadow-xl w-96">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <Button 
@@ -614,11 +623,11 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ onDateSelect, onClose }) =>
             size="sm" 
             type="button"
             onClick={() => navigateMonth('prev')}
-            className="hover:bg-white/10 border border-[rgba(78,60,250,0.2)] text-white rounded-lg"
+            className="hover:bg-white/10 border border-white/20 hover:border-primary/30 text-foreground rounded-lg"
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <CardTitle className="text-lg font-bold text-white">
+          <CardTitle className="text-lg font-bold text-foreground">
             {currentMonth.toLocaleDateString('sr-RS', { month: 'long', year: 'numeric' })}
           </CardTitle>
           <Button 
@@ -626,7 +635,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ onDateSelect, onClose }) =>
             size="sm" 
             type="button"
             onClick={() => navigateMonth('next')}
-            className="hover:bg-white/10 border border-[rgba(78,60,250,0.2)] text-white rounded-lg"
+            className="hover:bg-white/10 border border-white/20 hover:border-primary/30 text-foreground rounded-lg"
           >
             <ChevronRight className="w-4 h-4" />
           </Button>
@@ -694,7 +703,7 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ event, onClose, o
   };
 
   return (
-    <Card className="bg-[rgba(2,1,23,0.95)] border border-[rgba(78,60,250,0.3)] shadow-xl backdrop-blur-xl">
+    <Card className="bg-background/95 border border-primary/30 shadow-xl backdrop-blur-xl">
       <CardHeader className="flex flex-row items-center justify-between pb-6">
         <div className="flex items-center gap-3">
           <div 
@@ -704,7 +713,7 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ event, onClose, o
             {getEventIcon(event.type)}
           </div>
           <div>
-            <CardTitle className="text-xl font-bold text-white">
+            <CardTitle className="text-xl font-bold text-foreground">
               Detalji događaja
             </CardTitle>
             <Badge 
@@ -718,7 +727,7 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ event, onClose, o
         <Button
           variant="ghost"
           size="sm"
-          className="hover:bg-white/10 rounded-lg text-white"
+          className="hover:bg-white/10 rounded-lg text-foreground"
           onClick={onClose}
         >
           <X className="w-4 h-4" />
@@ -728,16 +737,16 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ event, onClose, o
       <CardContent className="space-y-6">
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-semibold text-white mb-2">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               {event.title}
             </h3>
-            <p className="text-[#9C9AA9] text-sm">
+            <p className="text-muted-foreground text-sm">
               {event.subject}
             </p>
           </div>
 
-          <div className="flex items-center gap-2 text-white">
-            <CalendarIcon className="w-4 h-4 text-[#9C9AA9]" />
+          <div className="flex items-center gap-2 text-foreground">
+            <CalendarIcon className="w-4 h-4 text-muted-foreground" />
             <span className="font-medium">
               {formatDate(event.date)}
             </span>
@@ -745,19 +754,19 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ event, onClose, o
 
           {event.description && (
             <div>
-              <h4 className="text-sm font-medium text-white mb-2">Opis:</h4>
-              <p className="text-[#9C9AA9] text-sm leading-relaxed bg-[rgba(241,242,243,0.05)] p-3 rounded-lg border border-[rgba(78,60,250,0.1)]">
+              <h4 className="text-sm font-medium text-foreground mb-2">Opis:</h4>
+              <p className="text-muted-foreground text-sm leading-relaxed bg-white/5 p-3 rounded-lg border border-primary/10">
                 {event.description}
               </p>
             </div>
           )}
         </div>
 
-        <div className="flex gap-3 pt-4 border-t border-[rgba(78,60,250,0.2)]">
+        <div className="flex gap-3 pt-4 border-t border-primary/20">
           <Button 
             variant="ghost"
             onClick={onClose} 
-            className="flex-1 hover:bg-white/10 border border-[rgba(78,60,250,0.2)] text-white rounded-lg"
+            className="flex-1 hover:bg-white/10 border border-white/20 hover:border-primary/30 text-foreground rounded-lg"
           >
             Zatvori
           </Button>

@@ -96,7 +96,7 @@
   background: var(--bg-card);
   border: 1px solid var(--border-primary);
   border-radius: 20px;
-  overflow: hidden;
+  overflow: visible;
   transition: all 0.3s ease;
   position: relative;
 }
@@ -104,6 +104,32 @@
 .inputContainer:hover {
   border-color: var(--primary-color);
   box-shadow: 0 8px 32px rgba(78, 60, 250, 0.15);
+}
+
+/* Mode-specific hover effects */
+.inputContainer.modeExplain:hover {
+  border-color: #4E3CFA;
+  box-shadow: 0 8px 32px rgba(78, 60, 250, 0.25);
+}
+
+.inputContainer.modeSolve:hover {
+  border-color: #F59E0B;
+  box-shadow: 0 8px 32px rgba(245, 158, 11, 0.25);
+}
+
+.inputContainer.modeSummary:hover {
+  border-color: #10B981;
+  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.25);
+}
+
+.inputContainer.modeTests:hover {
+  border-color: #EF4444;
+  box-shadow: 0 8px 32px rgba(239, 68, 68, 0.25);
+}
+
+.inputContainer.modeLearning:hover {
+  border-color: #3B82F6;
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.25);
 }
 
 /* Mode-specific input container styling */
@@ -139,6 +165,7 @@
   resize: none;
   outline: none;
   line-height: 1.6;
+  border-radius: 20px 20px 0 0;
 }
 
 .chatInput::placeholder {
@@ -154,6 +181,8 @@
   border-top: 1px solid var(--border-primary);
   gap: 16px;
   flex-wrap: wrap;
+  border-radius: 0 0 20px 20px;
+  overflow: hidden;
 }
 
 .inputActions {
@@ -192,6 +221,7 @@
 /* Mode Selector */
 .modeSelector {
   position: relative;
+  z-index: 1000;
 }
 
 .modeButton {
@@ -217,17 +247,16 @@
 }
 
 .modeDropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  margin-top: 8px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
+  position: fixed;
+  background: #1C212B;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(78, 60, 250, 0.3);
   border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 4px 16px rgba(78, 60, 250, 0.2);
+  z-index: 9999;
   overflow: hidden;
+  min-width: 200px;
+  max-height: 300px;
 }
 
 .modeOption {
@@ -238,7 +267,8 @@
   text-align: left;
   cursor: pointer;
   transition: all 0.2s ease;
-  border-bottom: 1px solid var(--border-primary);
+  border-bottom: 1px solid rgba(78, 60, 250, 0.2);
+  color: #FFFFFF;
 }
 
 .modeOption:last-child {
@@ -246,11 +276,13 @@
 }
 
 .modeOption:hover {
-  background: rgba(78, 60, 250, 0.1);
+  background: rgba(78, 60, 250, 0.15);
+  color: #FFFFFF;
 }
 
 .modeOption.selected {
-  background: rgba(78, 60, 250, 0.2);
+  background: rgba(78, 60, 250, 0.25);
+  color: #FFFFFF;
 }
 
 .modeDetails {
@@ -262,12 +294,12 @@
 .modeName {
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: #FFFFFF;
 }
 
 .modeDescription {
   font-size: 12px;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 /* Input Actions */
