@@ -13,8 +13,11 @@ import {
   Login,
   Register
 } from './pages/main';
+import { AdminLogin, AdminDashboard, MaterialManagement, FacultyOverlay } from './pages/admin';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { AdminAuthProvider } from './context/admin/AdminAuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import { ProtectedAdminRoute } from './components/admin';
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
@@ -170,9 +173,10 @@ const Sidebar: React.FC = () => {
       {/* Chats Section */}
       {!isCollapsed && (
         <div className="flex-1 flex flex-col px-4 pb-4 overflow-hidden max-md:hidden min-h-0">
-          <div className="mb-4">
+          <div className="mb-3">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Chatovi</h3>
-            <div className="flex-1 overflow-y-auto space-y-2 max-h-[calc(100vh-300px)] scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20">
+          </div>
+          <div className="flex-1 overflow-y-auto space-y-2 chats-list">
               {isLoadingChats ? (
                 <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">Učitavam chatove...</div>
               ) : filteredChats.length > 0 ? (
@@ -218,13 +222,10 @@ const Sidebar: React.FC = () => {
                   <p className="text-sm">Još nema chatova</p>
                 </div>
               )}
-            </div>
           </div>
         </div>
       )}
 
-      {/* Spacer */}
-      <div className="flex-1"></div>
 
       {/* Navigation Icons - All at bottom */}
       <div className="mt-auto pb-4 flex-shrink-0">
@@ -373,7 +374,8 @@ const RootRedirect: React.FC = () => {
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <AdminAuthProvider>
+        <Router>
         <Routes>
           {/* Root redirect based on auth status */}
           <Route path="/" element={<RootRedirect />} />
@@ -421,8 +423,27 @@ function App() {
           <Route path="/main/kontakt" element={<Contact />} />
           <Route path="/main/login" element={<Login />} />
           <Route path="/main/register" element={<Register />} />
+          
+          {/* Admin routes */}
+          <Route path="/admin" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={
+            <ProtectedAdminRoute>
+              <AdminDashboard />
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/materials" element={
+            <ProtectedAdminRoute>
+              <MaterialManagement />
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/materials/faculty/:facultyId" element={
+            <ProtectedAdminRoute>
+              <FacultyOverlay />
+            </ProtectedAdminRoute>
+          } />
         </Routes>
-      </Router>
+        </Router>
+      </AdminAuthProvider>
     </AuthProvider>
   );
 }

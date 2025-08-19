@@ -63,7 +63,7 @@ const Chat: React.FC = () => {
         
       } catch (error) {
         console.error('Error loading chat:', error);
-        navigate('/dashboard');
+        navigate('/home');
       } finally {
         setIsLoading(false);
       }
@@ -139,7 +139,7 @@ const Chat: React.FC = () => {
       <div className={styles.chatPage}>
         <div className={styles.errorContainer}>
           <p>Chat nije pronađen</p>
-          <button onClick={() => navigate('/dashboard')} className={styles.backButton}>
+          <button onClick={() => navigate('/home')} className={styles.backButton}>
             Nazad na početnu
           </button>
         </div>
@@ -152,11 +152,11 @@ const Chat: React.FC = () => {
       <div className="flex flex-col h-screen bg-[#0B0F1A] text-white font-inter">
         
         {/* Chat Header */}
-        <header className="flex-shrink-0 border-b border-[#4E3CFA]/10 px-6 py-4 bg-[#0B0F1A]">
+        <header className="flex-shrink-0 px-6 py-6">
           <div className="flex items-center gap-4">
             <button 
               className="group flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#4E3CFA]/30 transition-all duration-300 hover:scale-105 text-gray-400 hover:text-white"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/home')}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M19 12H5M12 19l-7-7 7-7"/>
@@ -199,7 +199,7 @@ const Chat: React.FC = () => {
 
         {/* Messages Area */}
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-3xl mx-auto px-4 py-4 space-y-4">
+          <div className="w-full mx-auto px-6 py-4 space-y-4">
             {messages.map((message) => (
               <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`flex gap-4 max-w-[85%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -267,8 +267,8 @@ const Chat: React.FC = () => {
         </main>
 
         {/* Input Area */}
-        <footer className="flex-shrink-0 border-t border-[#4E3CFA]/10 bg-[#0B0F1A] px-4 py-4">
-          <div className="max-w-3xl mx-auto">
+        <footer className="flex-shrink-0 px-6 py-6">
+          <div className="max-w-4xl mx-auto">
             <div className="relative bg-white/5 border border-white/10 hover:border-[#4E3CFA]/30 focus-within:border-[#4E3CFA]/50 rounded-xl p-3 transition-all duration-300">
               <textarea
                 ref={textareaRef}
