@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card, CardContent } from '../../components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
+import FacultyModal from './FacultyModal';
 
 interface City {
   _id: string;
@@ -34,6 +35,10 @@ const MaterialManagement: React.FC = () => {
   const [newFacultyName, setNewFacultyName] = useState('');
   const [selectedCityId, setSelectedCityId] = useState('');
   const [error, setError] = useState('');
+  const [isAddCityModalOpen, setIsAddCityModalOpen] = useState(false);
+  const [isAddFacultyModalOpen, setIsAddFacultyModalOpen] = useState(false);
+  const [isFacultyModalOpen, setIsFacultyModalOpen] = useState(false);
+  const [selectedFacultyId, setSelectedFacultyId] = useState('');
 
   const loadData = async () => {
     try {
@@ -112,6 +117,16 @@ const MaterialManagement: React.FC = () => {
     );
   }
 
+  const handleCityInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') {
+      setIsAddCityModalOpen(false);
+      setNewCityName('');
+      setError('');
+    } else if (e.key === 'Enter' && newCityName.trim() && !isAddingCity) {
+      handleAddCity();
+    }
+  };
+
   const handleAddCity = async () => {
     if (!newCityName.trim()) {
       setError('Naziv grada je obavezan');
@@ -140,10 +155,22 @@ const MaterialManagement: React.FC = () => {
       const data = await response.json();
       setCities(prev => [...prev, { ...data.city, faculties: [] }]);
       setNewCityName('');
+      setIsAddCityModalOpen(false);
     } catch (error: any) {
       setError(error.message || 'Greška pri dodavanju grada');
     } finally {
       setIsAddingCity(false);
+    }
+  };
+
+  const handleFacultyInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') {
+      setIsAddFacultyModalOpen(false);
+      setNewFacultyName('');
+      setSelectedCityId('');
+      setError('');
+    } else if (e.key === 'Enter' && newFacultyName.trim() && selectedCityId && !isAddingFaculty) {
+      handleAddFaculty();
     }
   };
 
@@ -183,6 +210,7 @@ const MaterialManagement: React.FC = () => {
       ));
       setNewFacultyName('');
       setSelectedCityId('');
+      setIsAddFacultyModalOpen(false);
     } catch (error: any) {
       setError(error.message || 'Greška pri dodavanju fakulteta');
     } finally {
@@ -203,8 +231,35 @@ const MaterialManagement: React.FC = () => {
     );
   };
 
+  const handleDeleteCity = async (cityId: string, cityName: string) => {
+    if (!window.confirm(`Da li ste sigurni da želite da obrišete grad "${cityName}"? Ova akcija će obrisati i sve fakultete u gradu.`)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/cities/${cityId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete city');
+      }
+
+      setCities(prev => prev.filter(city => city._id !== cityId));
+    } catch (error: any) {
+      setError(error.message || 'Greška pri brisanju grada');
+    }
+  };
+
   const handleFacultyClick = (facultyId: string) => {
-    navigate(`/admin/materials/faculty/${facultyId}`);
+    setSelectedFacultyId(facultyId);
+    setIsFacultyModalOpen(true);
   };
 
   return (
@@ -229,15 +284,16 @@ const MaterialManagement: React.FC = () => {
               </div>
             </div>
 
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="bg-black hover:bg-gray-800 text-white">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
-                    <path d="M12 5v14m-7-7h14"/>
-                  </svg>
-                  Dodaj Grad
-                </Button>
-              </DialogTrigger>
+            <Dialog open={isAddCityModalOpen} onOpenChange={setIsAddCityModalOpen}>
+              <Button 
+                className="bg-black hover:bg-gray-800 text-white"
+                onClick={() => setIsAddCityModalOpen(true)}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
+                  <path d="M12 5v14m-7-7h14"/>
+                </svg>
+                Dodaj Grad
+              </Button>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle>Dodaj novi grad</DialogTitle>
@@ -254,9 +310,11 @@ const MaterialManagement: React.FC = () => {
                       id="cityName"
                       value={newCityName}
                       onChange={(e) => setNewCityName(e.target.value)}
+                      onKeyDown={handleCityInputKeyDown}
                       placeholder="Unesite naziv grada..."
                       className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-500"
                       disabled={isAddingCity}
+                      autoFocus
                     />
                   </div>
                   
@@ -267,11 +325,17 @@ const MaterialManagement: React.FC = () => {
                   )}
                   
                   <div className="flex gap-2 justify-end">
-                    <DialogTrigger asChild>
-                      <Button variant="outline" disabled={isAddingCity}>
-                        Otkaži
-                      </Button>
-                    </DialogTrigger>
+                    <Button 
+                      variant="outline" 
+                      disabled={isAddingCity}
+                      onClick={() => {
+                        setIsAddCityModalOpen(false);
+                        setNewCityName('');
+                        setError('');
+                      }}
+                    >
+                      Otkaži
+                    </Button>
                     <Button
                       onClick={handleAddCity}
                       disabled={isAddingCity || !newCityName.trim()}
@@ -297,20 +361,34 @@ const MaterialManagement: React.FC = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-2xl font-bold text-gray-900">{city.name}</h2>
                   
-                  <div className="flex items-center gap-3">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="border-gray-200 hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700"
-                          onClick={() => setSelectedCityId(city._id)}
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
-                            <path d="M12 5v14m-7-7h14"/>
-                          </svg>
-                          Dodaj Fakultet
-                        </Button>
-                      </DialogTrigger>
+                  <div className="flex items-center gap-2">
+                    <Dialog open={isAddFacultyModalOpen} onOpenChange={setIsAddFacultyModalOpen}>
+                      <Button
+                        variant="outline"
+                        className="border-gray-200 hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700"
+                        onClick={() => {
+                          setSelectedCityId(city._id);
+                          setIsAddFacultyModalOpen(true);
+                        }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
+                          <path d="M12 5v14m-7-7h14"/>
+                        </svg>
+                        Dodaj Fakultet
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        className="border-red-200 hover:bg-red-50 hover:border-red-300 hover:text-red-700"
+                        onClick={() => handleDeleteCity(city._id, city.name)}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
+                          <path d="M3 6h18"/>
+                          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                        </svg>
+                        Obriši Grad
+                      </Button>
                       <DialogContent className="sm:max-w-md">
                         <DialogHeader>
                           <DialogTitle>Dodaj novi fakultet</DialogTitle>
@@ -327,9 +405,11 @@ const MaterialManagement: React.FC = () => {
                               id="facultyName"
                               value={newFacultyName}
                               onChange={(e) => setNewFacultyName(e.target.value)}
+                              onKeyDown={handleFacultyInputKeyDown}
                               placeholder="Unesite naziv fakulteta..."
                               className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-500"
                               disabled={isAddingFaculty}
+                              autoFocus
                             />
                           </div>
                           
@@ -340,11 +420,18 @@ const MaterialManagement: React.FC = () => {
                           )}
                           
                           <div className="flex gap-2 justify-end">
-                            <DialogTrigger asChild>
-                              <Button variant="outline" disabled={isAddingFaculty}>
-                                Otkaži
-                              </Button>
-                            </DialogTrigger>
+                            <Button 
+                              variant="outline" 
+                              disabled={isAddingFaculty}
+                              onClick={() => {
+                                setIsAddFacultyModalOpen(false);
+                                setNewFacultyName('');
+                                setSelectedCityId('');
+                                setError('');
+                              }}
+                            >
+                              Otkaži
+                            </Button>
                             <Button
                               onClick={handleAddFaculty}
                               disabled={isAddingFaculty || !newFacultyName.trim()}
@@ -389,7 +476,7 @@ const MaterialManagement: React.FC = () => {
                     {getFilteredFaculties(city).map((faculty) => (
                       <Card
                         key={faculty._id}
-                        className="cursor-pointer hover:shadow-lg transition-all duration-200 border-0 shadow-md bg-white/80 backdrop-blur-sm hover:bg-purple-50"
+                        className="cursor-pointer hover:shadow-lg transition-all duration-200 border-0 shadow-md bg-white hover:bg-white"
                         onClick={() => handleFacultyClick(faculty._id)}
                       >
                         <CardContent className="p-4 flex items-center justify-between">
@@ -455,6 +542,18 @@ const MaterialManagement: React.FC = () => {
           )}
         </div>
       </main>
+
+      {/* Faculty Modal */}
+      {isFacultyModalOpen && selectedFacultyId && (
+        <FacultyModal
+          facultyId={selectedFacultyId}
+          isOpen={isFacultyModalOpen}
+          onClose={() => {
+            setIsFacultyModalOpen(false);
+            setSelectedFacultyId('');
+          }}
+        />
+      )}
     </div>
   );
 };
