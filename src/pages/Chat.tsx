@@ -149,13 +149,10 @@ const Chat: React.FC = () => {
 
   return (
     <TooltipProvider>
-      <div className="w-full min-h-screen relative overflow-hidden bg-[#0B0F1A] text-white font-inter">
-        {/* Background decorations */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#4E3CFA]/5 via-[#0B0F1A] to-[#4E3CFA]/2 -z-10" />
-        <div className="absolute inset-0 bg-[radial-gradient(2px_2px_at_20px_30px,rgba(78,60,250,0.3),transparent),radial-gradient(2px_2px_at_40px_70px,rgba(78,60,250,0.2),transparent)] bg-repeat bg-[length:150px_150px] pointer-events-none" />
+      <div className="flex flex-col h-screen bg-[#0B0F1A] text-white font-inter">
         
         {/* Chat Header */}
-        <header className="sticky top-0 z-10 backdrop-blur-xl bg-[#0B0F1A]/80 border-b border-[#4E3CFA]/10 px-6 py-4">
+        <header className="flex-shrink-0 border-b border-[#4E3CFA]/10 px-6 py-4 bg-[#0B0F1A]">
           <div className="flex items-center gap-4">
             <button 
               className="group flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#4E3CFA]/30 transition-all duration-300 hover:scale-105 text-gray-400 hover:text-white"
@@ -201,12 +198,11 @@ const Chat: React.FC = () => {
         </header>
 
         {/* Messages Area */}
-        <main className="flex-1 overflow-y-auto px-6 py-8 min-h-0">
-          <div className="max-w-4xl mx-auto space-y-6 min-h-full flex flex-col justify-end">
-            <div className="flex-1"></div>
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-3xl mx-auto px-4 py-4 space-y-4">
             {messages.map((message) => (
               <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`flex gap-3 max-w-[80%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                <div className={`flex gap-4 max-w-[85%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                   <Avatar className="w-8 h-8 flex-shrink-0">
                     <AvatarFallback className={`text-xs font-semibold ${
                       message.type === 'user' 
@@ -243,7 +239,7 @@ const Chat: React.FC = () => {
             
             {isSending && (
               <div className="flex justify-start">
-                <div className="flex gap-3 max-w-[80%]">
+                <div className="flex gap-4 max-w-[85%]">
                   <Avatar className="w-8 h-8 flex-shrink-0">
                     <AvatarFallback className="text-xs font-semibold bg-gradient-to-br from-white/10 via-white/5 to-transparent text-white border border-white/20">
                       AI
@@ -271,12 +267,12 @@ const Chat: React.FC = () => {
         </main>
 
         {/* Input Area */}
-        <footer className="sticky bottom-0 bg-[#0B0F1A]/80 backdrop-blur-xl border-t border-[#4E3CFA]/10 px-6 py-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="relative bg-white/5 border border-white/10 hover:border-[#4E3CFA]/30 focus-within:border-[#4E3CFA]/50 rounded-2xl p-4 transition-all duration-300">
+        <footer className="flex-shrink-0 border-t border-[#4E3CFA]/10 bg-[#0B0F1A] px-4 py-4">
+          <div className="max-w-3xl mx-auto">
+            <div className="relative bg-white/5 border border-white/10 hover:border-[#4E3CFA]/30 focus-within:border-[#4E3CFA]/50 rounded-xl p-3 transition-all duration-300">
               <textarea
                 ref={textareaRef}
-                className="w-full bg-transparent text-white placeholder:text-gray-400 resize-none outline-none pr-12 text-base leading-relaxed"
+                className="w-full bg-transparent text-white placeholder:text-gray-400 resize-none outline-none pr-12 text-sm leading-relaxed"
                 placeholder="Napišite poruku..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
@@ -286,11 +282,11 @@ const Chat: React.FC = () => {
                 style={{ maxHeight: '200px' }}
               />
               <button 
-                className="absolute right-3 bottom-3 w-10 h-10 bg-gradient-to-r from-[#4E3CFA] via-[#4E3CFA] to-[#4E3CFA]/90 hover:from-[#4E3CFA]/90 hover:via-[#4E3CFA] hover:to-[#4E3CFA] text-white rounded-xl transition-all duration-300 shadow-lg shadow-[#4E3CFA]/30 hover:shadow-[#4E3CFA]/50 hover:-translate-y-1 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center"
+                className="absolute right-2 bottom-2 w-8 h-8 bg-[#4E3CFA] hover:bg-[#4E3CFA]/90 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 onClick={handleSendMessage}
                 disabled={!newMessage.trim() || isSending}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="22" y1="2" x2="11" y2="13"/>
                   <polygon points="22,2 15,22 11,13 2,9 22,2"/>
                 </svg>
