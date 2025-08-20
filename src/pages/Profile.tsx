@@ -7,6 +7,21 @@ import { Badge } from '../components/ui/badge';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
 import { Progress } from '../components/ui/progress';
 import { TooltipProvider } from '../components/ui/tooltip';
+import { 
+  Dialog, 
+  DialogTrigger, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription,
+  InnerDialog,
+  InnerDialogTrigger,
+  InnerDialogContent,
+  InnerDialogHeader,
+  InnerDialogTitle,
+  InnerDialogDescription
+} from '../components/ui/nested-dialog';
+import { Pricing } from '../components/blocks/pricing';
 import {
   User,
   Settings,
@@ -81,7 +96,6 @@ const Profile: React.FC = () => {
   const [marketingEmails, setMarketingEmails] = useState(false);
   
   // Password change state
-  const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -283,7 +297,6 @@ const Profile: React.FC = () => {
     try {
       await changePassword(currentPassword, newPassword);
       setSuccessMessage('Password changed successfully!');
-      setShowPasswordChange(false);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -320,7 +333,7 @@ const Profile: React.FC = () => {
 
   const renderProfileSection = () => (
     <div className="space-y-8">
-      <Card className="border border-primary/20 bg-gradient-to-br from-primary/8 via-primary/5 to-background/70 backdrop-blur-xl shadow-xl shadow-primary/20">
+      <Card className="border border-zinc-800/50 bg-zinc-900/50 backdrop-blur-xl shadow-xl shadow-black/20">
         <CardHeader>
           <div className="flex items-center gap-4">
             <Avatar className="w-16 h-16">
@@ -329,10 +342,10 @@ const Profile: React.FC = () => {
               </AvatarFallback>
             </Avatar>
             <div>
-              <CardTitle className="text-2xl font-bold text-foreground">
+              <CardTitle className="text-2xl font-bold text-white">
                 {profileData.name}
               </CardTitle>
-              <CardDescription className="text-base text-muted-foreground">
+              <CardDescription className="text-base text-gray-300">
                 Member since {profileData.joinDate}
               </CardDescription>
             </div>
@@ -340,82 +353,82 @@ const Profile: React.FC = () => {
         </CardHeader>
       </Card>
 
-      <Card className="border border-primary/20 bg-gradient-to-br from-primary/8 via-primary/5 to-background/70 backdrop-blur-xl shadow-xl shadow-primary/20">
+      <Card className="border border-zinc-800/50 bg-zinc-900/50 backdrop-blur-xl shadow-xl shadow-black/20">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
+          <CardTitle className="text-xl font-semibold text-white flex items-center gap-2">
             <User className="w-5 h-5 text-primary" />
             Profile Information
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Full Name</label>
+            <label className="text-sm font-medium text-white">Full Name</label>
             <div className="relative">
               <input
                 type="text"
                 value={profileData.name}
-                className="w-full p-3 bg-background/50 border border-primary/20 rounded-xl text-foreground opacity-60 cursor-not-allowed"
+                className="w-full p-3 bg-zinc-800/50 border border-zinc-700/50 rounded-xl text-white opacity-60 cursor-not-allowed"
                 readOnly
                 title="Full name cannot be changed"
               />
-              <Lock className="absolute right-3 top-3 w-4 h-4 text-muted-foreground" />
+              <Lock className="absolute right-3 top-3 w-4 h-4 text-gray-400" />
             </div>
-            <p className="text-xs text-muted-foreground">Cannot be changed</p>
+            <p className="text-xs text-gray-400">Cannot be changed</p>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Email</label>
+            <label className="text-sm font-medium text-white">Email</label>
             <div className="relative">
               <input
                 type="email"
                 value={profileData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
-                className="w-full p-3 bg-background/50 border border-primary/20 rounded-xl text-foreground focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                className="w-full p-3 bg-zinc-800/50 border border-zinc-700/50 rounded-xl text-white focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
               />
-              <Mail className="absolute right-3 top-3 w-4 h-4 text-muted-foreground" />
+              <Mail className="absolute right-3 top-3 w-4 h-4 text-gray-400" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">University</label>
+              <label className="text-sm font-medium text-white">University</label>
               <div className="relative">
                 <input
                   type="text"
                   value={profileData.university}
-                  className="w-full p-3 bg-background/50 border border-primary/20 rounded-xl text-foreground opacity-60 cursor-not-allowed"
+                  className="w-full p-3 bg-zinc-800/50 border border-zinc-700/50 rounded-xl text-white opacity-60 cursor-not-allowed"
                   readOnly
                   title="University cannot be changed"
                 />
-                <GraduationCap className="absolute right-3 top-3 w-4 h-4 text-muted-foreground" />
+                <GraduationCap className="absolute right-3 top-3 w-4 h-4 text-gray-400" />
               </div>
-              <p className="text-xs text-muted-foreground">Cannot be changed</p>
+              <p className="text-xs text-gray-400">Cannot be changed</p>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Major</label>
+              <label className="text-sm font-medium text-white">Major</label>
               <div className="relative">
                 <input
                   type="text"
                   value={profileData.major}
-                  className="w-full p-3 bg-background/50 border border-primary/20 rounded-xl text-foreground opacity-60 cursor-not-allowed"
+                  className="w-full p-3 bg-zinc-800/50 border border-zinc-700/50 rounded-xl text-white opacity-60 cursor-not-allowed"
                   readOnly
                   title="Major cannot be changed"
                 />
-                <Lock className="absolute right-3 top-3 w-4 h-4 text-muted-foreground" />
+                <Lock className="absolute right-3 top-3 w-4 h-4 text-gray-400" />
               </div>
-              <p className="text-xs text-muted-foreground">Cannot be changed</p>
+              <p className="text-xs text-gray-400">Cannot be changed</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Academic Year</label>
+              <label className="text-sm font-medium text-white">Academic Year</label>
               <div className="relative">
                 <select
                   value={profileData.year}
                   disabled
-                  className="w-full p-3 bg-background/50 border border-primary/20 rounded-xl text-foreground opacity-60 cursor-not-allowed appearance-none"
+                  className="w-full p-3 bg-zinc-800/50 border border-zinc-700/50 rounded-xl text-white opacity-60 cursor-not-allowed appearance-none"
                   title="Academic year cannot be changed"
                 >
                   <option value="1. godina">1. godina</option>
@@ -425,26 +438,26 @@ const Profile: React.FC = () => {
                   <option value="Master">Master</option>
                   <option value="PhD">PhD</option>
                 </select>
-                <Lock className="absolute right-3 top-3 w-4 h-4 text-muted-foreground" />
+                <Lock className="absolute right-3 top-3 w-4 h-4 text-gray-400" />
               </div>
-              <p className="text-xs text-muted-foreground">Cannot be changed</p>
+              <p className="text-xs text-gray-400">Cannot be changed</p>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Semester</label>
+              <label className="text-sm font-medium text-white">Semester</label>
               <div className="relative">
                 <select
                   value={profileData.semester}
                   disabled
-                  className="w-full p-3 bg-background/50 border border-primary/20 rounded-xl text-foreground opacity-60 cursor-not-allowed appearance-none"
+                  className="w-full p-3 bg-zinc-800/50 border border-zinc-700/50 rounded-xl text-white opacity-60 cursor-not-allowed appearance-none"
                   title="Semester cannot be changed"
                 >
                   <option value="1. semestar">1. semestar</option>
                   <option value="2. semestar">2. semestar</option>
                 </select>
-                <Lock className="absolute right-3 top-3 w-4 h-4 text-muted-foreground" />
+                <Lock className="absolute right-3 top-3 w-4 h-4 text-gray-400" />
               </div>
-              <p className="text-xs text-muted-foreground">Cannot be changed</p>
+              <p className="text-xs text-gray-400">Cannot be changed</p>
             </div>
           </div>
         </CardContent>
@@ -454,13 +467,13 @@ const Profile: React.FC = () => {
 
   const renderAppearanceSection = () => (
     <div className="space-y-8">
-      <Card className="border border-primary/20 bg-gradient-to-br from-primary/8 via-primary/5 to-background/70 backdrop-blur-xl shadow-xl shadow-primary/20">
+      <Card className="border border-zinc-800/50 bg-zinc-900/50 backdrop-blur-xl shadow-xl shadow-black/20">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
+          <CardTitle className="text-xl font-semibold text-white flex items-center gap-2">
             <Palette className="w-5 h-5 text-primary" />
             Color Mode
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-gray-300">
             Choose how the interface looks to you
           </CardDescription>
         </CardHeader>
@@ -468,7 +481,7 @@ const Profile: React.FC = () => {
           {['dark', 'light', 'auto'].map((mode, index) => (
             <div key={mode} className={index > 0 ? 'mt-3' : ''}>
               <label className="group cursor-pointer block">
-                <div className="flex items-center gap-4 p-4 border border-primary/20 rounded-xl hover:border-primary/40 hover:bg-primary/5 transition-all duration-200">
+                <div className="flex items-center gap-4 p-4 border border-zinc-700/50 rounded-xl hover:border-zinc-600/50 hover:bg-zinc-800/30 transition-all duration-200">
                   <input
                     type="radio"
                     name="colorMode"
@@ -478,10 +491,10 @@ const Profile: React.FC = () => {
                     className="w-4 h-4 text-primary focus:ring-primary/30"
                   />
                   <div className="flex-1">
-                    <div className="font-medium text-foreground capitalize">
+                    <div className="font-medium text-white capitalize">
                       {mode}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-gray-300">
                       {mode === 'dark' && 'Dark theme for reduced eye strain'}
                       {mode === 'light' && 'Light theme for better visibility'}
                       {mode === 'auto' && 'Follows your system preference'}
@@ -497,13 +510,13 @@ const Profile: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Card className="border border-primary/20 bg-gradient-to-br from-primary/8 via-primary/5 to-background/70 backdrop-blur-xl shadow-xl shadow-primary/20">
+      <Card className="border border-zinc-800/50 bg-zinc-900/50 backdrop-blur-xl shadow-xl shadow-black/20">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
+          <CardTitle className="text-xl font-semibold text-white flex items-center gap-2">
             <Settings className="w-5 h-5 text-primary" />
             Chat Font
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-gray-300">
             Choose the font family for chat messages
           </CardDescription>
         </CardHeader>
@@ -515,7 +528,7 @@ const Profile: React.FC = () => {
           ].map((font, index) => (
             <div key={font.value} className={index > 0 ? 'mt-3' : ''}>
               <label className="group cursor-pointer block">
-                <div className="flex items-center gap-4 p-4 border border-primary/20 rounded-xl hover:border-primary/40 hover:bg-primary/5 transition-all duration-200">
+                <div className="flex items-center gap-4 p-4 border border-zinc-700/50 rounded-xl hover:border-zinc-600/50 hover:bg-zinc-800/30 transition-all duration-200">
                   <input
                     type="radio"
                     name="chatFont"
@@ -525,10 +538,10 @@ const Profile: React.FC = () => {
                     className="w-4 h-4 text-primary focus:ring-primary/30"
                   />
                   <div className="flex-1">
-                    <div className="font-medium text-foreground">
+                    <div className="font-medium text-white">
                       {font.label}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-gray-300">
                       {font.desc}
                     </div>
                   </div>
@@ -547,13 +560,13 @@ const Profile: React.FC = () => {
   const renderAccountSection = () => (
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border border-primary/20 bg-gradient-to-br from-primary/8 via-primary/5 to-background/70 backdrop-blur-xl shadow-xl shadow-primary/20">
+        <Card className="border border-zinc-800/50 bg-zinc-900/50 backdrop-blur-xl shadow-xl shadow-black/20">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-gradient-to-br from-primary/30 via-primary/20 to-primary/10 rounded-xl">
                 <Check className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="font-semibold text-foreground">Account Status</h3>
+              <h3 className="font-semibold text-white">Account Status</h3>
             </div>
             <Badge className="bg-gradient-to-r from-green-500/20 to-green-600/20 text-green-400 border-green-500/30">
               {user?.isVerified ? 'Verified' : 'Active'}
@@ -561,30 +574,30 @@ const Profile: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="border border-primary/20 bg-gradient-to-br from-primary/8 via-primary/5 to-background/70 backdrop-blur-xl shadow-xl shadow-primary/20">
+        <Card className="border border-zinc-800/50 bg-zinc-900/50 backdrop-blur-xl shadow-xl shadow-black/20">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-gradient-to-br from-primary/30 via-primary/20 to-primary/10 rounded-xl">
                 <Calendar className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="font-semibold text-foreground">Total Conversations</h3>
+              <h3 className="font-semibold text-white">Total Conversations</h3>
             </div>
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-2xl font-bold text-white">
               {user?.totalConversations || 0}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border border-primary/20 bg-gradient-to-br from-primary/8 via-primary/5 to-background/70 backdrop-blur-xl shadow-xl shadow-primary/20">
+        <Card className="border border-zinc-800/50 bg-zinc-900/50 backdrop-blur-xl shadow-xl shadow-black/20">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-gradient-to-br from-primary/30 via-primary/20 to-primary/10 rounded-xl">
                 <Zap className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="font-semibold text-foreground">Monthly Usage</h3>
+              <h3 className="font-semibold text-white">Monthly Usage</h3>
             </div>
             <div className="space-y-2">
-              <div className="text-2xl font-bold text-foreground">
+              <div className="text-2xl font-bold text-white">
                 {user?.promptsUsedThisMonth || 0} / {user?.monthlyPromptLimit === -1 ? '∞' : (user?.monthlyPromptLimit || 10)}
               </div>
               {user?.monthlyPromptLimit !== -1 && (
@@ -598,105 +611,224 @@ const Profile: React.FC = () => {
         </Card>
       </div>
 
-      {showPasswordChange && (
-        <Card className="border border-primary/20 bg-gradient-to-br from-primary/8 via-primary/5 to-background/70 backdrop-blur-xl shadow-xl shadow-primary/20">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
-              <Lock className="w-5 h-5 text-primary" />
-              Change Password
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Current Password</label>
-              <input
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full p-3 bg-background/50 border border-primary/20 rounded-xl text-foreground focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                placeholder="Enter current password"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">New Password</label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full p-3 bg-background/50 border border-primary/20 rounded-xl text-foreground focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                placeholder="Enter new password"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Confirm New Password</label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full p-3 bg-background/50 border border-primary/20 rounded-xl text-foreground focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                placeholder="Confirm new password"
-              />
-            </div>
-            <div className="flex gap-3">
-              <Button 
-                className="bg-gradient-to-r from-primary via-primary to-primary/90 hover:from-primary/90 hover:via-primary hover:to-primary text-white"
-                onClick={handlePasswordChange}
-                disabled={isSaving}
-              >
-                {isSaving ? 'Changing...' : 'Change Password'}
-              </Button>
-              <Button 
-                variant="outline"
-                className="border-primary/20 text-muted-foreground hover:bg-primary/5 hover:border-primary/40"
-                onClick={() => {
-                  setShowPasswordChange(false);
-                  setCurrentPassword('');
-                  setNewPassword('');
-                  setConfirmPassword('');
-                  setError('');
-                }}
-              >
-                Cancel
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
-      <Card className="border border-primary/20 bg-gradient-to-br from-primary/8 via-primary/5 to-background/70 backdrop-blur-xl shadow-xl shadow-primary/20">
+      <Card className="border border-zinc-800/50 bg-zinc-900/50 backdrop-blur-xl shadow-xl shadow-black/20">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
+          <CardTitle className="text-xl font-semibold text-white flex items-center gap-2">
             <Settings className="w-5 h-5 text-primary" />
             Account Actions
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-3">
-            <Button 
-              variant="outline"
-              className="border-primary/20 text-foreground hover:bg-primary/5 hover:border-primary/40"
-              onClick={() => setShowPasswordChange(!showPasswordChange)}
-            >
-              <Lock className="w-4 h-4 mr-2" />
-              {showPasswordChange ? 'Cancel Password Change' : 'Change Password'}
-            </Button>
-            <Button 
-              variant="outline"
-              className="border-primary/20 text-foreground hover:bg-primary/5 hover:border-primary/40"
-              onClick={handleExportData}
-              disabled={isLoading}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              {isLoading ? 'Exporting...' : 'Export Data'}
-            </Button>
-            <Button 
-              variant="outline"
-              className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:border-red-500"
-              onClick={handleLogout}
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
+            
+            {/* Password Change Dialog */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="outline"
+                  className="border-zinc-700 bg-zinc-800/50 text-gray-100 hover:bg-zinc-700 hover:text-white hover:border-zinc-600"
+                >
+                  <Lock className="w-4 h-4 mr-2" />
+                  Change Password
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="border-zinc-800/50 bg-zinc-900/50 text-white backdrop-blur-xl">
+                <DialogHeader>
+                  <DialogTitle className="text-white">Change Password</DialogTitle>
+                  <DialogDescription className="text-gray-300">
+                    Enter your current password and choose a new one. Make sure it's at least 6 characters long.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-white">Current Password</label>
+                    <input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      className="w-full p-3 bg-zinc-800/50 border border-zinc-700/50 rounded-xl text-white focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                      placeholder="Enter current password"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-white">New Password</label>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full p-3 bg-zinc-800/50 border border-zinc-700/50 rounded-xl text-white focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                      placeholder="Enter new password"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-white">Confirm New Password</label>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full p-3 bg-zinc-800/50 border border-zinc-700/50 rounded-xl text-white focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                      placeholder="Confirm new password"
+                    />
+                  </div>
+                  
+                  <InnerDialog>
+                    <InnerDialogTrigger asChild>
+                      <Button 
+                        className="w-full bg-gradient-to-r from-zinc-700 via-zinc-800 to-zinc-900 hover:from-zinc-800 hover:via-zinc-900 hover:to-black text-white shadow-lg"
+                        disabled={isSaving || !currentPassword || !newPassword || !confirmPassword}
+                      >
+                        {isSaving ? 'Changing...' : 'Change Password'}
+                      </Button>
+                    </InnerDialogTrigger>
+                    <InnerDialogContent className="border-zinc-800/50 bg-zinc-900/50 text-white backdrop-blur-xl">
+                      <InnerDialogHeader>
+                        <InnerDialogTitle className="text-white">Confirm Password Change</InnerDialogTitle>
+                        <InnerDialogDescription className="text-gray-300">
+                          Are you sure you want to change your password? You'll need to log in again after this change.
+                        </InnerDialogDescription>
+                      </InnerDialogHeader>
+                      
+                      <div className="flex gap-3 mt-6">
+                        <Button 
+                          onClick={handlePasswordChange}
+                          className="flex-1 bg-gradient-to-r from-zinc-700 via-zinc-800 to-zinc-900 hover:from-zinc-800 hover:via-zinc-900 hover:to-black text-white shadow-lg"
+                          disabled={isSaving}
+                        >
+                          {isSaving ? 'Changing...' : 'Confirm Change'}
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          className="flex-1 border-zinc-700 bg-zinc-800/50 text-gray-100 hover:bg-zinc-700 hover:text-white hover:border-zinc-600"
+                          onClick={() => {
+                            setCurrentPassword('');
+                            setNewPassword('');
+                            setConfirmPassword('');
+                            setError('');
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </InnerDialogContent>
+                  </InnerDialog>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Export Data Dialog */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="outline"
+                  className="border-zinc-700 bg-zinc-800/50 text-gray-100 hover:bg-zinc-700 hover:text-white hover:border-zinc-600"
+                  disabled={isLoading}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Data
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="border-zinc-800/50 bg-zinc-900/50 text-white backdrop-blur-xl">
+                <DialogHeader>
+                  <DialogTitle className="text-white">Export Your Data</DialogTitle>
+                  <DialogDescription className="text-gray-300">
+                    Download all your personal data including profile information, conversation history, and settings.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-4">
+                  <div className="bg-zinc-800/30 p-4 rounded-lg">
+                    <h4 className="text-white font-medium mb-2">What's included:</h4>
+                    <ul className="text-gray-300 text-sm space-y-1">
+                      <li>• Profile information and settings</li>
+                      <li>• Chat history and conversations</li>
+                      <li>• Usage statistics</li>
+                      <li>• Account preferences</li>
+                    </ul>
+                  </div>
+                  
+                  <InnerDialog>
+                    <InnerDialogTrigger asChild>
+                      <Button 
+                        className="w-full bg-gradient-to-r from-zinc-700 via-zinc-800 to-zinc-900 hover:from-zinc-800 hover:via-zinc-900 hover:to-black text-white shadow-lg"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? 'Preparing Export...' : 'Start Export'}
+                      </Button>
+                    </InnerDialogTrigger>
+                    <InnerDialogContent className="border-zinc-800/50 bg-zinc-900/50 text-white backdrop-blur-xl">
+                      <InnerDialogHeader>
+                        <InnerDialogTitle className="text-white">Confirm Data Export</InnerDialogTitle>
+                        <InnerDialogDescription className="text-gray-300">
+                          Your data export will be prepared and downloaded automatically. This may take a few moments.
+                        </InnerDialogDescription>
+                      </InnerDialogHeader>
+                      
+                      <div className="flex gap-3 mt-6">
+                        <Button 
+                          onClick={handleExportData}
+                          className="flex-1 bg-gradient-to-r from-zinc-700 via-zinc-800 to-zinc-900 hover:from-zinc-800 hover:via-zinc-900 hover:to-black text-white shadow-lg"
+                          disabled={isLoading}
+                        >
+                          {isLoading ? 'Exporting...' : 'Confirm Export'}
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          className="flex-1 border-zinc-700 bg-zinc-800/50 text-gray-100 hover:bg-zinc-700 hover:text-white hover:border-zinc-600"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </InnerDialogContent>
+                  </InnerDialog>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Logout Dialog */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="outline"
+                  className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:border-red-500"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="border-zinc-800/50 bg-zinc-900/50 text-white backdrop-blur-xl">
+                <DialogHeader>
+                  <DialogTitle className="text-white">Confirm Logout</DialogTitle>
+                  <DialogDescription className="text-gray-300">
+                    Are you sure you want to log out? You'll need to sign in again to access your account.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-4">
+                  <div className="bg-zinc-800/30 p-4 rounded-lg">
+                    <p className="text-gray-300 text-sm">
+                      Your data and settings are automatically saved and will be available when you sign back in.
+                    </p>
+                  </div>
+                  
+                  <div className="flex gap-3">
+                    <Button 
+                      onClick={handleLogout}
+                      className="flex-1 bg-gradient-to-r from-red-800 via-red-900 to-red-950 hover:from-red-900 hover:via-red-950 hover:to-black text-white shadow-lg"
+                    >
+                      Yes, Logout
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      className="flex-1 border-zinc-700 bg-zinc-800/50 text-gray-100 hover:bg-zinc-700 hover:text-white hover:border-zinc-600"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardContent>
       </Card>
@@ -723,25 +855,25 @@ const Profile: React.FC = () => {
 
     return (
       <div className="space-y-6">
-        <Card className="border border-primary/20 bg-gradient-to-br from-primary/8 via-primary/5 to-background/70 backdrop-blur-xl shadow-xl shadow-primary/20">
+        <Card className="border border-zinc-800/50 bg-zinc-900/50 backdrop-blur-xl shadow-xl shadow-black/20">
           <CardHeader>
-            <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
+            <CardTitle className="text-xl font-semibold text-white flex items-center gap-2">
               <Shield className="w-5 h-5 text-primary" />
               Privacy Settings
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-gray-300">
               Control how your data is used and stored
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="flex items-center justify-between p-4 border border-primary/20 rounded-xl hover:bg-primary/5 transition-colors duration-200">
+            <div className="flex items-center justify-between p-4 border border-zinc-700/50 rounded-xl hover:bg-zinc-800/30 transition-colors duration-200">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-gradient-to-br from-primary/30 via-primary/20 to-primary/10 rounded-xl">
                   <Eye className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">Data Collection</h3>
-                  <p className="text-sm text-muted-foreground">Allow collection of usage data to improve service</p>
+                  <h3 className="font-semibold text-white">Data Collection</h3>
+                  <p className="text-sm text-gray-300">Allow collection of usage data to improve service</p>
                 </div>
               </div>
               <ToggleSwitch 
@@ -750,14 +882,14 @@ const Profile: React.FC = () => {
               />
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-primary/20 rounded-xl hover:bg-primary/5 transition-colors duration-200">
+            <div className="flex items-center justify-between p-4 border border-zinc-700/50 rounded-xl hover:bg-zinc-800/30 transition-colors duration-200">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-gradient-to-br from-primary/30 via-primary/20 to-primary/10 rounded-xl">
                   <Calendar className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">Chat History</h3>
-                  <p className="text-sm text-muted-foreground">Save conversation history for future reference</p>
+                  <h3 className="font-semibold text-white">Chat History</h3>
+                  <p className="text-sm text-gray-300">Save conversation history for future reference</p>
                 </div>
               </div>
               <ToggleSwitch 
@@ -766,14 +898,14 @@ const Profile: React.FC = () => {
               />
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-primary/20 rounded-xl hover:bg-primary/5 transition-colors duration-200">
+            <div className="flex items-center justify-between p-4 border border-zinc-700/50 rounded-xl hover:bg-zinc-800/30 transition-colors duration-200">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-gradient-to-br from-primary/30 via-primary/20 to-primary/10 rounded-xl">
                   <Settings className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">Analytics</h3>
-                  <p className="text-sm text-muted-foreground">Share anonymous usage analytics</p>
+                  <h3 className="font-semibold text-white">Analytics</h3>
+                  <p className="text-sm text-gray-300">Share anonymous usage analytics</p>
                 </div>
               </div>
               <ToggleSwitch 
@@ -782,14 +914,14 @@ const Profile: React.FC = () => {
               />
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-primary/20 rounded-xl hover:bg-primary/5 transition-colors duration-200">
+            <div className="flex items-center justify-between p-4 border border-zinc-700/50 rounded-xl hover:bg-zinc-800/30 transition-colors duration-200">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-gradient-to-br from-primary/30 via-primary/20 to-primary/10 rounded-xl">
                   <Bell className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">Marketing Emails</h3>
-                  <p className="text-sm text-muted-foreground">Receive updates about new features and improvements</p>
+                  <h3 className="font-semibold text-white">Marketing Emails</h3>
+                  <p className="text-sm text-gray-300">Receive updates about new features and improvements</p>
                 </div>
               </div>
               <ToggleSwitch 
@@ -805,80 +937,62 @@ const Profile: React.FC = () => {
 
   const renderBillingSection = () => (
     <div className="space-y-8">
-      <Card className="border border-primary/20 bg-gradient-to-br from-primary/8 via-primary/5 to-background/70 backdrop-blur-xl shadow-xl shadow-primary/20">
+      <Card className="border border-zinc-800/50 bg-zinc-900/50 backdrop-blur-xl shadow-xl shadow-black/20">
         <CardContent className="p-6">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-gradient-to-br from-primary/30 via-primary/20 to-primary/10 rounded-xl">
               <CreditCard className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-foreground">
+              <h3 className="text-xl font-semibold text-white">
                 Current Plan: {billingPlans.find(p => p.id === currentPlan)?.name}
               </h3>
-              <p className="text-muted-foreground">Manage your subscription</p>
+              <p className="text-gray-300">Manage your subscription</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {billingPlans.map((plan) => (
-          <Card 
-            key={plan.id} 
-            className={`group cursor-pointer transition-all duration-500 text-center backdrop-blur-xl relative overflow-hidden hover:-translate-y-2 hover:scale-105 ${
-              currentPlan === plan.id 
-                ? 'border-primary/60 shadow-2xl shadow-primary/50 bg-gradient-to-br from-primary/15 via-primary/10 to-background/80' 
-                : 'border-primary/20 shadow-xl shadow-primary/20 bg-gradient-to-br from-primary/8 via-primary/5 to-background/70'
-            }`}
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/5 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <CardHeader className="relative z-10">
-              <div className="mx-auto mb-4 p-4 bg-gradient-to-br from-primary/30 via-primary/20 to-primary/10 rounded-2xl w-fit shadow-lg group-hover:shadow-primary/40 group-hover:scale-110 transition-all duration-500">
-                <CreditCard className="w-8 h-8 text-primary" />
-              </div>
-              <CardTitle className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors duration-300">
-                {plan.name}
-              </CardTitle>
-              <div className="text-3xl font-black mb-2 bg-gradient-to-br from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
-                {plan.price}
-              </div>
-              <CardDescription className="text-sm text-muted-foreground group-hover:text-muted-foreground/90 transition-colors duration-300">
-                {plan.prompts}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="space-y-3 mb-6">
-                {plan.features.map((feature, index) => (
-                  <div key={index} className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <div className="w-2 h-2 bg-gradient-to-r from-primary to-primary/80 rounded-full flex-shrink-0"></div>
-                    <span>{feature}</span>
-                  </div>
-                ))}
-              </div>
-              <Button 
-                className={`w-full transition-all duration-300 ${
-                  currentPlan === plan.id 
-                    ? 'bg-muted text-muted-foreground cursor-default' 
-                    : 'bg-gradient-to-r from-primary via-primary to-primary/90 hover:from-primary/90 hover:via-primary hover:to-primary text-white hover:scale-105'
-                }`}
-                onClick={() => currentPlan !== plan.id && setCurrentPlan(plan.id)}
-                disabled={currentPlan === plan.id}
-              >
-                {currentPlan === plan.id ? (
-                  <>
-                    <Check className="w-4 h-4 mr-2" />
-                    Current Plan
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-4 h-4 mr-2" />
-                    Upgrade
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="relative -mx-4 lg:-mx-8">
+        <Pricing 
+          plans={[
+            {
+              name: 'Free',
+              price: '0',
+              yearlyPrice: '0', 
+              period: 'month',
+              features: ['10 AI conversations per day', 'Basic chat modes', 'Community support', 'Standard response time'],
+              description: 'Perfect for trying out the platform',
+              buttonText: currentPlan === 'free' ? 'Current Plan' : 'Get Started',
+              href: '#',
+              isPopular: false,
+            },
+            {
+              name: 'Pro',
+              price: '10',
+              yearlyPrice: '8',
+              period: 'month', 
+              features: ['100 conversations per day', 'Priority response time', 'Email support', 'Advanced chat modes', 'File attachments'],
+              description: 'Best for regular users',
+              buttonText: currentPlan === 'pro' ? 'Current Plan' : 'Upgrade to Pro',
+              href: '#',
+              isPopular: true,
+            },
+            {
+              name: 'Max',
+              price: '20',
+              yearlyPrice: '16',
+              period: 'month',
+              features: ['Unlimited conversations', 'Instant response time', '24/7 priority support', 'API access', 'Team collaboration', 'Custom integrations'],
+              description: 'For power users and teams',
+              buttonText: currentPlan === 'max' ? 'Current Plan' : 'Upgrade to Max', 
+              href: '#',
+              isPopular: false,
+            },
+          ]}
+          title="Choose Your Plan"
+          description="All plans include access to our AI platform and core features.\nUpgrade anytime to unlock more conversations and premium support."
+        />
       </div>
     </div>
   );
@@ -896,24 +1010,24 @@ const Profile: React.FC = () => {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen relative overflow-hidden bg-background text-foreground font-inter">
-        {/* Background decorations */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-primary/2 -z-10" />
-        <div className="absolute inset-0 bg-[radial-gradient(2px_2px_at_20px_30px,rgba(78,60,250,0.3),transparent),radial-gradient(2px_2px_at_40px_70px,rgba(78,60,250,0.2),transparent)] bg-repeat bg-[length:150px_150px] pointer-events-none" />
+      <div className="min-h-screen relative overflow-hidden bg-zinc-950 text-white font-inter">
+        {/* Background decorations - matching MainHome */}
+        <div className="absolute inset-0 bg-gradient-to-br from-background/10 via-zinc-950 to-background/10 -z-10" />
+        <div className="absolute inset-0 bg-[radial-gradient(2px_2px_at_20px_30px,hsla(0,0%,85%,0.1),transparent),radial-gradient(2px_2px_at_40px_70px,hsla(0,0%,75%,0.05),transparent)] bg-repeat bg-[length:150px_150px] pointer-events-none opacity-40" />
         
         <div className="flex min-h-screen">
           {/* Desktop Sidebar */}
-          <div className="hidden lg:flex w-80 bg-gradient-to-br from-primary/8 via-primary/5 to-background/70 border-r border-primary/20 backdrop-blur-xl flex-col">
-            <div className="p-6 border-b border-primary/20">
+          <div className="hidden lg:flex w-80 bg-zinc-900/50 border-r border-zinc-800/50 backdrop-blur-xl flex-col">
+            <div className="p-6 border-b border-zinc-800/50">
               <Button 
                 variant="ghost"
-                className="mb-4 text-muted-foreground hover:text-foreground hover:bg-primary/10"
+                className="mb-4 text-gray-300 hover:text-white hover:bg-zinc-800/50"
                 onClick={() => navigate('/')}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
               </Button>
-              <h1 className="text-3xl font-black bg-gradient-to-br from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-black bg-gradient-to-br from-white via-gray-100 to-gray-200 bg-clip-text text-transparent">
                 Settings
               </h1>
             </div>
@@ -923,15 +1037,15 @@ const Profile: React.FC = () => {
                   key={section.id}
                   className={`w-full flex items-center gap-3 p-4 rounded-xl text-left transition-all duration-200 ${
                     activeSection === section.id
-                      ? 'bg-gradient-to-r from-primary/20 via-primary/15 to-primary/10 border border-primary/30 text-primary shadow-lg shadow-primary/20'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-primary/5 border border-transparent'
+                      ? 'bg-zinc-800/60 border border-zinc-700/50 text-white shadow-lg shadow-black/20'
+                      : 'text-zinc-300 hover:text-white hover:bg-zinc-800/30 border border-transparent'
                   }`}
                   onClick={() => handleSectionChange(section.id as any)}
                 >
                   <div className={`p-2 rounded-lg transition-colors duration-200 ${
                     activeSection === section.id
-                      ? 'bg-primary/20 text-primary'
-                      : 'bg-muted/50 text-muted-foreground'
+                      ? 'bg-white/10 text-white'
+                      : 'bg-zinc-700/50 text-zinc-300'
                   }`}>
                     {section.icon}
                   </div>
@@ -951,12 +1065,12 @@ const Profile: React.FC = () => {
               />
               
               {/* Modal Content */}
-              <div className="relative w-80 max-w-[80vw] bg-gradient-to-br from-primary/8 via-primary/5 to-background/90 border-r border-primary/20 backdrop-blur-xl flex flex-col animate-in slide-in-from-left duration-300">
-                <div className="p-6 border-b border-primary/20">
+              <div className="relative w-80 max-w-[80vw] bg-zinc-900/90 border-r border-zinc-800/50 backdrop-blur-xl flex flex-col animate-in slide-in-from-left duration-300">
+                <div className="p-6 border-b border-zinc-800/50">
                   <div className="flex items-center justify-between mb-4">
                     <Button 
                       variant="ghost"
-                      className="text-muted-foreground hover:text-foreground hover:bg-primary/10"
+                      className="text-gray-300 hover:text-white hover:bg-zinc-800/50"
                       onClick={() => navigate('/')}
                     >
                       <ArrowLeft className="w-4 h-4 mr-2" />
@@ -965,13 +1079,13 @@ const Profile: React.FC = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-muted-foreground hover:text-foreground hover:bg-primary/10"
+                      className="text-gray-300 hover:text-white hover:bg-zinc-800/50"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <X className="w-5 h-5" />
                     </Button>
                   </div>
-                  <h1 className="text-2xl font-black bg-gradient-to-br from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
+                  <h1 className="text-2xl font-black bg-gradient-to-br from-white via-gray-100 to-gray-200 bg-clip-text text-transparent">
                     Settings
                   </h1>
                 </div>
@@ -981,15 +1095,15 @@ const Profile: React.FC = () => {
                       key={section.id}
                       className={`w-full flex items-center gap-3 p-4 rounded-xl text-left transition-all duration-200 ${
                         activeSection === section.id
-                          ? 'bg-gradient-to-r from-primary/20 via-primary/15 to-primary/10 border border-primary/30 text-primary shadow-lg shadow-primary/20'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-primary/5 border border-transparent'
+                          ? 'bg-zinc-800/60 border border-zinc-700/50 text-white shadow-lg shadow-black/20'
+                          : 'text-zinc-300 hover:text-white hover:bg-zinc-800/30 border border-transparent'
                       }`}
                       onClick={() => handleSectionChange(section.id as any)}
                     >
                       <div className={`p-2 rounded-lg transition-colors duration-200 ${
                         activeSection === section.id
-                          ? 'bg-primary/20 text-primary'
-                          : 'bg-muted/50 text-muted-foreground'
+                          ? 'bg-white/10 text-white'
+                          : 'bg-zinc-700/50 text-zinc-300'
                       }`}>
                         {section.icon}
                       </div>
@@ -1004,21 +1118,21 @@ const Profile: React.FC = () => {
           {/* Main Content */}
           <div className="flex-1 flex flex-col min-w-0">
             {/* Mobile Header */}
-            <div className="lg:hidden border-b border-primary/20 bg-gradient-to-r from-background/80 to-primary/5 backdrop-blur-xl p-4">
+            <div className="lg:hidden border-b border-zinc-800/50 bg-zinc-900/80 backdrop-blur-xl p-4">
               <div className="flex items-center gap-4">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-muted-foreground hover:text-foreground hover:bg-primary/10"
+                  className="text-gray-300 hover:text-white hover:bg-zinc-800/50"
                   onClick={() => setIsMobileMenuOpen(true)}
                 >
                   <Menu className="w-5 h-5" />
                 </Button>
                 <div className="flex-1 min-w-0">
-                  <h1 className="text-xl font-bold text-foreground truncate">
+                  <h1 className="text-xl font-bold text-white truncate">
                     {sections.find(s => s.id === activeSection)?.name}
                   </h1>
-                  <p className="text-sm text-muted-foreground truncate">
+                  <p className="text-sm text-gray-300 truncate">
                     Manage your settings
                   </p>
                 </div>
@@ -1026,11 +1140,11 @@ const Profile: React.FC = () => {
             </div>
 
             {/* Desktop Header */}
-            <div className="hidden lg:block border-b border-primary/20 bg-gradient-to-r from-background/80 to-primary/5 backdrop-blur-xl p-8">
-              <h1 className="text-4xl font-black bg-gradient-to-br from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent mb-2">
+            <div className="hidden lg:block border-b border-zinc-800/50 bg-zinc-900/80 backdrop-blur-xl p-8">
+              <h1 className="text-4xl font-black bg-gradient-to-br from-white via-gray-100 to-gray-200 bg-clip-text text-transparent mb-2">
                 {sections.find(s => s.id === activeSection)?.name}
               </h1>
-              <p className="text-xl text-muted-foreground">
+              <p className="text-xl text-gray-300">
                 Manage your account settings and preferences
               </p>
             </div>
@@ -1058,11 +1172,11 @@ const Profile: React.FC = () => {
                 </Card>
               )}
               {isLoading && (
-                <Card className="border-primary/20 bg-primary/5">
+                <Card className="border-zinc-800/50 bg-zinc-900/50">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3 text-primary">
                       <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                      <span className="text-sm lg:text-base">Loading profile data...</span>
+                      <span className="text-sm lg:text-base text-white">Loading profile data...</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -1076,10 +1190,10 @@ const Profile: React.FC = () => {
 
             {/* Actions */}
             {(activeSection === 'profile' || activeSection === 'appearance' || activeSection === 'privacy' || activeSection === 'billing') && (
-              <div className="border-t border-primary/20 bg-gradient-to-r from-background/80 to-primary/5 backdrop-blur-xl p-4 lg:p-8">
+              <div className="border-t border-zinc-800/50 bg-zinc-900/80 backdrop-blur-xl p-4 lg:p-8">
                 <div className="flex flex-col sm:flex-row gap-3 lg:gap-4">
                   <Button 
-                    className="bg-gradient-to-r from-primary via-primary to-primary/90 hover:from-primary/90 hover:via-primary hover:to-primary text-white px-6 lg:px-8 py-3 font-semibold"
+                    className="bg-gradient-to-r from-zinc-700 via-zinc-800 to-zinc-900 hover:from-zinc-800 hover:via-zinc-900 hover:to-black text-white px-6 lg:px-8 py-3 font-semibold shadow-lg"
                     onClick={handleSaveChanges}
                     disabled={isSaving || isLoading}
                   >
@@ -1088,7 +1202,7 @@ const Profile: React.FC = () => {
                   </Button>
                   <Button 
                     variant="outline"
-                    className="border-primary/20 text-muted-foreground hover:bg-primary/5 hover:border-primary/40 px-6 lg:px-8 py-3"
+                    className="border-zinc-700 bg-zinc-800/50 text-gray-100 hover:bg-zinc-700 hover:text-white hover:border-zinc-600 px-6 lg:px-8 py-3"
                     onClick={() => {
                       setError('');
                       setSuccessMessage('');

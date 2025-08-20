@@ -7,6 +7,8 @@ import { TooltipProvider } from '../components/ui/tooltip';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MessageCircle, BookOpen, Sparkles, Zap, Send, Clock } from 'lucide-react';
 
 type ChatMode = 'explain' | 'solve' | 'summary' | 'tests' | 'learning';
 
@@ -455,49 +457,130 @@ const Home: React.FC = () => {
 
   return (
     <TooltipProvider>
-      <div className="w-full min-h-screen relative overflow-hidden bg-[#0B0F1A] text-white font-sans">
-        {/* Background decorations */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#4E3CFA]/3 via-[#0B0F1A] to-[#4E3CFA]/1 -z-10" />
-        <div className="absolute inset-0 bg-[radial-gradient(2px_2px_at_20px_30px,rgba(78,60,250,0.3),transparent),radial-gradient(2px_2px_at_40px_70px,rgba(78,60,250,0.2),transparent)] bg-repeat bg-[length:150px_150px] pointer-events-none" />
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8 }}
+        className="w-full min-h-screen relative overflow-hidden bg-zinc-950 text-white font-inter"
+      >
+        {/* NADRKAN Background decorations */}
+        <div className="absolute inset-0 bg-gradient-to-br from-zinc-900/60 via-zinc-950 to-zinc-900/40 -z-10" />
+        <div className="absolute inset-0 bg-[radial-gradient(2px_2px_at_20px_30px,rgba(255,255,255,0.08),transparent),radial-gradient(2px_2px_at_40px_70px,rgba(255,255,255,0.04),transparent)] bg-repeat bg-[length:150px_150px] pointer-events-none opacity-50" />
+        
+        {/* Floating conversation elements animation */}
+        <div className="absolute inset-0 -z-5 pointer-events-none">
+          {[...Array(15)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute"
+              initial={{
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                scale: 0.3 + Math.random() * 0.7,
+              }}
+              animate={{
+                y: [null, Math.random() * -200, Math.random() * 200],
+                x: [null, Math.random() * -100, Math.random() * 100],
+                rotate: [0, Math.random() * 360],
+                opacity: [0.08, 0.20, 0.08],
+              }}
+              transition={{
+                duration: Math.random() * 25 + 20,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: Math.random() * 10,
+              }}
+            >
+              {[MessageCircle, BookOpen, Sparkles][i % 3] && 
+                React.createElement([MessageCircle, BookOpen, Sparkles][i % 3], {
+                  className: "w-5 h-5 text-white/15"
+                })
+              }
+            </motion.div>
+          ))}
+        </div>
         
         <div className="max-w-4xl mx-auto px-6 py-20 relative z-10">
-          {/* Hero Section */}
-          <div className="text-center mb-20 mt-16">
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-br from-white via-white/90 to-white/70 bg-clip-text text-transparent leading-tight mb-3">
-              {getPersonalizedGreeting()}
-            </h1>
-            <p className="text-base font-medium text-gray-400/80 max-w-xl mx-auto leading-relaxed">
+          {/* NADRKAN Hero Section */}
+          <motion.div 
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className="text-center mb-20 mt-16"
+          >
+            <motion.div
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, duration: 0.8, type: "spring", bounce: 0.4 }}
+            >
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-br from-white via-gray-100 to-gray-200 bg-clip-text text-transparent leading-tight mb-3 relative">
+                {getPersonalizedGreeting()}
+                <motion.div
+                  className="absolute -top-2 -right-10"
+                  animate={{ 
+                    rotate: [0, 15, -15, 0],
+                    scale: [1, 1.2, 1],
+                  }}
+                  transition={{ duration: 4, repeat: Infinity, delay: 1.5 }}
+                >
+                  <Sparkles className="w-8 h-8 text-blue-400/70" />
+                </motion.div>
+              </h1>
+            </motion.div>
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.6 }}
+              className="text-base font-medium text-gray-300 max-w-xl mx-auto leading-relaxed"
+            >
               {getPersonalizedSubtitle()}
-            </p>
-          </div>
+            </motion.p>
+          </motion.div>
 
-          {/* Input Section */}
-          <div className="mb-16 flex justify-center">
-            <div className={`w-full max-w-3xl bg-white/5 border backdrop-blur-xl rounded-2xl overflow-visible transition-all duration-300 hover:shadow-2xl relative ${
-              selectedMode === 'explain' ? 'border-[#4E3CFA]/20 shadow-xl shadow-[#4E3CFA]/20 hover:border-[#4E3CFA]/40' :
-              selectedMode === 'solve' ? 'border-orange-500/20 shadow-xl shadow-orange-500/20 hover:border-orange-500/40' :
-              selectedMode === 'summary' ? 'border-green-500/20 shadow-xl shadow-green-500/20 hover:border-green-500/40' :
-              selectedMode === 'tests' ? 'border-red-500/20 shadow-xl shadow-red-500/20 hover:border-red-500/40' :
-              selectedMode === 'learning' ? 'border-blue-500/20 shadow-xl shadow-blue-500/20 hover:border-blue-500/40' :
-              'border-[#4E3CFA]/20 shadow-xl shadow-[#4E3CFA]/20 hover:border-[#4E3CFA]/40'
-            }`}>
-              <textarea
+          {/* NADRKAN Input Section */}
+          <motion.div 
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.8 }}
+            className="mb-16 flex justify-center"
+          >
+            <motion.div 
+              className={`w-full max-w-3xl bg-zinc-900/50 border backdrop-blur-xl rounded-2xl overflow-visible transition-all duration-300 hover:shadow-2xl relative ${
+              selectedMode === 'explain' ? 'border-blue-500/30 shadow-xl shadow-blue-500/20 hover:border-blue-500/50' :
+              selectedMode === 'solve' ? 'border-orange-500/30 shadow-xl shadow-orange-500/20 hover:border-orange-500/50' :
+              selectedMode === 'summary' ? 'border-green-500/30 shadow-xl shadow-green-500/20 hover:border-green-500/50' :
+              selectedMode === 'tests' ? 'border-red-500/30 shadow-xl shadow-red-500/20 hover:border-red-500/50' :
+              selectedMode === 'learning' ? 'border-purple-500/30 shadow-xl shadow-purple-500/20 hover:border-purple-500/50' :
+              'border-zinc-700/50 shadow-xl shadow-black/20 hover:border-zinc-600/50'
+            }`}
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.8, duration: 0.6 }}
+              whileHover={{ scale: 1.02 }}>
+              <motion.textarea
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1, duration: 0.6 }}
                 className="w-full min-h-[120px] p-6 bg-transparent text-white placeholder:text-gray-400 resize-none outline-none text-lg leading-relaxed rounded-tl-2xl rounded-tr-2xl"
                 placeholder="Postavite pitanje ili opišite problem koji vas zanima..."
                 value={message}
                 onChange={handleInputChange}
                 onKeyPress={handleKeyPress}
               />
-              <div className="flex justify-between items-center p-6 bg-white/5 border-t border-white/10 gap-4 flex-wrap rounded-b-2xl">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.2, duration: 0.6 }}
+                className="flex justify-between items-center p-6 bg-zinc-800/30 border-t border-zinc-700/30 gap-4 flex-wrap rounded-b-2xl"
+              >
                 <div className="flex items-center gap-3 flex-wrap">
-                  <button 
-                    className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:border-white/20 rounded-xl text-gray-400 hover:text-white transition-all duration-300 min-w-32 max-w-48"
+                  <motion.button 
+                    className="flex items-center gap-2 px-4 py-2 bg-zinc-800/50 border border-zinc-700/50 hover:border-zinc-600/50 rounded-xl text-gray-400 hover:text-white transition-all duration-300 min-w-32 max-w-48"
                     onClick={handleOpenSubjectModal}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-                      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-                    </svg>
+                    <BookOpen className="w-4 h-4" />
                     {selectedContent ? (
                       <span className="text-sm font-medium truncate">
                         {selectedContent.subject.name} ({selectedContent.lessons.length} lekcija)
@@ -505,254 +588,424 @@ const Home: React.FC = () => {
                     ) : (
                       <span className="text-sm font-medium">Izaberi predmet</span>
                     )}
-                  </button>
+                  </motion.button>
                   <div className="relative">
-                    <button 
+                    <motion.button 
                       ref={modeButtonRef}
-                      className={`flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:border-[#4E3CFA]/30 rounded-xl text-white font-medium transition-all duration-300 min-w-24 ${showModeDropdown ? 'bg-[#4E3CFA]/10 border-[#4E3CFA]/30' : ''}`}
+                      className={`flex items-center gap-2 px-4 py-2 bg-zinc-800/50 border border-zinc-700/50 hover:border-blue-500/50 rounded-xl text-white font-medium transition-all duration-300 min-w-24 ${showModeDropdown ? 'bg-blue-500/20 border-blue-500/50' : ''}`}
                       onClick={handleModeButtonClick}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                     >
                       <span className="text-sm">{selectedModeConfig?.name}</span>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <motion.svg 
+                        width="12" 
+                        height="12" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2"
+                        animate={{ rotate: showModeDropdown ? 180 : 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
                         <polyline points="6,9 12,15 18,9"/>
-                      </svg>
-                    </button>
+                      </motion.svg>
+                    </motion.button>
                   </div>
                   
-                  <button className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 hover:border-[#4E3CFA]/30 rounded-lg text-gray-400 hover:text-white transition-all duration-300">
+                  <motion.button 
+                    className="flex items-center gap-2 px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 hover:border-zinc-600/50 rounded-lg text-gray-400 hover:text-white transition-all duration-300"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
                     </svg>
                     <span className="text-sm font-medium">Attachment</span>
-                  </button>
-                  <button className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 hover:border-[#4E3CFA]/30 rounded-lg text-gray-400 hover:text-white transition-all duration-300">
+                  </motion.button>
+                  <motion.button 
+                    className="flex items-center gap-2 px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 hover:border-zinc-600/50 rounded-lg text-gray-400 hover:text-white transition-all duration-300"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                       <circle cx="8.5" cy="8.5" r="1.5"/>
                       <polyline points="21,15 16,10 5,21"/>
                     </svg>
                     <span className="text-sm font-medium">Image</span>
-                  </button>
+                  </motion.button>
               </div>
                 <div className="flex items-center gap-4">
                   <span className="text-xs text-gray-400 whitespace-nowrap">{charCount}/{maxChars}</span>
-                  <button 
-                    className="w-11 h-11 bg-gradient-to-r from-[#4E3CFA] via-[#4E3CFA] to-[#4E3CFA]/90 hover:from-[#4E3CFA]/90 hover:via-[#4E3CFA] hover:to-[#4E3CFA] text-white rounded-xl transition-all duration-300 shadow-lg shadow-[#4E3CFA]/30 hover:shadow-[#4E3CFA]/50 hover:-translate-y-1 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center"
+                  <motion.button 
+                    className="w-11 h-11 bg-gradient-to-r from-zinc-700 via-zinc-800 to-zinc-900 hover:from-zinc-600 hover:via-zinc-700 hover:to-zinc-800 text-white rounded-xl transition-all duration-300 shadow-lg shadow-black/50 hover:shadow-black/70 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center"
                     onClick={handleSendMessage}
                     disabled={isInputEmpty || isCreatingChat}
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <line x1="22" y1="2" x2="11" y2="13"/>
-                      <polygon points="22,2 15,22 11,13 2,9 22,2"/>
-                    </svg>
-                  </button>
+                    <Send className="w-4 h-4" />
+                  </motion.button>
                 </div>
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
 
-          {/* Recent Chats */}
-          <div className="mb-16">
-            <h2 className="text-3xl font-bold text-center mb-12 bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
+          {/* NADRKAN Recent Chats */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.4, duration: 0.8 }}
+            className="mb-16"
+          >
+            <motion.h2 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 1.6, duration: 0.6 }}
+              className="text-3xl font-bold text-center mb-12 bg-gradient-to-br from-white via-gray-100 to-gray-200 bg-clip-text text-transparent"
+            >
               Nedavne konverzacije
-            </h2>
+            </motion.h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
               {isLoadingRecentChats ? (
-                <div className="col-span-full text-center py-20">
-                  <div className="w-8 h-8 border-2 border-[#4E3CFA]/30 border-t-[#4E3CFA] rounded-full animate-spin mx-auto mb-4"></div>
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="col-span-full text-center py-20"
+                >
+                  <motion.div 
+                    className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full mx-auto mb-4"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  />
                   <p className="text-gray-400">Učitavam nedavne konverzacije...</p>
-                </div>
+                </motion.div>
               ) : recentChats.length > 0 ? (
-                recentChats.map((chat) => (
-                  <Card 
-                    key={chat.id} 
-                    className="group cursor-pointer transition-all duration-700 text-left backdrop-blur-xl relative overflow-hidden hover:-translate-y-4 hover:scale-105 border-[#4E3CFA]/20 shadow-xl shadow-[#4E3CFA]/20 bg-gradient-to-br from-[#4E3CFA]/8 via-[#4E3CFA]/5 to-[#020117]/70 hover:shadow-[#4E3CFA]/40"
-                    onClick={() => navigate(`/chat/${chat.id}`)}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#4E3CFA]/0 via-[#4E3CFA]/5 to-[#4E3CFA]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-                    <CardContent className="p-6 relative z-10">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 bg-gradient-to-br from-[#4E3CFA]/30 via-[#4E3CFA]/20 to-[#4E3CFA]/10 rounded-xl w-fit shadow-lg group-hover:shadow-[#4E3CFA]/40 group-hover:scale-110 transition-all duration-500 relative">
-                          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-xl"></div>
-                          <svg className="w-4 h-4 text-[#4E3CFA] group-hover:text-[#4E3CFA]/90 transition-colors duration-300 relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                            <circle cx="12" cy="12" r="10"/>
-                            <polyline points="12,6 12,12 16,14"/>
-                          </svg>
+                <AnimatePresence>
+                  {recentChats.map((chat, index) => (
+                    <motion.div
+                      key={chat.id}
+                      initial={{ y: 50, opacity: 0, scale: 0.9 }}
+                      animate={{ y: 0, opacity: 1, scale: 1 }}
+                      exit={{ y: -50, opacity: 0, scale: 0.9 }}
+                      transition={{ delay: 1.8 + (index * 0.1), duration: 0.8, type: "spring" }}
+                      whileHover={{ 
+                        y: -10, 
+                        scale: 1.05,
+                        rotateX: 5,
+                      }}
+                    >
+                      <Card 
+                        className="group cursor-pointer transition-all duration-700 text-left backdrop-blur-xl relative overflow-hidden border-zinc-800/50 shadow-xl shadow-black/20 bg-gradient-to-br from-zinc-900/50 via-zinc-800/30 to-zinc-900/40"
+                        onClick={() => navigate(`/chat/${chat.id}`)}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                        
+                        {/* Animated glow effect */}
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 blur-xl"></div>
                         </div>
-                        <span className="text-xs text-gray-400">
-                          {formatChatTimestamp(chat.lastMessageAt)}
-                        </span>
-                      </div>
-                      <h3 className="text-lg font-bold text-white mb-3 group-hover:text-[#4E3CFA] transition-colors duration-300 line-clamp-2">
-                        {chat.title}
-                      </h3>
-                      {chat.subject && (
-                        <Badge variant="secondary" className="bg-[#4E3CFA]/20 text-[#4E3CFA] hover:bg-[#4E3CFA]/30 w-fit">
-                          {chat.subject.name} ({chat.subject.code})
-                        </Badge>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))
+                        
+                        <CardContent className="p-6 relative z-10">
+                          <div className="flex items-center gap-3 mb-4">
+                            <motion.div 
+                              className="p-2 bg-gradient-to-br from-zinc-700/50 via-zinc-600/30 to-zinc-700/20 rounded-xl w-fit shadow-lg relative"
+                              whileHover={{ scale: 1.15, rotate: 10 }}
+                              transition={{ type: "spring", stiffness: 300 }}
+                            >
+                              <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-xl"></div>
+                              <Clock className="w-4 h-4 text-blue-400 relative z-10" />
+                            </motion.div>
+                            <span className="text-xs text-gray-400">
+                              {formatChatTimestamp(chat.lastMessageAt)}
+                            </span>
+                          </div>
+                          <h3 className="text-lg font-bold text-white mb-3 group-hover:text-blue-300 transition-colors duration-300 line-clamp-2">
+                            {chat.title}
+                          </h3>
+                          {chat.subject && (
+                            <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 w-fit">
+                              {chat.subject.name} ({chat.subject.code})
+                            </Badge>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               ) : (
-                <div className="col-span-full text-center py-20">
-                  <div className="mx-auto mb-6 p-6 bg-gradient-to-br from-[#4E3CFA]/20 via-[#4E3CFA]/10 to-[#4E3CFA]/5 rounded-3xl w-fit shadow-lg relative">
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 2, duration: 0.8 }}
+                  className="col-span-full text-center py-20"
+                >
+                  <motion.div 
+                    className="mx-auto mb-6 p-6 bg-gradient-to-br from-zinc-800/50 via-zinc-700/30 to-zinc-800/20 rounded-3xl w-fit shadow-lg relative"
+                    animate={{ 
+                      scale: [1, 1.1, 1],
+                      rotate: [0, 5, -5, 0] 
+                    }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  >
                     <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-3xl"></div>
-                    <svg className="w-16 h-16 text-[#4E3CFA]/70 relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                    </svg>
-                  </div>
+                    <MessageCircle className="w-16 h-16 text-gray-400 relative z-10" />
+                  </motion.div>
                   <h3 className="text-2xl font-bold text-white mb-3">Još nema konverzacija</h3>
-                  <p className="text-lg text-gray-400 leading-relaxed max-w-md mx-auto">
+                  <p className="text-lg text-gray-300 leading-relaxed max-w-md mx-auto">
                     Započnite svoju prvю konverzaciju postavljanjem pitanja gore!
                   </p>
-                </div>
+                </motion.div>
               )}
-          </div>
+          </motion.div>
         </div>
 
-        {/* Subject/Lesson Selection Modal */}
-        {showSubjectModal && (
-          <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-5" onClick={handleCloseSubjectModal}>
-            <div className="bg-[#020117]/95 backdrop-blur-xl border border-[#4E3CFA]/20 rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl shadow-[#4E3CFA]/20" onClick={(e) => e.stopPropagation()}>
-              <div className="flex justify-between items-center p-6 border-b border-[#4E3CFA]/10">
-                <h2 className="text-xl font-bold bg-gradient-to-r from-white via-white/90 to-white/70 bg-clip-text text-transparent">
-                  {modalStep === 'subject' ? 'Izaberi predmet' : `Izaberi lekcije - ${tempSelectedSubject?.name}`}
-                </h2>
-                <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#4E3CFA]/30 transition-all duration-300 text-gray-400 hover:text-white" onClick={handleCloseSubjectModal}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18"/>
-                    <line x1="6" y1="6" x2="18" y2="18"/>
-                  </svg>
-                </button>
-              </div>
+        {/* NADRKAN Subject/Lesson Selection Modal */}
+        <AnimatePresence>
+          {showSubjectModal && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-5" 
+              onClick={handleCloseSubjectModal}
+            >
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0, y: 50 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 50 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="bg-zinc-950/95 backdrop-blur-xl border border-zinc-800/50 rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl shadow-black/50" 
+                onClick={(e) => e.stopPropagation()}
+              >
+                <motion.div 
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                  className="flex justify-between items-center p-6 border-b border-zinc-800/50"
+                >
+                  <h2 className="text-xl font-bold bg-gradient-to-br from-white via-gray-100 to-gray-200 bg-clip-text text-transparent">
+                    {modalStep === 'subject' ? 'Izaberi predmet' : `Izaberi lekcije - ${tempSelectedSubject?.name}`}
+                  </h2>
+                  <motion.button 
+                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-zinc-800/50 hover:bg-zinc-700/50 border border-zinc-700/50 hover:border-zinc-600/50 transition-all duration-300 text-gray-400 hover:text-white" 
+                    onClick={handleCloseSubjectModal}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="18" y1="6" x2="6" y2="18"/>
+                      <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                  </motion.button>
+                </motion.div>
 
-              <div className="flex-1 overflow-y-auto p-6">
-                {modalStep === 'subject' ? (
-                  <div className="space-y-3">
-                    {filteredSubjects.length > 0 ? (
-                      filteredSubjects.map(subject => (
-                      <Card 
-                        key={subject.id} 
-                        className="cursor-pointer transition-all duration-300 hover:shadow-lg backdrop-blur-xl border border-[#4E3CFA]/20 hover:border-[#4E3CFA]/40 bg-gradient-to-br from-[#4E3CFA]/5 via-[#020117]/90 to-[#020117]/70 hover:shadow-[#4E3CFA]/20"
-                        onClick={() => handleSubjectSelect(subject)}
+                <motion.div 
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="flex-1 overflow-y-auto p-6"
+                >
+                  {modalStep === 'subject' ? (
+                    <div className="space-y-3">
+                      {filteredSubjects.length > 0 ? (
+                        filteredSubjects.map((subject, index) => (
+                        <motion.div
+                          key={subject.id}
+                          initial={{ x: -20, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          transition={{ delay: 0.3 + (index * 0.1) }}
+                          whileHover={{ x: 5, scale: 1.02 }}
+                        >
+                          <Card 
+                            className="cursor-pointer transition-all duration-300 hover:shadow-lg backdrop-blur-xl border border-zinc-800/50 hover:border-zinc-700/50 bg-gradient-to-br from-zinc-900/50 via-zinc-800/30 to-zinc-900/40 hover:shadow-black/20"
+                            onClick={() => handleSubjectSelect(subject)}
+                          >
+                            <CardContent className="p-4">
+                              <h3 className="text-lg font-bold text-white mb-2">{subject.name}</h3>
+                              <div className="flex items-center gap-3 text-sm">
+                                <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 border-blue-500/30">{subject.code}</Badge>
+                                <span className="text-gray-400">{subject.year}. godina • {subject.semester}. semestar</span>
+                                <span className="text-gray-400 ml-auto">{subject.lessons.length} lekcija</span>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                        ))
+                      ) : (
+                        <motion.div 
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="text-center py-20"
+                        >
+                          <motion.div 
+                            className="mx-auto mb-6 p-6 bg-gradient-to-br from-zinc-800/50 via-zinc-700/30 to-zinc-800/20 rounded-3xl w-fit shadow-lg relative"
+                            animate={{ 
+                              scale: [1, 1.1, 1],
+                              rotate: [0, 5, -5, 0] 
+                            }}
+                            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-3xl"></div>
+                            <BookOpen className="w-16 h-16 text-gray-400 relative z-10" />
+                          </motion.div>
+                          <h3 className="text-xl font-bold text-white mb-3">Nema dostupnih predmeta</h3>
+                          <p className="text-gray-400">
+                            {user?.faculty && user?.academicYear 
+                              ? `Nema predmeta za ${user.faculty}, ${user.academicYear}.` 
+                              : 'Molimo ažurirajte informacije o fakultetu u profilu.'}
+                          </p>
+                        </motion.div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {tempSelectedSubject?.lessons.map((lesson, index) => (
+                        <motion.div
+                          key={lesson.id}
+                          initial={{ x: -20, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          transition={{ delay: 0.1 + (index * 0.05) }}
+                          whileHover={{ x: 5, scale: 1.02 }}
+                        >
+                          <Card 
+                            className={`cursor-pointer transition-all duration-300 hover:shadow-lg backdrop-blur-xl border ${tempSelectedLessons.some(l => l.id === lesson.id) ? 'border-blue-500/50 bg-gradient-to-br from-blue-500/20 via-zinc-900/50 to-zinc-800/50 shadow-blue-500/20' : 'border-zinc-800/50 hover:border-zinc-700/50 bg-gradient-to-br from-zinc-900/50 via-zinc-800/30 to-zinc-900/40'} hover:shadow-black/20`}
+                            onClick={() => handleLessonToggle(lesson)}
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-4">
+                                <div className="mt-1">
+                                  <motion.div 
+                                    className={`w-5 h-5 border-2 rounded border-blue-500/50 flex items-center justify-center transition-all duration-300 ${
+                                      tempSelectedLessons.some(l => l.id === lesson.id) 
+                                        ? 'bg-blue-500 border-blue-500 text-white' 
+                                        : 'bg-transparent'
+                                    }`}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                  >
+                                    <AnimatePresence>
+                                      {tempSelectedLessons.some(l => l.id === lesson.id) && (
+                                        <motion.svg 
+                                          initial={{ scale: 0 }}
+                                          animate={{ scale: 1 }}
+                                          exit={{ scale: 0 }}
+                                          width="12" 
+                                          height="12" 
+                                          viewBox="0 0 24 24" 
+                                          fill="none" 
+                                          stroke="currentColor" 
+                                          strokeWidth="3"
+                                        >
+                                          <polyline points="20,6 9,17 4,12"/>
+                                        </motion.svg>
+                                      )}
+                                    </AnimatePresence>
+                                  </motion.div>
+                                </div>
+                                <div className="flex-1">
+                                  <h4 className="text-base font-semibold text-white mb-2 leading-tight">{lesson.title}</h4>
+                                  <p className="text-sm text-gray-400 leading-relaxed">{lesson.description}</p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+
+                <motion.div 
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="flex justify-between items-center p-6 border-t border-zinc-800/50 gap-4"
+                >
+                  {modalStep === 'lessons' && (
+                    <motion.div
+                      initial={{ x: -20, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      <Button 
+                        variant="secondary" 
+                        onClick={handleBackToSubjects} 
+                        className="bg-zinc-800/50 border-zinc-700/50 hover:border-zinc-600/50 text-white hover:text-blue-400"
                       >
-                        <CardContent className="p-4">
-                          <h3 className="text-lg font-bold text-white mb-2">{subject.name}</h3>
-                          <div className="flex items-center gap-3 text-sm">
-                            <Badge variant="secondary" className="bg-[#4E3CFA]/20 text-[#4E3CFA] border-[#4E3CFA]/30">{subject.code}</Badge>
-                            <span className="text-gray-400">{subject.year}. godina • {subject.semester}. semestar</span>
-                            <span className="text-gray-400 ml-auto">{subject.lessons.length} lekcija</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      ))
-                    ) : (
-                      <div className="text-center py-20">
-                        <div className="mx-auto mb-6 p-6 bg-gradient-to-br from-[#4E3CFA]/20 via-[#4E3CFA]/10 to-[#4E3CFA]/5 rounded-3xl w-fit shadow-lg relative">
-                          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-3xl"></div>
-                          <svg className="w-16 h-16 text-[#4E3CFA]/70 relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-                          </svg>
-                        </div>
-                        <h3 className="text-xl font-bold text-white mb-3">Nema dostupnih predmeta</h3>
-                        <p className="text-gray-400">
-                          {user?.faculty && user?.academicYear 
-                            ? `Nema predmeta za ${user.faculty}, ${user.academicYear}.` 
-                            : 'Molimo ažurirajte informacije o fakultetu u profilu.'}
-                        </p>
-                      </div>
+                        Nazad
+                      </Button>
+                    </motion.div>
+                  )}
+                  <div className="flex items-center gap-4 ml-auto">
+                    {modalStep === 'lessons' && (
+                      <>
+                        <motion.span 
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.6 }}
+                          className="text-sm text-gray-400 whitespace-nowrap"
+                        >
+                          {tempSelectedLessons.length} od {tempSelectedSubject?.lessons.length} lekcija izabrano
+                        </motion.span>
+                        <motion.div
+                          initial={{ x: 20, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          transition={{ delay: 0.7 }}
+                        >
+                          <Button 
+                            onClick={handleConfirmSelection}
+                            disabled={tempSelectedLessons.length === 0}
+                            className="bg-gradient-to-r from-zinc-700 via-zinc-800 to-zinc-900 hover:from-zinc-600 hover:via-zinc-700 hover:to-zinc-800 text-white shadow-lg shadow-black/50 hover:shadow-black/70 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+                          >
+                            Potvrdi izbor
+                          </Button>
+                        </motion.div>
+                      </>
                     )}
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    {tempSelectedSubject?.lessons.map(lesson => (
-                      <Card 
-                        key={lesson.id}
-                        className={`cursor-pointer transition-all duration-300 hover:shadow-lg backdrop-blur-xl border ${tempSelectedLessons.some(l => l.id === lesson.id) ? 'border-[#4E3CFA]/40 bg-gradient-to-br from-[#4E3CFA]/10 via-[#4E3CFA]/5 to-[#020117]/70 shadow-[#4E3CFA]/20' : 'border-[#4E3CFA]/20 hover:border-[#4E3CFA]/40 bg-gradient-to-br from-[#4E3CFA]/5 via-[#020117]/90 to-[#020117]/70'} hover:shadow-[#4E3CFA]/20`}
-                        onClick={() => handleLessonToggle(lesson)}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-4">
-                            <div className="mt-1">
-                              <div className={`w-5 h-5 border-2 rounded border-[#4E3CFA]/40 flex items-center justify-center transition-all duration-300 ${
-                                tempSelectedLessons.some(l => l.id === lesson.id) 
-                                  ? 'bg-[#4E3CFA] border-[#4E3CFA] text-white' 
-                                  : 'bg-transparent'
-                              }`}>
-                                {tempSelectedLessons.some(l => l.id === lesson.id) && (
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                    <polyline points="20,6 9,17 4,12"/>
-                                  </svg>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex-1">
-                              <h4 className="text-base font-semibold text-white mb-2 leading-tight">{lesson.title}</h4>
-                              <p className="text-sm text-gray-400 leading-relaxed">{lesson.description}</p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                </motion.div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* NADRKAN Dropdown portal */}
+        <AnimatePresence>
+          {showModeDropdown && (
+            <motion.div 
+              data-dropdown="mode-dropdown"
+              initial={{ opacity: 0, scale: 0.9, y: -10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="fixed bg-zinc-900/95 backdrop-blur-xl border border-zinc-700/50 rounded-xl shadow-2xl shadow-black/50 z-[9999] overflow-hidden w-64 max-h-80"
+              style={{
+                top: `${dropdownPosition.top}px`,
+                left: `${dropdownPosition.left}px`
+              }}
+            >
+              {chatModes.map((mode, index) => (
+                <motion.button
+                  key={mode.id}
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: index * 0.05 }}
+                  className={`w-full px-4 py-3 text-left bg-transparent border-none text-white hover:bg-zinc-800/50 transition-all duration-300 border-b border-zinc-700/30 last:border-b-0 ${mode.id === selectedMode ? 'bg-blue-500/20' : ''}`}
+                  onClick={() => handleModeSelect(mode.id)}
+                  whileHover={{ x: 5 }}
+                >
+                  <div className="flex flex-col gap-1">
+                    <div className="text-sm font-semibold">{mode.name}</div>
+                    <div className="text-xs text-gray-400">{mode.description}</div>
                   </div>
-                )}
-              </div>
-
-              <div className="flex justify-between items-center p-6 border-t border-primary/10 gap-4">
-                {modalStep === 'lessons' && (
-                  <Button variant="secondary" onClick={handleBackToSubjects} className="bg-white/5 border-white/10 hover:border-[#4E3CFA]/30 text-white hover:text-[#4E3CFA]">
-                    Nazad
-                  </Button>
-                )}
-                <div className="flex items-center gap-4 ml-auto">
-                  {modalStep === 'lessons' && (
-                    <>
-                      <span className="text-sm text-gray-400 whitespace-nowrap">
-                        {tempSelectedLessons.length} od {tempSelectedSubject?.lessons.length} lekcija izabrano
-                      </span>
-                      <Button 
-                        onClick={handleConfirmSelection}
-                        disabled={tempSelectedLessons.length === 0}
-                        className="bg-gradient-to-r from-primary via-primary to-primary/90 hover:from-primary/90 hover:via-primary hover:to-primary text-white shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
-                      >
-                        Potvrdi izbor
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Dropdown portal - FIXED to be on top of everything */}
-        {showModeDropdown && (
-          <div 
-            data-dropdown="mode-dropdown"
-            className="fixed bg-[#1C212B] backdrop-blur-xl border border-[#4E3CFA]/30 rounded-xl shadow-2xl shadow-black/50 z-[9999] overflow-hidden w-64 max-h-80"
-            style={{
-              top: `${dropdownPosition.top}px`,
-              left: `${dropdownPosition.left}px`
-            }}
-          >
-            {chatModes.map((mode) => (
-              <button
-                key={mode.id}
-                className={`w-full px-4 py-3 text-left bg-transparent border-none text-white hover:bg-white/10 transition-all duration-300 border-b border-white/10 last:border-b-0 ${mode.id === selectedMode ? 'bg-[#4E3CFA]/20' : ''}`}
-                onClick={() => handleModeSelect(mode.id)}
-              >
-                <div className="flex flex-col gap-1">
-                  <div className="text-sm font-semibold">{mode.name}</div>
-                  <div className="text-xs text-gray-400">{mode.description}</div>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-        </div>
-      </div>
+                </motion.button>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </TooltipProvider>
   );
 };

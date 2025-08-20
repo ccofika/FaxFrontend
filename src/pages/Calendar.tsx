@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { TooltipProvider } from '../components/ui/tooltip';
-import { Clock, Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, CheckSquare, FileText, BookOpen, X } from 'lucide-react';
+import { Clock, Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, CheckSquare, FileText, BookOpen, X, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
 import styles from './Calendar.module.css';
 
 interface CalendarEvent {
@@ -113,7 +114,7 @@ const Calendar: React.FC = () => {
 
     // Empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="p-2 min-h-[80px] bg-white/5 rounded-lg border border-primary/10"></div>);
+      days.push(<div key={`empty-${i}`} className="p-2 min-h-[80px] bg-zinc-800/20 rounded-lg border border-zinc-700/30"></div>);
     }
 
     // Days of the month
@@ -124,15 +125,19 @@ const Calendar: React.FC = () => {
                      today.getFullYear() === currentYear;
       
       days.push(
-        <div 
-          key={day} 
-          className={`p-3 min-h-[80px] bg-white/10 hover:bg-white/15 transition-colors duration-200 cursor-pointer rounded-lg flex flex-col items-center border ${
-            isToday ? 'border-primary bg-primary/20 shadow-lg shadow-primary/30' : 'border-primary/20'
-          } ${event ? 'bg-white/15' : ''}`}
+        <motion.div 
+          key={day}
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 2 + (day * 0.01), duration: 0.3 }}
+          whileHover={{ scale: 1.05, y: -2 }}
+          className={`p-3 min-h-[80px] bg-zinc-800/30 hover:bg-zinc-700/50 transition-all duration-200 cursor-pointer rounded-lg flex flex-col items-center border ${
+            isToday ? 'border-yellow-400/70 bg-yellow-400/10 shadow-lg shadow-yellow-400/20' : 'border-zinc-700/50'
+          } ${event ? 'bg-zinc-700/40' : ''}`}
           onClick={() => setSelectedDate(new Date(currentYear, currentMonth, day))}
         >
           <span className={`text-lg font-bold mb-1 ${
-            isToday ? 'text-primary' : 'text-foreground'
+            isToday ? 'text-yellow-400' : 'text-white'
           }`}>{day}</span>
           {event && (
             <div 
@@ -159,7 +164,7 @@ const Calendar: React.FC = () => {
               )}
             </div>
           )}
-        </div>
+        </motion.div>
       );
     }
 
@@ -168,10 +173,39 @@ const Calendar: React.FC = () => {
 
   return (
     <TooltipProvider>
-      <div className="w-full min-h-screen relative overflow-hidden bg-background text-foreground font-inter">
-        {/* Background decorations */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-primary/2 -z-10" />
-        <div className="absolute inset-0 bg-[radial-gradient(2px_2px_at_20px_30px,rgba(78,60,250,0.3),transparent),radial-gradient(2px_2px_at_40px_70px,rgba(78,60,250,0.2),transparent)] bg-repeat bg-[length:150px_150px] pointer-events-none" />
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8 }}
+        className="w-full min-h-screen relative overflow-hidden bg-zinc-950 text-white font-inter"
+      >
+        {/* NADRKANI Background decorations */}
+        <div className="absolute inset-0 bg-gradient-to-br from-zinc-900/50 via-zinc-950 to-zinc-900/30 -z-10" />
+        <div className="absolute inset-0 bg-[radial-gradient(2px_2px_at_20px_30px,rgba(255,255,255,0.1),transparent),radial-gradient(2px_2px_at_40px_70px,rgba(255,255,255,0.05),transparent)] bg-repeat bg-[length:150px_150px] pointer-events-none opacity-40" />
+        
+        {/* Floating particles animation */}
+        <div className="absolute inset-0 -z-5 pointer-events-none">
+          {[...Array(15)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1 h-1 bg-white/20 rounded-full"
+              initial={{
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+              }}
+              animate={{
+                y: [null, Math.random() * -100, Math.random() * 100],
+                opacity: [0.2, 0.5, 0.2],
+              }}
+              transition={{
+                duration: Math.random() * 10 + 10,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: Math.random() * 5,
+              }}
+            />
+          ))}
+        </div>
         
         {/* Success Notification */}
         {showNotification && (
@@ -190,102 +224,200 @@ const Calendar: React.FC = () => {
         )}
         
         <div className="w-full max-w-none px-6 py-8">
-          {/* Modern Professional Header */}
-          <div className="max-w-6xl mx-auto mb-12">
+          {/* NADRKAN Professional Header */}
+          <motion.div 
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className="max-w-6xl mx-auto mb-12"
+          >
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
               <div className="space-y-2">
-                <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-br from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent tracking-tight">
-                  Zadaci i rokovi
-                </h1>
-                <p className="text-lg text-muted-foreground font-medium">
+                <motion.div
+                  initial={{ scale: 0.8 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, duration: 0.8, type: "spring", bounce: 0.4 }}
+                >
+                  <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-br from-white via-gray-100 to-gray-200 bg-clip-text text-transparent tracking-tight relative">
+                    Zadaci i rokovi
+                    <motion.div
+                      className="absolute -top-2 -right-8"
+                      animate={{ 
+                        rotate: [0, 15, -15, 0],
+                        scale: [1, 1.2, 1],
+                      }}
+                      transition={{ duration: 2, repeat: Infinity, delay: 2 }}
+                    >
+                      <Sparkles className="w-8 h-8 text-yellow-400/70" />
+                    </motion.div>
+                  </h1>
+                </motion.div>
+                <motion.p 
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4, duration: 0.6 }}
+                  className="text-lg text-gray-300 font-medium"
+                >
                   Organizujte svoje akademske obaveze efikasno
-                </p>
+                </motion.p>
               </div>
-              <Button 
-                className="group bg-gradient-to-r from-primary via-primary to-primary/90 hover:from-primary/90 hover:via-primary hover:to-primary text-white rounded-xl px-6 py-3 font-semibold transition-all duration-300 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-1 relative overflow-hidden self-start lg:self-auto"
-                onClick={() => setIsAddEventModalOpen(true)}
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.6, duration: 0.8, type: "spring", bounce: 0.6 }}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-                <span className="relative z-10 flex items-center gap-2">
-                  <Plus className="w-5 h-5" />
-                  Novi događaj
-                </span>
-              </Button>
+                <motion.button
+                  className="group bg-gradient-to-r from-zinc-700 via-zinc-800 to-zinc-900 hover:from-zinc-600 hover:via-zinc-700 hover:to-zinc-800 text-white rounded-xl px-6 py-3 font-semibold transition-all duration-300 shadow-lg shadow-black/50 hover:shadow-black/70 hover:-translate-y-1 relative overflow-hidden self-start lg:self-auto"
+                  onClick={() => setIsAddEventModalOpen(true)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <motion.div 
+                    className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0"
+                    initial={{ x: "-100%" }}
+                    whileHover={{ x: "100%" }}
+                    transition={{ duration: 0.7 }}
+                  />
+                  <span className="relative z-10 flex items-center gap-2">
+                    <Plus className="w-5 h-5" />
+                    Novi događaj
+                  </span>
+                </motion.button>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
 
           <div className="max-w-6xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Calendar Section */}
-              <div className="lg:col-span-2">
-                <Card className="bg-white/5 border-primary/20 shadow-xl shadow-primary/20 backdrop-blur-xl">
+              {/* NADRKAN Calendar Section */}
+              <motion.div 
+                initial={{ x: -100, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.8, duration: 0.8 }}
+                className="lg:col-span-2"
+              >
+                <Card className="bg-zinc-900/50 border-zinc-800/50 shadow-xl shadow-black/20 backdrop-blur-xl">
                 <CardHeader className="pb-6">
                   <div className="flex items-center justify-between">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="hover:bg-white/10 rounded-lg border border-white/20 hover:border-primary/30 text-foreground"
-                      onClick={() => navigateMonth('prev')}
+                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="hover:bg-zinc-800/50 rounded-lg border border-zinc-700/50 hover:border-zinc-600/50 text-white"
+                        onClick={() => navigateMonth('prev')}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                    </motion.div>
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 1, type: "spring", bounce: 0.5 }}
                     >
-                      <ChevronLeft className="w-4 h-4" />
-                    </Button>
-                    <CardTitle className="text-2xl font-bold text-foreground">
-                      {currentDate.toLocaleDateString('sr-RS', { month: 'long', year: 'numeric' })}
-                    </CardTitle>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="hover:bg-white/10 rounded-lg border border-white/20 hover:border-primary/30 text-foreground"
-                      onClick={() => navigateMonth('next')}
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
+                      <CardTitle className="text-2xl font-bold text-white">
+                        {currentDate.toLocaleDateString('sr-RS', { month: 'long', year: 'numeric' })}
+                      </CardTitle>
+                    </motion.div>
+                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="hover:bg-zinc-800/50 rounded-lg border border-zinc-700/50 hover:border-zinc-600/50 text-white"
+                        onClick={() => navigateMonth('next')}
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </motion.div>
                   </div>
                 </CardHeader>
 
                 <CardContent>
-                  <div className="grid grid-cols-7 gap-1 mb-4">
-                    {['Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub', 'Ned'].map(day => (
-                      <div key={day} className="p-3 text-center text-sm font-bold text-foreground bg-primary/10 rounded-lg uppercase tracking-wider">
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1.2, duration: 0.6 }}
+                    className="grid grid-cols-7 gap-1 mb-4"
+                  >
+                    {['Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub', 'Ned'].map((day, i) => (
+                      <motion.div 
+                        key={day} 
+                        initial={{ y: -20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 1.3 + (i * 0.1), duration: 0.4 }}
+                        className="p-3 text-center text-sm font-bold text-white bg-zinc-800/50 rounded-lg uppercase tracking-wider"
+                      >
                         {day}
-                      </div>
+                      </motion.div>
                     ))}
-                  </div>
+                  </motion.div>
                   
-                  <div className="grid grid-cols-7 gap-2 bg-background/95 rounded-xl p-4 border border-primary/20">
+                  <motion.div 
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 1.5, duration: 0.8 }}
+                    className="grid grid-cols-7 gap-2 bg-zinc-950/95 rounded-xl p-4 border border-zinc-800/50"
+                  >
                     {renderCalendarDays()}
-                  </div>
+                  </motion.div>
                 </CardContent>
 
-                <div className="flex justify-center gap-6 mt-6 pt-6 border-t border-primary/20">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getEventTypeColor('kolokvijum') }}></div>
-                    <span className="text-sm text-muted-foreground">Kolokvijumi</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getEventTypeColor('zadatak') }}></div>
-                    <span className="text-sm text-muted-foreground">Zadaci</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getEventTypeColor('ispit') }}></div>
-                    <span className="text-sm text-muted-foreground">Ispiti</span>
-                  </div>
-                </div>
+                <motion.div 
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 2, duration: 0.6 }}
+                  className="flex justify-center gap-6 mt-6 pt-6 border-t border-zinc-800/50"
+                >
+                  {[
+                    { type: 'kolokvijum', label: 'Kolokvijumi' },
+                    { type: 'zadatak', label: 'Zadaci' },
+                    { type: 'ispit', label: 'Ispiti' }
+                  ].map((item, i) => (
+                    <motion.div 
+                      key={item.type}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 2.1 + (i * 0.1), type: "spring", bounce: 0.5 }}
+                      className="flex items-center gap-2"
+                    >
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getEventTypeColor(item.type as CalendarEvent['type']) }}></div>
+                      <span className="text-sm text-gray-300">{item.label}</span>
+                    </motion.div>
+                  ))}
+                </motion.div>
                 </Card>
-              </div>
+              </motion.div>
 
-              {/* Side Panel - Upcoming Duties */}
-              <div>
-                <Card className="bg-white/5 border-primary/20 shadow-xl shadow-primary/20 backdrop-blur-xl">
+              {/* NADRKAN Side Panel - Upcoming Duties */}
+              <motion.div
+                initial={{ x: 100, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 1, duration: 0.8 }}
+              >
+                <Card className="bg-zinc-900/50 border-zinc-800/50 shadow-xl shadow-black/20 backdrop-blur-xl">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-xl font-bold text-foreground">
-                      <Clock className="w-5 h-5 text-muted-foreground" />
-                      Nadolazeće obaveze
-                    </CardTitle>
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 1.2, type: "spring", bounce: 0.6 }}
+                    >
+                      <CardTitle className="flex items-center gap-2 text-xl font-bold text-white">
+                        <Clock className="w-5 h-5 text-gray-400" />
+                        Nadolazeće obaveze
+                      </CardTitle>
+                    </motion.div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {upcomingEvents.map(event => (
-                      <Card key={event.id} className="group cursor-pointer transition-all duration-700 backdrop-blur-xl border border-primary/20 shadow-xl shadow-primary/20 bg-gradient-to-br from-primary/8 via-primary/5 to-background/70 hover:shadow-primary/40 hover:-translate-y-2">
+                    <AnimatePresence>
+                      {upcomingEvents.map((event, index) => (
+                        <motion.div
+                          key={event.id}
+                          initial={{ y: 50, opacity: 0, scale: 0.8 }}
+                          animate={{ y: 0, opacity: 1, scale: 1 }}
+                          exit={{ y: -50, opacity: 0, scale: 0.8 }}
+                          transition={{ delay: 1.4 + (index * 0.1), duration: 0.6, type: "spring" }}
+                          whileHover={{ scale: 1.02, y: -5 }}
+                        >
+                          <Card className="group cursor-pointer transition-all duration-700 backdrop-blur-xl border border-zinc-700/50 shadow-xl shadow-black/20 bg-gradient-to-br from-zinc-800/30 via-zinc-900/50 to-zinc-800/20 hover:shadow-black/40 hover:border-zinc-600/50">
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between mb-3">
                             <Badge 
@@ -294,43 +426,57 @@ const Calendar: React.FC = () => {
                             >
                               {getEventTypeLabel(event.type)}
                             </Badge>
-                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <span className="text-xs text-gray-400 flex items-center gap-1">
                               <Clock className="w-3 h-3" />
                               {formatTimeUntil(event.date)}
                             </span>
                           </div>
                           
-                          <h4 className="font-semibold text-foreground mb-2 group-hover:text-primary transition-colors duration-300">
+                          <h4 className="font-semibold text-white mb-2 group-hover:text-yellow-400 transition-colors duration-300">
                             {event.title}
                           </h4>
-                          <p className="text-sm text-foreground font-medium mb-1">
+                          <p className="text-sm text-gray-200 font-medium mb-1">
                             {event.subject}
                           </p>
-                          <p className="text-xs text-muted-foreground mb-2">
+                          <p className="text-xs text-gray-400 mb-2">
                             {formatDate(event.date)}
                           </p>
                           
                           {event.description && (
-                            <p className="text-sm text-muted-foreground leading-relaxed">
+                            <p className="text-sm text-gray-300 leading-relaxed">
                               {event.description}
                             </p>
                           )}
                         </CardContent>
                       </Card>
-                    ))}
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
 
                     {upcomingEvents.length === 0 && (
-                      <div className="text-center py-8">
-                        <div className="mx-auto mb-6 p-4 bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 rounded-2xl w-fit shadow-lg relative">
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 1.8, duration: 0.8 }}
+                        className="text-center py-8"
+                      >
+                        <motion.div 
+                          className="mx-auto mb-6 p-4 bg-gradient-to-br from-zinc-800/50 via-zinc-700/30 to-zinc-800/20 rounded-2xl w-fit shadow-lg relative"
+                          animate={{ 
+                            scale: [1, 1.05, 1],
+                            rotate: [0, 2, -2, 0] 
+                          }}
+                          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                        >
                           <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-2xl"></div>
-                          <CalendarIcon className="w-12 h-12 text-primary/70 relative z-10" />
-                        </div>
-                        <p className="text-muted-foreground">Nema nadolazećih obaveza</p>
-                      </div>
+                          <CalendarIcon className="w-12 h-12 text-gray-400 relative z-10" />
+                        </motion.div>
+                        <p className="text-gray-400">Nema nadolazećih obaveza</p>
+                      </motion.div>
                     )}
                   </CardContent>
                 </Card>
-              </div>
+              </motion.div>
             </div>
           </div>
 
@@ -367,7 +513,7 @@ const Calendar: React.FC = () => {
           </div>
         )}
         </div>
-      </div>
+      </motion.div>
     </TooltipProvider>
   );
 };

@@ -6,14 +6,18 @@
 
 :root {
   --primary-color: #4E3CFA;
-  --dark-bg: #020117;
-  --gray-color: #9C9AA9;
+  --dark-bg: #09090b; /* zinc-950 equivalent */
+  --darker-bg: rgba(24, 24, 27, 0.5); /* zinc-900/50 equivalent */
+  --border-color: rgba(39, 39, 42, 0.5); /* zinc-800/50 equivalent */
+  --gray-color: #d4d4d8; /* zinc-300 equivalent */
+  --muted-color: #a1a1aa; /* zinc-400 equivalent */
   --white: #FFFFFF;
   --gradient-primary: linear-gradient(135deg, #4E3CFA 0%, #6A5ACD 100%);
-  --bg-primary: #020117;
+  --bg-primary: #09090b;
   --text-primary: #FFFFFF;
-  --text-secondary: #9C9AA9;
-  --border-primary: rgba(78, 60, 250, 0.2);
+  --text-secondary: #d4d4d8;
+  --text-muted: #a1a1aa;
+  --border-primary: rgba(39, 39, 42, 0.5);
 }
 
 /* Custom toggle styles that work with our design system */
@@ -138,15 +142,15 @@
 
 /* Glass morphism effect utilities */
 .glass-card {
-  background: linear-gradient(135deg, rgba(78, 60, 250, 0.08) 0%, rgba(2, 1, 23, 0.6) 100%);
-  border: 1px solid rgba(78, 60, 250, 0.2);
+  background: rgba(24, 24, 27, 0.5); /* zinc-900/50 */
+  border: 1px solid rgba(39, 39, 42, 0.5); /* zinc-800/50 */
   backdrop-filter: blur(20px);
   border-radius: 24px;
 }
 
 .glass-card:hover {
-  border-color: rgba(78, 60, 250, 0.4);
-  box-shadow: 0 20px 40px rgba(78, 60, 250, 0.2);
+  border-color: rgba(63, 63, 70, 0.5); /* zinc-700/50 */
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
 
 /* Custom scrollbar for sidebar */
