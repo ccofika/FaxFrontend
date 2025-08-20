@@ -18,7 +18,11 @@ module.exports = {
   	},
   	extend: {
   		fontFamily: {
-  			'inter': ['Inter', 'system-ui', 'sans-serif'],
+  			inter: [
+  				'Inter',
+  				'system-ui',
+  				'sans-serif'
+  			]
   		},
   		colors: {
   			border: 'hsl(var(--border))',
@@ -38,10 +42,7 @@ module.exports = {
   				DEFAULT: 'hsl(var(--destructive))',
   				foreground: 'hsl(var(--destructive-foreground))'
   			},
-  			muted: {
-  				DEFAULT: 'hsl(var(--muted))',
-  				foreground: 'hsl(var(--muted-foreground))'
-  			},
+  			muted: 'hsl(var(--muted))',
   			accent: {
   				DEFAULT: 'hsl(var(--accent))',
   				foreground: 'hsl(var(--accent-foreground))'
@@ -53,7 +54,10 @@ module.exports = {
   			card: {
   				DEFAULT: 'hsl(var(--card))',
   				foreground: 'hsl(var(--card-foreground))'
-  			}
+  			},
+  			brand: 'hsl(var(--brand))',
+  			'brand-foreground': 'hsl(var(--brand-foreground))',
+  			'muted-foreground': 'hsl(var(--muted-foreground))'
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
@@ -77,28 +81,44 @@ module.exports = {
   					height: '0'
   				}
   			},
-  			'accordion-down': {
+  			marquee: {
   				from: {
-  					height: '0'
+  					transform: 'translateX(0)'
   				},
   				to: {
-  					height: 'var(--radix-accordion-content-height)'
+  					transform: 'translateX(calc(-100% - var(--gap)))'
   				}
   			},
-  			'accordion-up': {
-  				from: {
-  					height: 'var(--radix-accordion-content-height)'
+  			'star-movement-bottom': {
+  				'0%': {
+  					transform: 'translate(0%, 0%)',
+  					opacity: '1'
   				},
-  				to: {
-  					height: '0'
+  				'100%': {
+  					transform: 'translate(-100%, 0%)',
+  					opacity: '0'
+  				}
+  			},
+  			'star-movement-top': {
+  				'0%': {
+  					transform: 'translate(0%, 0%)',
+  					opacity: '1'
+  				},
+  				'100%': {
+  					transform: 'translate(100%, 0%)',
+  					opacity: '0'
   				}
   			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
-  			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			marquee: 'marquee var(--duration) linear infinite',
+  			'star-movement-bottom': 'star-movement-bottom linear infinite alternate',
+  			'star-movement-top': 'star-movement-top linear infinite alternate'
+  		},
+  		maxWidth: {
+  			container: '1280px'
   		}
   	}
   },

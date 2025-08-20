@@ -4,49 +4,58 @@
 
 @layer base {
   :root {
-    /* FAXit Dark Theme based on Demo page colors */
-    --background: 222 84% 6%; /* #020117 */
-    --foreground: 210 40% 98%; /* #FFFFFF */
-    --card: 223 48% 12%; /* dark card background */
-    --card-foreground: 210 40% 98%; /* #FFFFFF */
-    --popover: 223 48% 12%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 254 72% 60%; /* #4E3CFA */
-    --primary-foreground: 210 40% 98%;
-    --secondary: 223 48% 12%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 223 48% 12%;
-    --muted-foreground: 218 12% 62%; /* #9C9AA9 */
-    --accent: 223 48% 12%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 254 72% 60% / 0.2; /* rgba(78, 60, 250, 0.2) */
-    --input: 223 48% 12%;
-    --ring: 254 72% 60%; /* #4E3CFA */
+    /* FAXit GRAYSCALE Theme - NO COLORS */
+    --background: 0 0% 100%; /* #0F0F0F */
+    --foreground: 240 10% 3.9%; /* #FAFAFA */
+    --card: 0 0% 12%; /* #1F1F1F */
+    --card-foreground: 0 0% 98%; /* #FAFAFA */
+    --popover: 0 0% 12%; /* #1F1F1F */
+    --popover-foreground: 0 0% 98%; /* #FAFAFA */
+    --primary: 0 0% 90%; /* #E5E5E5 */
+    --primary-foreground: 0 0% 10%; /* #1A1A1A */
+    --secondary: 0 0% 12%; /* #1F1F1F */
+    --secondary-foreground: 0 0% 98%; /* #FAFAFA */
+    --muted: 240 4.8% 95.9%; /* #1F1F1F */
+    --muted-foreground: 240 3.8% 46.1%; /* #9E9E9E */
+    --accent: 0 0% 20%; /* #333333 */
+    --accent-foreground: 0 0% 98%; /* #FAFAFA */
+    --destructive: 0 0% 40%; /* #666666 */
+    --destructive-foreground: 0 0% 98%; /* #FAFAFA */
+    --border: 0 0% 20% / 0.2; /* rgba(51, 51, 51, 0.2) */
+    --input: 0 0% 12%; /* #1F1F1F */
+    --ring: 0 0% 40%; /* #666666 */
     --radius: 0.75rem;
+    --brand: 266 100% 50%;
+    --brand-foreground: 270 100% 98%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 250 59% 61%;
-    --primary-foreground: 222.2 84% 4.9%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 250 59% 61%;
+    --background: 240 10% 3.9%; /* #0F0F0F */
+    --foreground: 0 0% 98%; /* #FAFAFA */
+    --card: 0 0% 12%; /* #1F1F1F */
+    --card-foreground: 0 0% 98%; /* #FAFAFA */
+    --popover: 0 0% 12%; /* #1F1F1F */
+    --popover-foreground: 0 0% 98%; /* #FAFAFA */
+    --primary: 0 0% 90%; /* #E5E5E5 */
+    --primary-foreground: 0 0% 10%; /* #1A1A1A */
+    --secondary: 0 0% 20%; /* #333333 */
+    --secondary-foreground: 0 0% 98%; /* #FAFAFA */
+    --muted: 240 3.7% 15.9%; /* #333333 */
+    --muted-foreground: 240 5% 64.9%; /* #A6A6A6 */
+    --accent: 0 0% 20%; /* #333333 */
+    --accent-foreground: 0 0% 98%; /* #FAFAFA */
+    --destructive: 0 0% 40%; /* #666666 */
+    --destructive-foreground: 0 0% 98%; /* #FAFAFA */
+    --border: 0 0% 20%; /* #333333 */
+    --input: 0 0% 20%; /* #333333 */
+    --ring: 0 0% 40%; /* #666666 */ --brand: 266 70% 60%; --brand-foreground: 270 100% 98%;
+  }
+  .theme {
+    --animate-marquee: marquee var(--duration) linear infinite;
+    --animate-accordion-down: accordion-down 0.2s ease-out;
+    --animate-accordion-up: accordion-up 0.2s ease-out;
+    --animate-star-movement-bottom: star-movement-bottom linear infinite alternate;
+    --animate-star-movement-top: star-movement-top linear infinite alternate;
   }
 }
 
@@ -62,7 +71,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  
+
   code {
     font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
       monospace;
@@ -73,24 +82,87 @@
   .hover-card {
     @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20;
   }
-  
+
   .faq-button {
     @apply w-full p-5 bg-transparent border-none text-left text-foreground text-lg font-semibold cursor-pointer flex justify-between items-center transition-all duration-300 hover:bg-primary/10;
   }
-  
+
   .footer-link {
     @apply text-muted-foreground no-underline transition-colors duration-300 block py-1 text-base hover:text-primary;
   }
-  
+
   .social-icon {
     @apply text-muted-foreground transition-all duration-300 p-2 rounded-lg flex items-center justify-center hover:text-primary hover:bg-primary/10;
   }
-  
+
   .cta-button-primary {
     @apply bg-white text-primary border-none rounded-xl px-9 py-4 text-lg font-semibold cursor-pointer transition-all duration-300 flex items-center gap-2 shadow-lg hover:bg-white/90 hover:-translate-y-1;
   }
-  
+
   .cta-button-secondary {
     @apply bg-white/10 text-white border border-white/30 rounded-xl px-9 py-4 text-lg font-medium cursor-pointer transition-all duration-300 flex items-center gap-2 backdrop-blur-lg hover:bg-white/20 hover:-translate-y-1;
+  }
+}
+
+@theme inline {
+  @keyframes marquee {
+  from {
+    transform: translateX(0);
+    }
+  to {
+    transform: translateX(calc(-100% - var(--gap)));
+    }
+  }
+  @keyframes accordion-down {
+  from {
+    height: 0;
+    }
+  to {
+    height: var(--radix-accordion-content-height);
+    }
+  }
+  @keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+    }
+  to {
+    height: 0;
+    }
+  }
+  @keyframes accordion-down {
+  from {
+    height: 0;
+    }
+  to {
+    height: var(--radix-accordion-content-height);
+    }
+  }
+  @keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+    }
+  to {
+    height: 0;
+    }
+  }
+  @keyframes star-movement-bottom {
+  0% {
+    transform: translate(0%, 0%);
+    opacity: 1;
+    }
+  100% {
+    transform: translate(-100%, 0%);
+    opacity: 0;
+    }
+  }
+  @keyframes star-movement-top {
+  0% {
+    transform: translate(0%, 0%);
+    opacity: 1;
+    }
+  100% {
+    transform: translate(100%, 0%);
+    opacity: 0;
+    }
   }
 }

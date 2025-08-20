@@ -50,7 +50,7 @@ const AdminDashboard: React.FC = () => {
                 onClick={logout}
                 variant="outline"
                 size="sm"
-                className="border-gray-200 hover:bg-red-50 hover:border-red-200 hover:text-red-600"
+                className="border-gray-300 text-gray-700 hover:bg-red-50 hover:border-red-200 hover:text-red-600"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -124,7 +124,7 @@ const AdminDashboard: React.FC = () => {
                 Upravljaj korisnicima
               </Button>
               
-              <Button variant="outline" className="w-full border-gray-200 hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700 justify-start">
+              <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700 justify-start">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 </svg>
@@ -133,7 +133,7 @@ const AdminDashboard: React.FC = () => {
 
               <Button 
                 variant="outline" 
-                className="w-full border-gray-200 hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700 justify-start"
+                className="w-full border-gray-300 text-gray-700 hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700 justify-start"
                 onClick={() => navigate('/admin/materials')}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
@@ -142,7 +142,7 @@ const AdminDashboard: React.FC = () => {
                 Material Management
               </Button>
               
-              <Button variant="outline" className="w-full border-gray-200 hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700 justify-start">
+              <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700 justify-start">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
                   <path d="M12 20V10"/>
                   <path d="M18 20V4"/>

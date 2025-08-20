@@ -1,220 +1,300 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import Navigation from '../../components/Navigation';
+import { motion, useScroll, useInView, AnimatePresence } from 'motion/react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Avatar, AvatarFallback } from '../../components/ui/avatar';
 import { Progress } from '../../components/ui/progress';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../../components/ui/accordion';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { TooltipProvider } from '../../components/ui/tooltip';
-import { HelpCircle, CheckSquare, FileText, BookOpen, GraduationCap, Clock, BarChart3, Star, Play, Zap, Brain, Users, TrendingUp, Check } from 'lucide-react';
+import { HelpCircle, CheckSquare, FileText, BookOpen, GraduationCap, Clock, BarChart3, Star, Play, Zap, Brain, Users, TrendingUp, Check, Menu, X, ArrowRight, ChevronRight } from 'lucide-react';
+import { cn } from '../../lib/utils';
+import { TestimonialsSection } from '../../components/blocks/testimonials-with-marquee';
+import { FeaturesSectionWithHoverEffects } from '../../components/blocks/feature-section-with-hover-effects';
+import { BentoGrid } from '../../components/ui/bento-grid';
+import FAQs from '../../components/ui/faq';
+import { HeroVideoDialog } from '../../components/ui/hero-video-dialog';
+import { ShinyButton } from '../../components/ui/shiny-button';
+
+// Navigation Header Component
+const modernNavItems = [
+  { name: 'Početna', href: '/main' },
+  { name: 'Kako funkcioniše', href: '/main/kako-funkcionise' },
+  { name: 'Podržani fakulteti', href: '/main/podrzani-fakulteti' },
+  { name: 'Demo', href: '/main/demonstracija' },
+  { name: 'Cene', href: '/main/cene' },
+  { name: 'FAQ', href: '/main/faq' },
+  { name: 'Kontakt', href: '/main/kontakt' }
+];
+
+const ModernHeader = () => {
+  const [menuState, setMenuState] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [hoveredNavItem, setHoveredNavItem] = useState<number | null>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <header>
+      <nav
+        data-state={menuState && 'active'}
+        className="fixed z-50 w-full px-2 group">
+        <div className={cn('mx-auto mt-2 max-w-7xl px-6 transition-all duration-300 lg:px-12', isScrolled && 'bg-zinc-950/80 max-w-5xl rounded-2xl border border-zinc-800/50 backdrop-blur-xl lg:px-6 shadow-lg shadow-black/20')}>
+          <div className="relative flex flex-wrap items-center justify-between gap-6 py-3 lg:gap-0 lg:py-4">
+            <div className="flex w-full justify-between lg:w-auto">
+              <Link
+                to="/"
+                aria-label="home"
+                className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-lg">F</span>
+                </div>
+                <span className="text-2xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">FAXit</span>
+              </Link>
+
+              <button
+                onClick={() => setMenuState(!menuState)}
+                aria-label={menuState ? 'Close Menu' : 'Open Menu'}
+                className="relative z-20 -m-2.5 -mr-4 block cursor-pointer p-2.5 lg:hidden">
+                <Menu className="group-data-[state=active]:rotate-180 group-data-[state=active]:scale-0 group-data-[state=active]:opacity-0 m-auto size-6 duration-200 text-white" />
+                <X className="group-data-[state=active]:rotate-0 group-data-[state=active]:scale-100 group-data-[state=active]:opacity-100 absolute inset-0 m-auto size-6 -rotate-180 scale-0 opacity-0 duration-200 text-white" />
+              </button>
+            </div>
+
+            <div className="absolute inset-0 m-auto hidden size-fit lg:block">
+              <div 
+                className="flex gap-1 rounded-full p-1 border border-zinc-700/50"
+                onMouseLeave={() => setHoveredNavItem(null)}
+              >
+                {modernNavItems.map((item, index) => (
+                  <Link
+                    key={index}
+                    to={item.href}
+                    onMouseEnter={() => setHoveredNavItem(index)}
+                    className="py-2 px-4 relative text-white text-sm font-medium"
+                  >
+                    {hoveredNavItem === index && (
+                      <motion.div
+                        layoutId="navbar-fluid"
+                        transition={{ duration: 0.2, ease: "linear" }}
+                        className="absolute inset-0 rounded-full bg-zinc-800/60 backdrop-blur-sm"
+                      />
+                    )}
+                    <span className="relative z-10">
+                      {item.name}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-zinc-900/50 group-data-[state=active]:block lg:group-data-[state=active]:flex mb-6 hidden w-full flex-wrap items-center justify-end space-y-8 rounded-3xl border border-zinc-800/50 p-6 shadow-2xl backdrop-blur-xl md:flex-nowrap lg:m-0 lg:flex lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none">
+              <div className="lg:hidden">
+                <ul className="space-y-6 text-base">
+                  {modernNavItems.map((item, index) => (
+                    <li key={index}>
+                      <Link
+                        to={item.href}
+                        className="text-white hover:text-zinc-300 block duration-150 font-medium">
+                        <span>{item.name}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className={cn('border-zinc-700 bg-zinc-800/50 text-white hover:bg-zinc-700 hover:border-zinc-600', isScrolled && 'lg:hidden')}>
+                  <Link to="/main/login">
+                    <span>Prijava</span>
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="sm"
+                  className={cn('bg-primary hover:bg-primary/90 shadow-lg', isScrolled ? 'lg:inline-flex' : 'lg:hidden')}>
+                  <Link to="/main/register">
+                    <span>Započni</span>
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+  );
+};
 
 const MainHome: React.FC = () => {
-  const [hoveredMode, setHoveredMode] = useState<string | null>(null);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const [videoCurrentTime, setVideoCurrentTime] = useState(0);
-  const [videoDuration, setVideoDuration] = useState(0);
-  const [activeFAQ, setActiveFAQ] = useState<string | null>(null);
+  const { scrollYProgress } = useScroll();
 
-  const modes = [
-    {
-      id: 'explain',
-      name: 'Explain',
-      description: 'Objašnjava složene koncepte jednostavnim jezikom',
-      icon: <HelpCircle className="h-6 w-6" />,
-      color: '#4E3CFA',
-      preview: 'Pita AI-ja "Objasni mi kako funkcioniše ovaj algoritam" i dobija detaljno objašnjenje prilagođeno nivou'
-    },
-    {
-      id: 'solve',
-      name: 'Solve',
-      description: 'Rešava probleme i zadatke korak po korak',
-      icon: <CheckSquare className="h-6 w-6" />,
-      color: '#4E3CFA',
-      preview: 'Kači fotografiju zadatka iz matematike i AI rešava sa objašnjenjem svakog koraka'
-    },
-    {
-      id: 'summary',
-      name: 'Summary',
-      description: 'Pravi sažetke tekstova i materijala',
-      icon: <FileText className="h-6 w-6" />,
-      color: '#4E3CFA',
-      preview: 'Upload-uje 50-stranični PDF i dobija ključne tačke sažete u nekoliko pasusa'
-    },
-    {
-      id: 'tests',
-      name: 'Tests',
-      description: 'Generiše testove za vežbanje gradiva',
-      icon: <BookOpen className="h-6 w-6" />,
-      color: '#4E3CFA',
-      preview: 'Na osnovu gradiva kreira test sa 20 pitanja multiple choice + objašnjenja odgovora'
-    },
-    {
-      id: 'learning',
-      name: 'Learning',
-      description: 'Interaktivno učenje sa AI tutorom',
-      icon: <GraduationCap className="h-6 w-6" />,
-      color: '#4E3CFA',
-      preview: 'AI postavlja pitanja, daje savete i prilagođava tempo učenja na osnovu napretka'
-    }
-  ];
-
-  const benefits = [
-    {
-      title: 'Prilagođeno tvom smeru',
-      description: 'AI razume specifičnosti tvog fakulteta i smer',
-      icon: <GraduationCap className="h-6 w-6" />
-    },
-    {
-      title: 'Radi sa tvojim knjigama',
-      description: 'Upload-uj materijale i dobij odgovore iz tvojih izvora',
-      icon: <BookOpen className="h-6 w-6" />
-    },
-    {
-      title: 'Dostupno 24/7',
-      description: 'Tvoj AI asistent ne spava - učiš kad god želiš',
-      icon: <Clock className="h-6 w-6" />
-    },
-    {
-      title: 'Napredna analitika',
-      description: 'Prati napredak i identifikuje oblasti za poboljšanje',
-      icon: <BarChart3 className="h-6 w-6" />
-    }
-  ];
 
   const testimonials = [
     {
-      name: 'Marko Petković',
-      faculty: 'Elektrotehnički fakultet',
-      year: '3. godina',
-      quote: 'FAXit mi je pomogao da prođem analizu sa 9. Objašnjenja su bila jasnija od profesora.',
-      avatar: 'MP'
+      author: {
+        name: 'Marko Petković',
+        handle: 'Elektrotehnički fakultet • 3. godina',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'
+      },
+      text: 'FAXit mi je pomogao da prođem analizu sa 9. Objašnjenja su bila jasnija od profesora.'
     },
     {
-      name: 'Ana Nikolić',
-      faculty: 'Medicinski fakultet',
-      year: '2. godina',
-      quote: 'Sažeci materijala su mi uštedeli sate učenja. Preporučujem svim studentima!',
-      avatar: 'AN'
+      author: {
+        name: 'Ana Nikolić',
+        handle: 'Medicinski fakultet • 2. godina',
+        avatar: 'https://images.unsplash.com/photo-1494790108755-2616c47734aa?w=150&h=150&fit=crop&crop=face'
+      },
+      text: 'Sažeci materijala su mi uštedeli sate učenja. Preporučujem svim studentima!'
     },
     {
-      name: 'Stefan Jovanović',
-      faculty: 'Ekonomski fakultet',
-      year: '4. godina',
-      quote: 'Test generator je fantastičan. Konačno mogu da vežbam sa stvarnim pitanjima.',
-      avatar: 'SJ'
+      author: {
+        name: 'Stefan Jovanović',
+        handle: 'Ekonomski fakultet • 4. godina',
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
+      },
+      text: 'Test generator je fantastičan. Konačno mogu da vežbam sa stvarnim pitanjima.'
+    },
+    {
+      author: {
+        name: 'Milica Stojanović',
+        handle: 'Pravni fakultet • 1. godina',
+        avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face'
+      },
+      text: 'Savršeno za pripremu ispita! AI objašnjava sve što ne razumem iz skripte.'
+    },
+    {
+      author: {
+        name: 'Petar Mitrović',
+        handle: 'FON • 2. godina',
+        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face'
+      },
+      text: 'Revolucija u učenju! FAXit mi je skratio vreme pripreme za polovinu.'
+    },
+    {
+      author: {
+        name: 'Jovana Radić',
+        handle: 'Medicinski fakultet • 4. godina',
+        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face'
+      },
+      text: 'Jako intuitivno i praktično. Posebno mi pomažu testovi za vežbanje.'
     }
   ];
 
-  const handleVideoPlay = () => {
-    const video = document.querySelector('.video-element') as HTMLVideoElement;
-    if (video) {
-      if (video.paused) {
-        video.play();
-        setIsVideoPlaying(true);
-      } else {
-        video.pause();
-        setIsVideoPlaying(false);
-      }
-    }
-  };
-
-  const handleVideoTimeUpdate = () => {
-    const video = document.querySelector('.video-element') as HTMLVideoElement;
-    if (video) {
-      setVideoCurrentTime(video.currentTime);
-    }
-  };
-
-  const handleVideoLoadedMetadata = () => {
-    const video = document.querySelector('.video-element') as HTMLVideoElement;
-    if (video) {
-      setVideoDuration(video.duration || 0);
-    }
-  };
-
-  const handleVideoDurationChange = () => {
-    const video = document.querySelector('.video-element') as HTMLVideoElement;
-    if (video && video.duration && !isNaN(video.duration)) {
-      setVideoDuration(video.duration);
-    }
-  };
-
-  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const video = document.querySelector('.video-element') as HTMLVideoElement;
-    if (!video || !videoDuration) return;
-    
-    const progressContainer = e.currentTarget;
-    const rect = progressContainer.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const progressWidth = rect.width;
-    const clickedPercentage = Math.max(0, Math.min(1, clickX / progressWidth));
-    const clickedTime = clickedPercentage * videoDuration;
-    
-    video.currentTime = clickedTime;
-    setVideoCurrentTime(clickedTime);
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
   return (
     <TooltipProvider>
-      <div className="min-h-screen relative overflow-hidden bg-background text-foreground font-inter">
-        <Navigation />
-        {/* Background decorations */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-primary/2 -z-10" />
-        <div className="absolute inset-0 bg-[radial-gradient(2px_2px_at_20px_30px,rgba(78,60,250,0.3),transparent),radial-gradient(2px_2px_at_40px_70px,rgba(78,60,250,0.2),transparent)] bg-repeat bg-[length:150px_150px] pointer-events-none" />
+      {/* Scroll Progress Bar */}
+      <motion.div 
+        className="fixed top-0 left-0 right-0 h-1 bg-white origin-left z-50"
+        style={{ scaleX: scrollYProgress }}
+      />
+      
+      <motion.div 
+        className="min-h-screen relative overflow-hidden bg-zinc-950 text-white font-inter"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        <ModernHeader />
+        {/* Modern Background Effects */}
+        <div 
+          aria-hidden
+          className="z-[1] absolute inset-0 pointer-events-none isolate opacity-40">
+          <div className="w-[35rem] h-[80rem] -translate-y-[350px] absolute left-0 top-0 -rotate-45 rounded-full bg-[radial-gradient(68.54%_68.72%_at_55.02%_31.46%,hsla(0,0%,85%,.08)_0,hsla(0,0%,55%,.02)_50%,hsla(0,0%,45%,0)_80%)]" />
+          <div className="h-[80rem] absolute right-0 top-0 w-56 rotate-45 rounded-full bg-[radial-gradient(50%_50%_at_50%_50%,hsla(0,0%,85%,.06)_0,hsla(0,0%,45%,.02)_80%,transparent_100%)] [translate:-5%_-50%]" />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-br from-background/10 via-zinc-950 to-background/10 -z-10" />
+        <div className="absolute inset-0 bg-[radial-gradient(2px_2px_at_20px_30px,hsla(0,0%,85%,0.1),transparent),radial-gradient(2px_2px_at_40px_70px,hsla(0,0%,75%,0.05),transparent)] bg-repeat bg-[length:150px_150px] pointer-events-none opacity-40" />
         
       
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      {/* Modern Hero Section */}
+      <motion.section 
+        className="relative pt-36 pb-20 px-4 sm:px-6 lg:px-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+      >
         <div className="max-w-7xl mx-auto">
           <div className="text-center space-y-12">
-            <div className="inline-flex items-center gap-3 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-full px-6 py-3 text-sm font-medium text-primary backdrop-blur-xl shadow-lg shadow-primary/10 hover:shadow-primary/20 hover:scale-105 transition-all duration-300">
-              <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-              <Star className="w-4 h-4" />
-              Više od običnog AI tutora
-              <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-            </div>
+            <Link
+              to="#link"
+              className="hover:bg-zinc-800/50 group mx-auto flex w-fit items-center gap-4 rounded-full border border-zinc-800/50 p-1 pl-4 shadow-md shadow-black/20 transition-all duration-300 backdrop-blur-xl mb-8">
+              <span className="text-gray-300 text-sm font-medium">Više od običnog AI tutora</span>
+              <span className="block h-4 w-0.5 border-l border-zinc-700 bg-zinc-700"></span>
+              <div className="bg-zinc-800/50 group-hover:bg-zinc-700 size-6 overflow-hidden rounded-full duration-500">
+                <div className="flex w-12 -translate-x-1/2 duration-500 ease-in-out group-hover:translate-x-0">
+                  <span className="flex size-6">
+                    <ArrowRight className="m-auto size-3 text-muted-foreground" />
+                  </span>
+                  <span className="flex size-6">
+                    <ArrowRight className="m-auto size-3 text-muted-foreground" />
+                  </span>
+                </div>
+              </div>
+            </Link>
             
-            <div className="space-y-6">
-              <h1 className="text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-none">
-                <span className="block bg-gradient-to-br from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">Tvoj AI asistent</span>
-                <span className="block mt-2 bg-gradient-to-r from-primary via-primary to-primary/80 bg-clip-text text-transparent relative">
+            <motion.div 
+              className="space-y-6"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+            >
+              <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-none">
+                <motion.span 
+                  className="block bg-gradient-to-br from-white via-gray-100 to-gray-200 bg-clip-text text-transparent"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.8 }}
+                >
+                  Tvoj AI asistent
+                </motion.span>
+                <motion.span 
+                  className="block mt-2 bg-white bg-clip-text text-transparent"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 1.0 }}
+                >
                   za fakultet
-                  <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-primary/10 blur-2xl rounded-full"></div>
-                </span>
+                </motion.span>
               </h1>
-            </div>
+            </motion.div>
             
-            <p className="text-xl md:text-2xl text-muted-foreground/90 font-medium leading-relaxed max-w-3xl mx-auto">
-              FAXit pomaže studentima da 
-              <span className="text-foreground font-semibold">lakše uče</span>, 
-              <span className="text-foreground font-semibold">rešavaju zadatke</span> i 
-              <span className="text-foreground font-semibold">pripremaju se za ispite</span> 
-              uz naprednu AI tehnologiju
-            </p>
+            <motion.p 
+              className="text-xl md:text-2xl text-gray-300 font-medium leading-relaxed max-w-3xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 1.2 }}
+            >
+              FAXit pomaže studentima da lakše uče, rešavaju zadatke i pripremaju se za ispite uz naprednu AI tehnologiju
+            </motion.p>
 
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-              <Button className="group bg-gradient-to-r from-primary via-primary to-primary/90 hover:from-primary/90 hover:via-primary hover:to-primary text-white rounded-2xl px-12 py-6 text-xl font-bold transition-all duration-500 shadow-2xl shadow-primary/40 hover:shadow-primary/60 hover:-translate-y-2 hover:scale-105 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                <span className="relative z-10 flex items-center gap-3">
-                  <Zap className="w-6 h-6" />
-                  Započni besplatno
-                </span>
-              </Button>
-              <Button 
-                variant="ghost" 
-                className="group bg-white/5 hover:bg-white/15 text-white border-2 border-white/20 hover:border-white/40 rounded-2xl px-12 py-6 text-xl font-semibold transition-all duration-500 backdrop-blur-xl shadow-xl hover:shadow-2xl hover:-translate-y-2 hover:scale-105 relative overflow-hidden"
+            <motion.div 
+              className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 1.4 }}
+            >
+              <Link to="/main/register">
+                <ShinyButton className="bg-white text-black hover:bg-gray-100 border border-gray-200 px-12 py-4 text-xl font-bold shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+                  <span className="flex items-center gap-3">
+                    <Zap className="w-6 h-6" />
+                    Započni besplatno
+                  </span>
+                </ShinyButton>
+              </Link>
+              
+              <ShinyButton 
+                className="bg-zinc-800 text-white hover:bg-zinc-700 border border-zinc-600 px-12 py-4 text-xl font-semibold shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
                 onClick={() => {
                   const videoSection = document.querySelector('.video-preview');
                   if (videoSection) {
@@ -225,583 +305,159 @@ const MainHome: React.FC = () => {
                   }
                 }}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                <span className="relative z-10 flex items-center gap-3">
+                <span className="flex items-center gap-3 text-white">
                   <Play className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" />
                   Pogledaj video
                 </span>
-              </Button>
-            </div>
+              </ShinyButton>
+            </motion.div>
           </div>
         </div>
 
-        {/* Video Preview */}
-        <div className="video-preview mt-16 max-w-4xl mx-auto">
-          <Card className="overflow-hidden shadow-2xl">
-            <div className="aspect-video bg-black relative">
-              <video 
-                className="video-element w-full h-full object-cover"
-                preload="metadata"
-                controls={false}
-                muted
-                onTimeUpdate={handleVideoTimeUpdate}
-                onLoadedMetadata={handleVideoLoadedMetadata}
-                onDurationChange={handleVideoDurationChange}
-                onLoadedData={handleVideoDurationChange}
-                onCanPlay={handleVideoDurationChange}
-                onPlay={() => setIsVideoPlaying(true)}
-                onPause={() => setIsVideoPlaying(false)}
-              >
-                <source src="/videos/test-video.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-              
-              {/* Custom Video Controls */}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                <div className="flex items-center gap-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-white hover:bg-[#4E3CFA]/20"
-                    onClick={handleVideoPlay}
-                  >
-                    {isVideoPlaying ? (
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                        <rect x="6" y="4" width="4" height="16"/>
-                        <rect x="14" y="4" width="4" height="16"/>
-                      </svg>
-                    ) : (
-                      <Play className="w-4 h-4" />
-                    )}
-                  </Button>
-                  
-                  <div className="flex-1 cursor-pointer" onClick={handleProgressClick}>
-                    <div className="bg-white/30 rounded-full h-2">
-                      <div 
-                        className="bg-primary rounded-full h-2 transition-all"
-                        style={{ width: `${videoDuration ? (videoCurrentTime / videoDuration) * 100 : 0}%` }}
-                      />
-                    </div>
-                  </div>
-                  
-                  <span className="text-white text-sm">
-                    {formatTime(videoCurrentTime)} / {formatTime(videoDuration)}
-                  </span>
-                </div>
-              </div>
-              
-              {/* Large Play Overlay (only when paused) */}
-              {!isVideoPlaying && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                  <Button
-                    size="lg"
-                    className="rounded-full w-16 h-16"
-                    onClick={handleVideoPlay}
-                  >
-                    <Play className="w-6 h-6 ml-1" />
-                  </Button>
-                </div>
-              )}
-            </div>
-          </Card>
-        </div>
-      </section>
+      </motion.section>
 
-      {/* Stats Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-background backdrop-blur-3xl"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(78,60,250,0.1),transparent_70%)] animate-pulse"></div>
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
-            {[
-              { number: '10,000+', label: 'Aktivnih studenata', icon: Users },
-              { number: '50+', label: 'Podržanih fakulteta', icon: GraduationCap },
-              { number: '95%', label: 'Poboljšanje ocena', icon: TrendingUp },
-              { number: '24/7', label: 'Dostupnost', icon: Clock }
-            ].map((stat, index) => (
-              <div 
-                key={index}
-                className="group text-center border border-primary/20 bg-gradient-to-br from-primary/8 via-primary/5 to-background/60 rounded-3xl p-8 transition-all duration-500 cursor-pointer backdrop-blur-xl shadow-xl shadow-primary/20 hover:-translate-y-3 hover:shadow-2xl hover:shadow-primary/40 hover:border-primary/50 hover:scale-105 relative overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/5 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"></div>
-                <div className="flex justify-center mb-6 relative z-10">
-                  <div className="p-4 bg-gradient-to-br from-primary/30 via-primary/20 to-primary/10 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-primary/30 group-hover:scale-110 transition-all duration-500 relative">
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-2xl"></div>
-                    <stat.icon className="w-8 h-8 text-primary group-hover:text-primary/90 transition-colors duration-300 relative z-10" />
-                  </div>
-                </div>
-                <div className="relative z-10">
-                  <div className="text-4xl md:text-5xl font-black mb-3 bg-gradient-to-br from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-500">
-                    {stat.number}
-                  </div>
-                  <div className="text-base font-semibold text-muted-foreground/80 group-hover:text-muted-foreground transition-colors duration-300">
-                    {stat.label}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* Video Preview Section */}
+      <motion.section 
+        className="py-12 px-4 sm:px-6 lg:px-8 bg-zinc-950"
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 1.6 }}
+      >
+        <div className="video-preview max-w-4xl mx-auto">
+          <HeroVideoDialog
+            videoSrc="/videos/test-video.mp4"
+            thumbnailSrc="https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=1920&h=1080&fit=crop&crop=entropy&auto=format&fm=jpg&q=60"
+            thumbnailAlt="FAXit Demo Video"
+            className="rounded-xl shadow-2xl border border-zinc-800"
+            animationStyle="from-center"
+          />
         </div>
-      </section>
+      </motion.section>
+
 
       {/* 5 Modes Section */}
-      <section className="py-28 px-4 sm:px-6 lg:px-8 bg-background relative overflow-hidden">
+      <motion.section 
+        className="py-28 px-4 sm:px-6 lg:px-8 bg-zinc-950 relative overflow-hidden"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.6 }}
+      >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(78,60,250,0.05),transparent_50%)] animate-pulse"></div>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(78,60,250,0.03),transparent_50%)]"></div>
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center mb-20">
+          <motion.div 
+            className="text-center mb-20"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
             <div className="space-y-6">
-              <h2 className="text-5xl md:text-6xl lg:text-7xl font-black bg-gradient-to-br from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent leading-tight">
-                5 načina da 
-                <span className="block bg-gradient-to-r from-primary via-primary to-primary/80 bg-clip-text text-transparent relative">
-                  učiš
-                  <div className="absolute -inset-2 bg-gradient-to-r from-primary/10 to-primary/5 blur-3xl rounded-full"></div>
-                </span>
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-br from-white to-zinc-300 bg-clip-text text-transparent mb-4">
+                5 načina da učiš
               </h2>
-              <p className="text-2xl font-medium text-muted-foreground/90 max-w-4xl mx-auto leading-relaxed">
+              <p className="text-xl text-zinc-300 max-w-3xl mx-auto hover:text-white transition-colors duration-300 cursor-default">
                 Svaki režim je dizajniran za 
-                <span className="text-foreground font-semibold">različite tipove pitanja</span> i 
-                <span className="text-foreground font-semibold">izazova</span>
+                <span className="text-white font-semibold">različite tipove pitanja</span> i 
+                <span className="text-white font-semibold">izazova</span>
               </p>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
-            {modes.map((mode) => (
-              <Card
-                key={mode.id}
-                className={`group cursor-pointer transition-all duration-700 text-center backdrop-blur-xl relative overflow-hidden hover:-translate-y-4 hover:scale-105 ${
-                  hoveredMode === mode.id 
-                    ? 'border-primary/60 shadow-2xl shadow-primary/50 bg-gradient-to-br from-primary/15 via-primary/10 to-background/80' 
-                    : 'border-primary/20 shadow-xl shadow-primary/20 bg-gradient-to-br from-primary/8 via-primary/5 to-background/70'
-                }`}
-                onMouseEnter={() => setHoveredMode(mode.id)}
-                onMouseLeave={() => setHoveredMode(null)}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/5 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-                <CardContent className="p-8 relative z-10">
-                  <div className="mx-auto mb-6 p-4 bg-gradient-to-br from-primary/30 via-primary/20 to-primary/10 rounded-2xl w-fit shadow-lg group-hover:shadow-primary/40 group-hover:scale-110 transition-all duration-500 relative">
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-2xl"></div>
-                    <div className="text-primary group-hover:text-primary/90 transition-colors duration-300 relative z-10">
-                      {mode.icon}
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors duration-300">{mode.name}</h3>
-                  <p className="text-base text-muted-foreground text-center leading-relaxed group-hover:text-muted-foreground/90 transition-colors duration-300">
-                    {mode.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <FeaturesSectionWithHoverEffects />
         </div>
-      </section>
+      </motion.section>
 
       {/* Benefits Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/10 to-primary/5">
+      <motion.section 
+        className="py-20 px-4 sm:px-6 lg:px-8 bg-zinc-950"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.6 }}
+      >
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent mb-4">Zašto FAXit?</h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto hover:text-foreground transition-colors duration-300 cursor-default">
+          <motion.div 
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-br from-white to-zinc-300 bg-clip-text text-transparent mb-4">Zašto FAXit?</h2>
+            <p className="text-xl text-zinc-300 max-w-3xl mx-auto hover:text-white transition-colors duration-300 cursor-default">
               Više od običnog AI-ja - tvoj lični tutor koji razume fakultet
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {benefits.map((benefit, index) => (
-              <Card 
-                key={index}
-                className="text-center h-full border border-primary/20 bg-gradient-to-br from-primary/8 to-background/60 rounded-2xl p-8 transition-all duration-300 cursor-pointer backdrop-blur-lg shadow-lg shadow-primary/10 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/30 hover:border-primary/40"
-              >
-                <CardContent className="p-0">
-                  <div className="mx-auto mb-6 p-4 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full w-fit flex items-center justify-center">
-                    <div className="text-primary">
-                    {benefit.icon}
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-semibold text-foreground mb-3 hover:text-primary transition-colors duration-300 cursor-default">{benefit.title}</h3>
-                  <p className="text-base text-muted-foreground leading-relaxed hover:text-foreground transition-colors duration-300 cursor-default">
-                    {benefit.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <BentoGrid />
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Testimonials Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent mb-4">Šta kažu studenti</h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto hover:text-foreground transition-colors duration-300 cursor-default">
-              Hiljade studenata već koristi FAXit za bolje ocene
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <Card 
-                key={index}
-                className="h-full border border-primary/20 bg-gradient-to-br from-primary/8 to-background/60 rounded-2xl p-6 transition-all duration-300 cursor-pointer backdrop-blur-lg shadow-lg shadow-primary/10 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/30 hover:border-primary/40"
-              >
-                <CardContent className="p-0">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 bg-gradient-to-r from-primary to-primary/80 rounded-full flex items-center justify-center text-white font-semibold text-base">
-                      {testimonial.avatar}
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-foreground mb-1 hover:text-primary transition-colors duration-300">{testimonial.name}</h4>
-                      <p className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-300">{testimonial.faculty} • {testimonial.year}</p>
-                    </div>
-                  </div>
-                  <p className="text-muted-foreground italic text-base leading-relaxed hover:text-foreground transition-colors duration-300 cursor-default">
-                    "{testimonial.quote}"
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Detailed Features Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8" style={{
-        background: 'linear-gradient(135deg, rgba(78, 60, 250, 0.1) 0%, rgba(26, 22, 53, 1) 100%)'
-      }}>
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 style={{
-              fontSize: 'clamp(28px, 5vw, 48px)',
-              fontWeight: 700,
-              background: 'linear-gradient(135deg, #FFFFFF 0%, #B8BCC8 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              marginBottom: '16px'
-            }}>Napredne funkcije</h2>
-            <p style={{
-              fontSize: '20px',
-              color: '#9C9AA9',
-              maxWidth: '768px',
-              margin: '0 auto'
-            }}>
-              Discover sa kojim mogućnostima FAXit pomaže studentima
-            </p>
-          </div>
-
-          <Tabs defaultValue="ai-tutor" className="w-full">
-            <TabsList className="grid w-full grid-cols-1 md:grid-cols-3">
-              <TabsTrigger value="ai-tutor">AI Tutor</TabsTrigger>
-              <TabsTrigger value="progress">Napredak</TabsTrigger>
-              <TabsTrigger value="collaboration">Saradnja</TabsTrigger>
-            </TabsList>
-            
-            
-            <TabsContent value="ai-tutor" className="mt-8">
-              <Card>
-                <CardContent className="p-8">
-                  <div className="grid md:grid-cols-2 gap-8 items-center">
-                    <div>
-                      <h3 className="text-2xl font-bold mb-4 text-white">Personalizovani AI Tutor</h3>
-                      <p className="text-[#9C9AA9] mb-6 leading-relaxed">
-                        Naš napredni AI sistem prilagođava se tvom stilu učenja, prepoznaje tvoje jake i slabe strane, 
-                        i prilagođava objašnjenja i zadatke prema tvom tempu napredovanja.
-                      </p>
-                      <div className="space-y-4">
-                        {[
-                          'Adaptivno učenje prilagođeno tebi',
-                          'Prepoznavanje oblasti za poboljšanje',
-                          'Personalizovani saveti i strategije',
-                          'Dostupan 24/7 kada god ti treba'
-                        ].map((feature, index) => (
-                          <div key={index} className="flex items-center gap-3">
-                            <div className="w-2 h-2 bg-gradient-to-r from-[#4E3CFA] to-[#6A5ACD] rounded-full"></div>
-                            <span className="text-[#9C9AA9]">{feature}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="bg-gradient-to-br from-[#4E3CFA]/20 to-[#6A5ACD]/20 rounded-lg p-8 h-64 flex items-center justify-center border border-[#4E3CFA]/20">
-                      <Brain className="w-20 h-20 text-[#4E3CFA]" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="progress" className="mt-8">
-              <Card>
-                <CardContent className="p-8">
-                  <div className="grid md:grid-cols-2 gap-8 items-center">
-                    <div className="bg-gradient-to-br from-[#4E3CFA]/20 to-[#6A5ACD]/20 rounded-lg p-8 h-64 flex items-center justify-center border border-[#4E3CFA]/20">
-                      <BarChart3 className="w-20 h-20 text-[#4E3CFA]" />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-bold mb-4 text-white">Praćenje Napretka</h3>
-                      <p className="text-[#9C9AA9] mb-6 leading-relaxed">
-                        Detaljno prati svoj akademski napredak kroz interaktivne grafikone, 
-                        statistike i personalizovane izveštaje koji pokazuju tvoj razvoj kroz vreme.
-                      </p>
-                      <div className="space-y-4">
-                        <div>
-                          <div className="flex justify-between mb-2">
-                            <span className="text-sm font-medium text-white">Matematika</span>
-                            <span className="text-sm text-[#9C9AA9]">85%</span>
-                          </div>
-                          <Progress value={85} className="h-2" />
-                        </div>
-                        <div>
-                          <div className="flex justify-between mb-2">
-                            <span className="text-sm font-medium text-white">Fizika</span>
-                            <span className="text-sm text-[#9C9AA9]">72%</span>
-                          </div>
-                          <Progress value={72} className="h-2" />
-                        </div>
-                        <div>
-                          <div className="flex justify-between mb-2">
-                            <span className="text-sm font-medium text-white">Hemija</span>
-                            <span className="text-sm text-[#9C9AA9]">90%</span>
-                          </div>
-                          <Progress value={90} className="h-2" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="collaboration" className="mt-8">
-              <Card>
-                <CardContent className="p-8">
-                  <div className="grid md:grid-cols-2 gap-8 items-center">
-                    <div>
-                      <h3 className="text-2xl font-bold mb-4 text-white">Timska Saradnja</h3>
-                      <p className="text-[#9C9AA9] mb-6 leading-relaxed">
-                        Udruži se sa kolegama, formiraj study grupe, deli beleške i radi zajedno na projektima. 
-                        FAXit omogućava jednostavnu saradnju između studenata.
-                      </p>
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {['Ana Marić', 'Petar Jović', 'Milica Stojanović', 'Stefan Mitrović'].map((name, index) => (
-                          <Badge key={index} variant="secondary" className="px-3 py-1 bg-gradient-to-r from-[#4E3CFA]/20 to-[#6A5ACD]/20 text-white border-[#4E3CFA]/30">
-                            {name}
-                          </Badge>
-                        ))}
-                      </div>
-                      <Button className="w-full sm:w-auto bg-gradient-to-r from-[#4E3CFA] to-[#6A5ACD] hover:from-[#4E3CFA]/90 hover:to-[#6A5ACD]/90">
-                        <Users className="w-4 h-4 mr-2" />
-                        Pristupi study grupi
-                      </Button>
-                    </div>
-                    <div className="bg-gradient-to-br from-[#4E3CFA]/20 to-[#6A5ACD]/20 rounded-lg p-8 h-64 flex items-center justify-center border border-[#4E3CFA]/20">
-                      <Users className="w-20 h-20 text-[#4E3CFA]" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </section>
+      <TestimonialsSection
+        title="Šta kažu studenti"
+        description="Hiljade studenata već koristi FAXit za bolje ocene"
+        testimonials={testimonials}
+      />
 
       {/* FAQ Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8" style={{background: '#020117'}}>
+      <motion.section 
+        className="py-20 px-4 sm:px-6 lg:px-8 bg-zinc-950" 
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.6 }}
+      >
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 style={{
-              fontSize: 'clamp(28px, 5vw, 48px)',
-              fontWeight: 700,
-              background: 'linear-gradient(135deg, #FFFFFF 0%, #B8BCC8 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              marginBottom: '16px'
-            }}>Često postavljana pitanja</h2>
-            <p style={{
-              fontSize: '20px',
-              color: '#9C9AA9'
-            }}>
+          <motion.div 
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-br from-white to-zinc-300 bg-clip-text text-transparent mb-4">Često postavljana pitanja</h2>
+            <p className="text-xl text-zinc-300 max-w-3xl mx-auto hover:text-white transition-colors duration-300 cursor-default">
               Odgovori na najčešća pitanja o FAXit-u
             </p>
-          </div>
+          </motion.div>
 
-          <div className="w-full space-y-4">
-            {[
-              {
-                id: 'item-1',
-                question: 'Da li je FAXit besplatan za studente?',
-                answer: 'FAXit nudi besplatnu verziju sa osnovnim funkcijama. Premium verzija sa naprednim mogućnostima je dostupna po studentskim cenama, sa posebnim popustima za studente iz Srbije.'
-              },
-              {
-                id: 'item-2',
-                question: 'Koje fakultete FAXit podržava?',
-                answer: 'FAXit trenutno podržava više od 50 fakulteta u Srbiji, uključujući sve glavne univerzitete u Beogradu, Novom Sadu, Nišu i Kragujevcu. Kontinuirano dodajemo nove fakultete i smerove.'
-              },
-              {
-                id: 'item-3',
-                question: 'Kako FAXit štiti privatnost mojih podataka?',
-                answer: 'Vaša privatnost nam je izuzetno važna. Svi podaci su šifrovani i čuvaju se u skladu sa GDPR propisima. Ne delimo vaše lične informacije sa trećim stranama bez vaše eksplicitne dozvole.'
-              },
-              {
-                id: 'item-4',
-                question: 'Mogu li da koristim FAXit offline?',
-                answer: 'Trenutno FAXit zahteva internet konekciju za potpunu funkcionalnost. Međutim, radimo na offline mogućnostima koje će biti dostupne uskoro, omogućavajući vam da učite i kada nimate pristup internetu.'
-              },
-              {
-                id: 'item-5',
-                question: 'Kako mogu da dobijem podršku ako imam problema?',
-                answer: 'Naš support tim je dostupan 24/7 preko live chat-a, emaila ili telefona. Takođe imamo opsežnu bazu znanja i video tutorijale koji pokrivaju sve aspekte korišćenja FAXit-a.'
-              }
-            ].map((faq) => (
-              <div 
-                key={faq.id}
-                style={{
-                  border: '1px solid rgba(78, 60, 250, 0.2)',
-                  background: 'linear-gradient(135deg, rgba(78, 60, 250, 0.08) 0%, rgba(2, 1, 23, 0.6) 100%)',
-                  borderRadius: '12px',
-                  marginBottom: '12px',
-                  backdropFilter: 'blur(20px)',
-                  overflow: 'hidden'
-                }}
-              >
-                <button
-                  style={{
-                    width: '100%',
-                    padding: '20px 24px',
-                    background: 'transparent',
-                    border: 'none',
-                    textAlign: 'left',
-                    color: '#FFFFFF',
-                    fontSize: '18px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onClick={() => setActiveFAQ(activeFAQ === faq.id ? null : faq.id)}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = 'rgba(78, 60, 250, 0.1)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                  }}
-                >
-                  <span>{faq.question}</span>
-                  <span style={{
-                    transform: activeFAQ === faq.id ? 'rotate(180deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.3s ease',
-                    fontSize: '20px'
-                  }}>▼</span>
-                </button>
-                {activeFAQ === faq.id && (
-                  <div style={{
-                    padding: '0 24px 24px 24px',
-                    color: '#9C9AA9',
-                    fontSize: '16px',
-                    lineHeight: 1.6,
-                    borderTop: '1px solid rgba(78, 60, 250, 0.1)',
-                    paddingTop: '20px'
-                  }}>
-                    {faq.answer}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <FAQs />
+          </motion.div>
         </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.15),transparent_70%)] animate-pulse"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(255,255,255,0.1),transparent_50%)]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.08),transparent_50%)]"></div>
-        <div className="max-w-6xl mx-auto text-center relative z-10 space-y-12">
-          <div className="space-y-8">
-            <h2 className="text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-none bg-gradient-to-br from-white via-white/90 to-white/70 bg-clip-text text-transparent">
-              Spreman da 
-              <span className="block mt-2 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent relative">
-                poboljšaš ocene?
-                <div className="absolute -inset-2 bg-gradient-to-r from-white/20 to-white/10 blur-3xl rounded-full"></div>
-              </span>
-            </h2>
-          </div>
-          <p className="text-2xl md:text-3xl font-medium opacity-90 max-w-4xl mx-auto leading-relaxed">
-            Pridruži se 
-            <span className="font-bold text-white">hiljadama studenata</span> 
-            koji već koriste FAXit za 
-            <span className="font-bold text-white">bolje učenje</span> i 
-            <span className="font-bold text-white">bolje rezultate</span> 
-            na fakultetu.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-8 justify-center items-center">
-            <Button className="group bg-white text-primary border-none rounded-3xl px-16 py-8 text-2xl font-black transition-all duration-700 shadow-2xl hover:shadow-white/30 hover:-translate-y-3 hover:scale-110 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-primary/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-              <span className="relative z-10 flex items-center gap-4">
-                <Zap className="w-8 h-8 group-hover:rotate-12 group-hover:scale-125 transition-transform duration-500" />
-                Počni besplatno
-              </span>
-            </Button>
-            <Button className="group bg-white/10 text-white border-2 border-white/30 rounded-3xl px-16 py-8 text-2xl font-bold transition-all duration-700 backdrop-blur-xl shadow-xl hover:shadow-white/20 hover:-translate-y-3 hover:scale-110 hover:bg-white/20 hover:border-white/50 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-              <span className="relative z-10 flex items-center gap-4">
-                <Play className="w-8 h-8 group-hover:scale-125 transition-transform duration-500" />
-                Pogledaj demo
-              </span>
-            </Button>
-          </div>
-          <div className="flex flex-wrap justify-center gap-12 text-xl font-semibold opacity-90">
-            <div className="group flex items-center gap-4 hover:opacity-100 transition-opacity duration-300">
-              <div className="p-2 bg-white/20 rounded-full group-hover:bg-white/30 group-hover:scale-110 transition-all duration-300">
-                <Check className="w-6 h-6" />
-              </div>
-              <span className="group-hover:text-white transition-colors duration-300">Besplatno probanje 30 dana</span>
-            </div>
-            <div className="group flex items-center gap-4 hover:opacity-100 transition-opacity duration-300">
-              <div className="p-2 bg-white/20 rounded-full group-hover:bg-white/30 group-hover:scale-110 transition-all duration-300">
-                <Check className="w-6 h-6" />
-              </div>
-              <span className="group-hover:text-white transition-colors duration-300">Bez ugovorne obaveze</span>
-            </div>
-            <div className="group flex items-center gap-4 hover:opacity-100 transition-opacity duration-300">
-              <div className="p-2 bg-white/20 rounded-full group-hover:bg-white/30 group-hover:scale-110 transition-all duration-300">
-                <Check className="w-6 h-6" />
-              </div>
-              <span className="group-hover:text-white transition-colors duration-300">Podrška 24/7</span>
-            </div>
-          </div>
-        </div>
-      </section>
+      </motion.section>
 
       {/* Footer */}
-      <footer style={{
-        background: 'linear-gradient(135deg, #020117 0%, rgba(26, 22, 53, 1) 100%)',
-        color: 'white',
-        borderTop: '1px solid rgba(78, 60, 250, 0.2)'
-      }}>
+      <footer className="bg-zinc-950 text-white border-t border-zinc-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="lg:col-span-1">
               <div className="flex items-center gap-2 mb-4">
-                <div style={{
-                  width: '32px',
-                  height: '32px',
-                  background: 'linear-gradient(135deg, #4E3CFA 0%, #6A5ACD 100%)',
-                  borderRadius: '8px'
-                }} />
+                <div className="w-8 h-8 bg-zinc-800 rounded-lg" />
                 <span className="text-2xl font-bold">FAXit</span>
               </div>
-              <p style={{color: '#9C9AA9', marginBottom: '24px'}}>
+              <p className="text-zinc-400 mb-6">
                 AI asistent koji revolucioniše način kako studenti uče i pristupaju gradivu na fakultetu.
               </p>
             </div>
 
             <div>
-              <h4 style={{fontWeight: 600, marginBottom: '16px', color: '#FFFFFF'}}>Stranice</h4>
+              <h4 className="font-semibold mb-4 text-white">Stranice</h4>
               <ul className="space-y-2">
                 {[
                   { name: 'Kako funkcioniše', path: '/main/kako-funkcionise' },
@@ -813,16 +469,7 @@ const MainHome: React.FC = () => {
                   <li key={index}>
                     <Link 
                       to={link.path} 
-                      style={{
-                        color: '#9C9AA9',
-                        textDecoration: 'none',
-                        transition: 'color 0.3s ease',
-                        display: 'block',
-                        padding: '4px 0',
-                        fontSize: '16px'
-                      }}
-                      onMouseOver={(e) => e.currentTarget.style.color = '#4E3CFA'}
-                      onMouseOut={(e) => e.currentTarget.style.color = '#9C9AA9'}
+                      className="text-zinc-400 hover:text-white no-underline transition-colors duration-300 block py-1 text-base"
                     >
                       {link.name}
                     </Link>
@@ -832,7 +479,7 @@ const MainHome: React.FC = () => {
             </div>
 
             <div>
-              <h4 style={{fontWeight: 600, marginBottom: '16px', color: '#FFFFFF'}}>Podrška</h4>
+              <h4 className="font-semibold mb-4 text-white">Podrška</h4>
               <ul className="space-y-2">
                 {[
                   { name: 'Kontakt', path: '/main/kontakt' },
@@ -843,16 +490,7 @@ const MainHome: React.FC = () => {
                   <li key={index}>
                     <Link 
                       to={link.path} 
-                      style={{
-                        color: '#9C9AA9',
-                        textDecoration: 'none',
-                        transition: 'color 0.3s ease',
-                        display: 'block',
-                        padding: '4px 0',
-                        fontSize: '16px'
-                      }}
-                      onMouseOver={(e) => e.currentTarget.style.color = '#4E3CFA'}
-                      onMouseOut={(e) => e.currentTarget.style.color = '#9C9AA9'}
+                      className="text-zinc-400 hover:text-white no-underline transition-colors duration-300 block py-1 text-base"
                     >
                       {link.name}
                     </Link>
@@ -862,7 +500,7 @@ const MainHome: React.FC = () => {
             </div>
 
             <div>
-              <h4 style={{fontWeight: 600, marginBottom: '16px', color: '#FFFFFF'}}>Društvene mreže</h4>
+              <h4 className="font-semibold mb-4 text-white">Društvene mreže</h4>
               <div className="flex gap-4">
                 {[
                   {
@@ -893,23 +531,7 @@ const MainHome: React.FC = () => {
                   <a 
                     key={index} 
                     href="#" 
-                    style={{
-                      color: '#9C9AA9',
-                      transition: 'all 0.3s ease',
-                      padding: '8px',
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.color = '#4E3CFA';
-                      e.currentTarget.style.background = 'rgba(78, 60, 250, 0.1)';
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.color = '#9C9AA9';
-                      e.currentTarget.style.background = 'transparent';
-                    }}
+                    className="p-2 rounded-lg flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-all duration-300"
                   >
                     {social.icon}
                   </a>
@@ -918,24 +540,20 @@ const MainHome: React.FC = () => {
             </div>
           </div>
 
-          <div style={{
-            borderTop: '1px solid rgba(78, 60, 250, 0.2)',
-            paddingTop: '32px',
-            marginTop: '32px'
-          }}>
+          <div className="border-t border-zinc-800 pt-8 mt-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <p style={{color: '#9C9AA9', fontSize: '16px'}}>
+              <p className="text-zinc-400 text-base">
                 © 2024 FAXit. Sva prava zadržana.
               </p>
               
-              <p style={{color: '#9C9AA9', fontSize: '16px'}}>
+              <p className="text-zinc-400 text-base">
                 Napravljeno sa ❤️ za studente Srbije
               </p>
             </div>
           </div>
         </div>
       </footer>
-      </div>
+      </motion.div>
       
     </TooltipProvider>
   );

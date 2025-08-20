@@ -40,8 +40,23 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
       try {
         const token = localStorage.getItem('adminToken');
         if (token) {
-          // Validate token with backend (implement API call)
-          // For now, we'll just clear invalid tokens
+          // Validate token with backend
+          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/admin/me`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            setAdmin(data.admin);
+          } else {
+            // Invalid token
+            localStorage.removeItem('adminToken');
+            setAdmin(null);
+          }
+        } else {
           setAdmin(null);
         }
       } catch (error) {

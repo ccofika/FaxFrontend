@@ -6,6 +6,8 @@ import { Input } from '../../components/ui/input';
 import { Card, CardContent } from '../../components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
 import FacultyModal from './FacultyModal';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface City {
   _id: string;
@@ -39,6 +41,8 @@ const MaterialManagement: React.FC = () => {
   const [isAddFacultyModalOpen, setIsAddFacultyModalOpen] = useState(false);
   const [isFacultyModalOpen, setIsFacultyModalOpen] = useState(false);
   const [selectedFacultyId, setSelectedFacultyId] = useState('');
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteItem, setDeleteItem] = useState<{type: string, id: string, name: string, cityId?: string} | null>(null);
 
   const loadData = async () => {
     try {
@@ -156,6 +160,7 @@ const MaterialManagement: React.FC = () => {
       setCities(prev => [...prev, { ...data.city, faculties: [] }]);
       setNewCityName('');
       setIsAddCityModalOpen(false);
+      setError('');
     } catch (error: any) {
       setError(error.message || 'Greška pri dodavanju grada');
     } finally {
@@ -211,6 +216,7 @@ const MaterialManagement: React.FC = () => {
       setNewFacultyName('');
       setSelectedCityId('');
       setIsAddFacultyModalOpen(false);
+      setError('');
     } catch (error: any) {
       setError(error.message || 'Greška pri dodavanju fakulteta');
     } finally {
@@ -231,11 +237,12 @@ const MaterialManagement: React.FC = () => {
     );
   };
 
-  const handleDeleteCity = async (cityId: string, cityName: string) => {
-    if (!window.confirm(`Da li ste sigurni da želite da obrišete grad "${cityName}"? Ova akcija će obrisati i sve fakultete u gradu.`)) {
-      return;
-    }
+  const handleDeleteCity = (cityId: string, cityName: string) => {
+    setDeleteItem({ type: 'city', id: cityId, name: cityName });
+    setDeleteConfirmOpen(true);
+  };
 
+  const executeDeleteCity = async (cityId: string) => {
     try {
       const token = localStorage.getItem('adminToken');
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/cities/${cityId}`, {
@@ -260,6 +267,37 @@ const MaterialManagement: React.FC = () => {
   const handleFacultyClick = (facultyId: string) => {
     setSelectedFacultyId(facultyId);
     setIsFacultyModalOpen(true);
+  };
+
+  const handleDeleteFaculty = (facultyId: string, facultyName: string, cityId: string) => {
+    setDeleteItem({ type: 'faculty', id: facultyId, name: facultyName, cityId });
+    setDeleteConfirmOpen(true);
+  };
+
+  const executeDeleteFaculty = async (facultyId: string, cityId: string) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/faculties/${facultyId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete faculty');
+      }
+
+      setCities(prev => prev.map(city => 
+        city._id === cityId 
+          ? { ...city, faculties: city.faculties.filter(faculty => faculty._id !== facultyId) }
+          : city
+      ));
+    } catch (error: any) {
+      setError(error.message || 'Greška pri brisanju fakulteta');
+    }
   };
 
   return (
@@ -294,10 +332,10 @@ const MaterialManagement: React.FC = () => {
                 </svg>
                 Dodaj Grad
               </Button>
-              <DialogContent className="sm:max-w-md">
+              <DialogContent className="sm:max-w-md bg-white">
                 <DialogHeader>
-                  <DialogTitle>Dodaj novi grad</DialogTitle>
-                  <DialogDescription>
+                  <DialogTitle className="text-gray-900">Dodaj novi grad</DialogTitle>
+                  <DialogDescription className="text-gray-600">
                     Unesite naziv novog grada
                   </DialogDescription>
                 </DialogHeader>
@@ -333,6 +371,7 @@ const MaterialManagement: React.FC = () => {
                         setNewCityName('');
                         setError('');
                       }}
+                      className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                     >
                       Otkaži
                     </Button>
@@ -354,8 +393,16 @@ const MaterialManagement: React.FC = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-8">
-          {cities.map((city) => (
-            <div key={city._id} className="bg-white rounded-xl shadow-lg border border-gray-200">
+          <AnimatePresence>
+            {cities.map((city, index) => (
+              <motion.div 
+                key={city._id} 
+                className="bg-white rounded-xl shadow-lg border border-gray-200"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+              >
               {/* City Header */}
               <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-4">
@@ -365,7 +412,7 @@ const MaterialManagement: React.FC = () => {
                     <Dialog open={isAddFacultyModalOpen} onOpenChange={setIsAddFacultyModalOpen}>
                       <Button
                         variant="outline"
-                        className="border-gray-200 hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700"
+                        className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900"
                         onClick={() => {
                           setSelectedCityId(city._id);
                           setIsAddFacultyModalOpen(true);
@@ -379,7 +426,7 @@ const MaterialManagement: React.FC = () => {
                       
                       <Button
                         variant="outline"
-                        className="border-red-200 hover:bg-red-50 hover:border-red-300 hover:text-red-700"
+                        className="border-red-300 text-red-700 hover:bg-red-50 hover:border-red-400 hover:text-red-900"
                         onClick={() => handleDeleteCity(city._id, city.name)}
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
@@ -389,10 +436,10 @@ const MaterialManagement: React.FC = () => {
                         </svg>
                         Obriši Grad
                       </Button>
-                      <DialogContent className="sm:max-w-md">
+                      <DialogContent className="sm:max-w-md bg-white">
                         <DialogHeader>
-                          <DialogTitle>Dodaj novi fakultet</DialogTitle>
-                          <DialogDescription>
+                          <DialogTitle className="text-gray-900">Dodaj novi fakultet</DialogTitle>
+                          <DialogDescription className="text-gray-600">
                             Dodavanje fakulteta u grad: {city.name}
                           </DialogDescription>
                         </DialogHeader>
@@ -429,6 +476,7 @@ const MaterialManagement: React.FC = () => {
                                 setSelectedCityId('');
                                 setError('');
                               }}
+                              className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                             >
                               Otkaži
                             </Button>
@@ -472,33 +520,87 @@ const MaterialManagement: React.FC = () => {
               {/* Faculties Grid */}
               <div className="p-6">
                 {getFilteredFaculties(city).length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {getFilteredFaculties(city).map((faculty) => (
-                      <Card
-                        key={faculty._id}
-                        className="cursor-pointer hover:shadow-lg transition-all duration-200 border-0 shadow-md bg-white hover:bg-white"
-                        onClick={() => handleFacultyClick(faculty._id)}
-                      >
-                        <CardContent className="p-4 flex items-center justify-between">
-                          <span className="font-medium text-gray-900">{faculty.name}</span>
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            className="text-gray-400"
+                  <motion.div 
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "-100px" }}
+                    variants={{
+                      hidden: {},
+                      visible: {
+                        transition: {
+                          staggerChildren: 0.1
+                        }
+                      }
+                    }}
+                  >
+                    <AnimatePresence mode="wait">
+                      {getFilteredFaculties(city).map((faculty) => (
+                        <motion.div
+                          key={`${faculty._id}-${searchTerms[city._id] || 'all'}`}
+                          variants={{
+                            hidden: { opacity: 0, y: 20 },
+                            visible: { opacity: 1, y: 0 }
+                          }}
+                          initial="hidden"
+                          animate="visible"
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <Card
+                            className="hover:shadow-lg transition-all duration-200 border-0 shadow-md bg-white hover:bg-white"
                           >
-                            <path d="M9 18l6-6-6-6"/>
-                          </svg>
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <span 
+                              className="font-medium text-gray-900 cursor-pointer hover:text-gray-700 flex-1"
+                              onClick={() => handleFacultyClick(faculty._id)}
+                            >
+                              {faculty.name}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="p-2 h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteFaculty(faculty._id, faculty.name, city._id);
+                                }}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M3 6h18"/>
+                                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                                </svg>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="p-2 h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                                onClick={() => handleFacultyClick(faculty._id)}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M9 18l6-6-6-6"/>
+                                </svg>
+                              </Button>
+                            </div>
+                          </div>
                         </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                          </Card>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </motion.div>
                 ) : (
-                  <Card className="border-2 border-dashed border-gray-300 bg-gray-50">
-                    <CardContent className="p-8 text-center">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Card className="border-2 border-dashed border-gray-300 bg-gray-50">
+                      <CardContent className="p-8 text-center">
                       <svg
                         width="48"
                         height="48"
@@ -512,17 +614,24 @@ const MaterialManagement: React.FC = () => {
                         <circle cx="12" cy="10" r="3"/>
                       </svg>
                       <p className="text-gray-600 mb-2">Nema fakulteta</p>
-                      <p className="text-sm text-gray-500">Klikni 'Dodaj Fakultet' da dodaš prvi fakultet</p>
-                    </CardContent>
-                  </Card>
+                        <p className="text-sm text-gray-500">Klikni 'Dodaj Fakultet' da dodaš prvi fakultet</p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 )}
               </div>
-            </div>
-          ))}
+              </motion.div>
+            ))}
+          </AnimatePresence>
 
           {cities.length === 0 && (
-            <Card className="border-2 border-dashed border-gray-300 bg-gray-50">
-              <CardContent className="p-12 text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <Card className="border-2 border-dashed border-gray-300 bg-gray-50">
+                <CardContent className="p-12 text-center">
                 <svg
                   width="64"
                   height="64"
@@ -536,9 +645,10 @@ const MaterialManagement: React.FC = () => {
                   <circle cx="12" cy="10" r="3"/>
                 </svg>
                 <h3 className="text-lg font-semibold text-gray-700 mb-2">Nema gradova</h3>
-                <p className="text-gray-500 mb-4">Počni sa dodavanjem prvog grada</p>
-              </CardContent>
-            </Card>
+                  <p className="text-gray-500 mb-4">Počni sa dodavanjem prvog grada</p>
+                </CardContent>
+              </Card>
+            </motion.div>
           )}
         </div>
       </main>
@@ -554,6 +664,30 @@ const MaterialManagement: React.FC = () => {
           }}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setDeleteItem(null);
+        }}
+        onConfirm={async () => {
+          if (deleteItem) {
+            if (deleteItem.type === 'city') {
+              await executeDeleteCity(deleteItem.id);
+            } else if (deleteItem.type === 'faculty') {
+              await executeDeleteFaculty(deleteItem.id, deleteItem.cityId!);
+            }
+          }
+          setDeleteConfirmOpen(false);
+          setDeleteItem(null);
+        }}
+        title={`Obriši ${deleteItem?.type === 'city' ? 'grad' : 'fakultet'}`}
+        description={`Da li ste sigurni da želite da obrišete ${deleteItem?.type === 'city' ? 'grad' : 'fakultet'} "${deleteItem?.name}"? ${deleteItem?.type === 'city' ? 'Ova akcija će obrisati i sve fakultete u gradu.' : 'Ova akcija će obrisati i sve smerove i predmete fakulteta.'}`}
+        confirmText="Obriši"
+        cancelText="Otkaži"
+      />
     </div>
   );
 };
