@@ -7,10 +7,10 @@ import { useMediaQuery } from "src/hooks/use-media-query";
 import { cn } from "src/lib/utils";
 import { motion } from "framer-motion";
 import { Check, Star } from "lucide-react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { useState, useRef } from "react";
-import confetti from "canvas-confetti";
-import NumberFlow from "@number-flow/react";
+// import confetti from "canvas-confetti";
+// import NumberFlow from "@number-flow/react";
 
 interface PricingPlan {
   name: string;
@@ -46,25 +46,25 @@ export function Pricing({
       const x = rect.left + rect.width / 2;
       const y = rect.top + rect.height / 2;
 
-      confetti({
-        particleCount: 50,
-        spread: 60,
-        origin: {
-          x: x / window.innerWidth,
-          y: y / window.innerHeight,
-        },
-        colors: [
-          "hsl(var(--primary))",
-          "hsl(var(--accent))",
-          "hsl(var(--secondary))",
-          "hsl(var(--muted))",
-        ],
-        ticks: 200,
-        gravity: 1.2,
-        decay: 0.94,
-        startVelocity: 30,
-        shapes: ["circle"],
-      });
+      // confetti({
+      //   particleCount: 50,
+      //   spread: 60,
+      //   origin: {
+      //     x: x / window.innerWidth,
+      //     y: y / window.innerHeight,
+      //   },
+      //   colors: [
+      //     "hsl(var(--primary))",
+      //     "hsl(var(--accent))",
+      //     "hsl(var(--secondary))",
+      //     "hsl(var(--muted))",
+      //   ],
+      //   ticks: 200,
+      //   gravity: 1.2,
+      //   decay: 0.94,
+      //   startVelocity: 30,
+      //   shapes: ["circle"],
+      // });
     }
   };
 
@@ -145,24 +145,7 @@ export function Pricing({
               </p>
               <div className="mt-6 flex items-center justify-center gap-x-2">
                 <span className="text-5xl font-bold tracking-tight text-foreground">
-                  <NumberFlow
-                    value={
-                      isMonthly ? Number(plan.price) : Number(plan.yearlyPrice)
-                    }
-                    format={{
-                      style: "currency",
-                      currency: "USD",
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }}
-                    formatter={(value) => `$${value}`}
-                    transformTiming={{
-                      duration: 500,
-                      easing: "ease-out",
-                    }}
-                    willChange
-                    className="font-variant-numeric: tabular-nums"
-                  />
+                  ${isMonthly ? plan.price : plan.yearlyPrice}
                 </span>
                 {plan.period !== "Next 3 months" && (
                   <span className="text-sm font-semibold leading-6 tracking-wide text-muted-foreground">
@@ -187,7 +170,7 @@ export function Pricing({
               <hr className="w-full my-4" />
 
               <Link
-                href={plan.href}
+                to={plan.href}
                 className={cn(
                   buttonVariants({
                     variant: "outline",

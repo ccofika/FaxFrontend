@@ -24,6 +24,34 @@ interface CityWithFaculties extends City {
   faculties: Faculty[];
 }
 
+interface DocumentSection {
+  _id: string;
+  sectionId: string;
+  title: string;
+  path: string;
+  level: number;
+  pageStart: number;
+  pageEnd: number;
+  charStart: number;
+  charEnd: number;
+  content: string;
+  docId: string;
+  subjectId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface AIAnalysisResult {
+  sections: Array<{
+    title: string;
+    level: number;
+    pageStart: number;
+    pageEnd: number;
+    parentSectionId?: string;
+    semanticType: 'chapter' | 'section' | 'subsection' | 'paragraph';
+  }>;
+}
+
 const MaterialManagement: React.FC = () => {
   const { admin, isAuthenticated, isLoading } = useAdminAuth();
   const navigate = useNavigate();
@@ -43,6 +71,13 @@ const MaterialManagement: React.FC = () => {
   const [selectedFacultyId, setSelectedFacultyId] = useState('');
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteItem, setDeleteItem] = useState<{type: string, id: string, name: string, cityId?: string} | null>(null);
+  const [showSectionsPreview, setShowSectionsPreview] = useState(false);
+  const [sections, setSections] = useState<DocumentSection[]>([]);
+  const [loadingSections, setLoadingSections] = useState(false);
+  const [selectedSectionIndex, setSelectedSectionIndex] = useState<number | null>(null);
+  const [showAIAnalysis, setShowAIAnalysis] = useState(false);
+  const [aiAnalysisResult, setAiAnalysisResult] = useState<AIAnalysisResult | null>(null);
+  const [loadingAIAnalysis, setLoadingAIAnalysis] = useState(false);
 
   const loadData = async () => {
     try {
@@ -264,6 +299,62 @@ const MaterialManagement: React.FC = () => {
     }
   };
 
+  const loadSections = async () => {
+    setLoadingSections(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/ingestion/sections`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load sections');
+      }
+
+      const data = await response.json();
+      setSections(data.sections || []);
+      console.log('Loaded sections:', data.sections);
+    } catch (error: any) {
+      console.error('Error loading sections:', error);
+      setError(error.message || 'Greška pri učitavanju sekcija');
+    } finally {
+      setLoadingSections(false);
+    }
+  };
+
+  const loadAIAnalysis = async () => {
+    setLoadingAIAnalysis(true);
+    // Reset previous data
+    setAiAnalysisResult(null);
+    setError('');
+    
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/ingestion/ai-analysis?t=${Date.now()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load AI analysis');
+      }
+
+      const data = await response.json();
+      setAiAnalysisResult(data.aiAnalysis || null);
+      console.log('Loaded AI analysis:', data.aiAnalysis);
+    } catch (error: any) {
+      console.error('Error loading AI analysis:', error);
+      setError(error.message || 'Greška pri učitavanju AI analize');
+    } finally {
+      setLoadingAIAnalysis(false);
+    }
+  };
+
   const handleFacultyClick = (facultyId: string) => {
     setSelectedFacultyId(facultyId);
     setIsFacultyModalOpen(true);
@@ -322,16 +413,54 @@ const MaterialManagement: React.FC = () => {
               </div>
             </div>
 
-            <Dialog open={isAddCityModalOpen} onOpenChange={setIsAddCityModalOpen}>
-              <Button 
-                className="bg-black hover:bg-gray-800 text-white"
-                onClick={() => setIsAddCityModalOpen(true)}
+            <div className="flex items-center gap-3">
+              <Button
+                variant={showAIAnalysis ? "default" : "outline"}
+                onClick={() => {
+                  setShowAIAnalysis(!showAIAnalysis);
+                  if (!showAIAnalysis) {
+                    loadAIAnalysis();
+                  }
+                }}
+                className={showAIAnalysis ? "bg-purple-600 hover:bg-purple-700 text-white" : "border-purple-300 text-purple-700 hover:bg-purple-50"}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
-                  <path d="M12 5v14m-7-7h14"/>
+                  <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                  <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
                 </svg>
-                Dodaj Grad
+                {showAIAnalysis ? 'Sakrij AI Analizu' : 'AI Analiza TOC'}
               </Button>
+
+              <Button
+                variant={showSectionsPreview ? "default" : "outline"}
+                onClick={() => {
+                  setShowSectionsPreview(!showSectionsPreview);
+                  if (!showSectionsPreview) {
+                    loadSections();
+                  }
+                }}
+                className={showSectionsPreview ? "bg-blue-600 hover:bg-blue-700 text-white" : "border-blue-300 text-blue-700 hover:bg-blue-50"}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14,2 14,8 20,8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10,9 9,9 8,9"/>
+                </svg>
+                {showSectionsPreview ? 'Sakrij Sekcije' : 'Prikaži Sekcije'}
+              </Button>
+
+              <Dialog open={isAddCityModalOpen} onOpenChange={setIsAddCityModalOpen}>
+                <Button 
+                  className="bg-black hover:bg-gray-800 text-white"
+                  onClick={() => setIsAddCityModalOpen(true)}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
+                    <path d="M12 5v14m-7-7h14"/>
+                  </svg>
+                  Dodaj Grad
+                </Button>
               <DialogContent className="sm:max-w-md bg-white">
                 <DialogHeader>
                   <DialogTitle className="text-gray-900">Dodaj novi grad</DialogTitle>
@@ -386,12 +515,242 @@ const MaterialManagement: React.FC = () => {
                 </div>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* AI Analysis Display */}
+        {showAIAnalysis && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="mb-8"
+          >
+            <Card className="bg-white shadow-lg border border-purple-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">AI TOC Analysis Results</h2>
+                    <p className="text-sm text-gray-600">Rezultati AI analize table of contents</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={loadAIAnalysis}
+                      disabled={loadingAIAnalysis}
+                      className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                        <path d="M21 3v5h-5"/>
+                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                        <path d="M3 21v-5h5"/>
+                      </svg>
+                      {loadingAIAnalysis ? 'Učitavanje...' : 'Osvežava'}
+                    </Button>
+                  </div>
+                </div>
+
+                {loadingAIAnalysis ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                  </div>
+                ) : aiAnalysisResult && aiAnalysisResult.sections && aiAnalysisResult.sections.length > 0 ? (
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-gray-900">
+                      AI Extracted Sections ({aiAnalysisResult.sections.length})
+                    </h3>
+                    <div className="bg-gray-50 p-4 rounded-lg max-h-96 overflow-y-auto">
+                      <div className="space-y-3">
+                        {aiAnalysisResult.sections.map((section, index) => (
+                          <div
+                            key={index}
+                            className="bg-white p-4 rounded-md border border-gray-200 shadow-sm"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                    section.level === 1 ? 'bg-blue-100 text-blue-800' :
+                                    section.level === 2 ? 'bg-green-100 text-green-800' :
+                                    'bg-yellow-100 text-yellow-800'
+                                  }`}>
+                                    Level {section.level}
+                                  </span>
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                    {section.semanticType}
+                                  </span>
+                                </div>
+                                <h4 className="font-medium text-gray-900 mb-1">{section.title}</h4>
+                                <div className="text-xs text-gray-500 space-y-1">
+                                  <p>Pages: {section.pageStart} - {section.pageEnd}</p>
+                                  {section.parentSectionId && (
+                                    <p>Parent Section: {section.parentSectionId}</p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="text-xs text-gray-400 ml-2">
+                                #{index + 1}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Raw JSON Display */}
+                    <div className="mt-6">
+                      <h3 className="font-semibold text-gray-900 mb-2">Raw JSON Response</h3>
+                      <div className="bg-gray-900 p-4 rounded-lg overflow-x-auto">
+                        <pre className="text-green-400 text-sm font-mono whitespace-pre-wrap">
+                          {JSON.stringify(aiAnalysisResult, null, 2)}
+                        </pre>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto mb-4 text-gray-400">
+                      <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                      <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">No AI Analysis</h3>
+                    <p className="text-gray-500">Process a document with AI to see analysis results</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Sections Preview */}
+        {showSectionsPreview && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="mb-8"
+          >
+            <Card className="bg-white shadow-lg border border-gray-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Document Sections Preview</h2>
+                    <p className="text-sm text-gray-600">Izvučene sekcije iz PDF dokumenata za testiranje</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={loadSections}
+                      disabled={loadingSections}
+                      className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                        <path d="M21 3v5h-5"/>
+                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                        <path d="M3 21v-5h5"/>
+                      </svg>
+                      {loadingSections ? 'Učitavanje...' : 'Osvežava'}
+                    </Button>
+                  </div>
+                </div>
+
+                {loadingSections ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                  </div>
+                ) : sections.length > 0 ? (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Sections List */}
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-gray-900">Sekcije ({sections.length})</h3>
+                      <div className="max-h-96 overflow-y-auto space-y-2">
+                        {sections.map((section, index) => (
+                          <motion.div
+                            key={section._id}
+                            className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                              selectedSectionIndex === index
+                                ? 'border-blue-500 bg-blue-50'
+                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                            }`}
+                            onClick={() => setSelectedSectionIndex(index)}
+                            whileHover={{ scale: 1.01 }}
+                            whileTap={{ scale: 0.99 }}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-gray-900 truncate">{section.title}</h4>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Path: {section.path} | Level: {section.level} | Pages: {section.pageStart}-{section.pageEnd}
+                                </p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                  Characters: {section.charStart}-{section.charEnd} ({section.charEnd - section.charStart} chars)
+                                </p>
+                              </div>
+                              <div className="text-xs text-gray-400 ml-2">
+                                #{index + 1}
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Section Content Preview */}
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-gray-900">
+                        Sadržaj sekcije {selectedSectionIndex !== null ? `#${selectedSectionIndex + 1}` : ''}
+                      </h3>
+                      {selectedSectionIndex !== null && sections[selectedSectionIndex] ? (
+                        <div className="bg-gray-50 p-4 rounded-lg max-h-96 overflow-y-auto">
+                          <div className="mb-3 pb-3 border-b border-gray-300">
+                            <h4 className="font-medium text-gray-900">{sections[selectedSectionIndex].title}</h4>
+                            <div className="text-xs text-gray-500 mt-1 space-y-1">
+                              <p>Section ID: {sections[selectedSectionIndex].sectionId}</p>
+                              <p>Path: {sections[selectedSectionIndex].path}</p>
+                              <p>Level: {sections[selectedSectionIndex].level}</p>
+                              <p>Pages: {sections[selectedSectionIndex].pageStart} - {sections[selectedSectionIndex].pageEnd}</p>
+                              <p>Characters: {sections[selectedSectionIndex].charStart} - {sections[selectedSectionIndex].charEnd}</p>
+                              <p>Content length: {sections[selectedSectionIndex].content.length} chars</p>
+                            </div>
+                          </div>
+                          <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono">
+                            {sections[selectedSectionIndex].content}
+                          </pre>
+                        </div>
+                      ) : (
+                        <div className="bg-gray-50 p-8 rounded-lg text-center">
+                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto mb-4 text-gray-400">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14,2 14,8 20,8"/>
+                          </svg>
+                          <p className="text-gray-600">Izaberite sekciju da vidite njen sadržaj</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto mb-4 text-gray-400">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14,2 14,8 20,8"/>
+                    </svg>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Nema sekcija</h3>
+                    <p className="text-gray-500">Dodajte PDF materijal i pokrenite obradu da vidite sekcije</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         <div className="space-y-8">
           <AnimatePresence>
             {cities.map((city, index) => (

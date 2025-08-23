@@ -758,6 +758,7 @@ const Home: React.FC = () => {
                   </p>
                 </motion.div>
               )}
+            </div>
           </motion.div>
         </div>
 

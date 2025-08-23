@@ -31,6 +31,23 @@ interface Subject {
   order: number;
 }
 
+interface Material {
+  _id: string;
+  title: string;
+  type: 'book' | 'pdf' | 'link' | 'video' | 'notes';
+  r2Key?: string;
+  bucket?: string;
+  url?: string;
+  note?: string;
+  subjectId: string;
+  facultyId: string;
+  departmentId: string;
+  year: number;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface FacultyModalProps {
   facultyId: string;
   isOpen: boolean;
@@ -43,6 +60,7 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
   const [faculty, setFaculty] = useState<Faculty | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [materials, setMaterials] = useState<{[subjectId: string]: Material[]}>({});
   const [selectedDeptId, setSelectedDeptId] = useState<string>('');
   const [selectedYear, setSelectedYear] = useState<number>(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,6 +75,18 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
   const [isAddSubjectModalOpen, setIsAddSubjectModalOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteItem, setDeleteItem] = useState<{type: string, id: string, name: string} | null>(null);
+  
+  // Material states
+  const [uploadingMaterials, setUploadingMaterials] = useState<{[subjectId: string]: boolean}>({});
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [renameMaterial, setRenameMaterial] = useState<{id: string, subjectId: string, currentTitle: string} | null>(null);
+  const [newMaterialTitle, setNewMaterialTitle] = useState('');
+  const [isPageSelectionModalOpen, setIsPageSelectionModalOpen] = useState(false);
+  const [pageSelectionMaterial, setPageSelectionMaterial] = useState<{id: string, subjectId: string, title: string} | null>(null);
+  const [startPage, setStartPage] = useState(1);
+  const [maxPages, setMaxPages] = useState(10);
+  const [tocPage, setTocPage] = useState<number | undefined>(undefined);
+  const [tocToPage, setTocToPage] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     if (!isAuthenticated || !facultyId || !isOpen) return;
@@ -69,8 +99,15 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
       loadSubjects();
     } else {
       setSubjects([]);
+      setMaterials({});
     }
   }, [selectedDeptId, selectedYear]);
+
+  useEffect(() => {
+    if (subjects.length > 0) {
+      loadMaterialsForSubjects();
+    }
+  }, [subjects]);
 
   const loadData = async () => {
     try {
@@ -315,6 +352,259 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
       setSubjects(prev => prev.filter(subject => subject._id !== subjectId));
     } catch (error: any) {
       setError(error.message || 'Greška pri brisanju predmeta');
+    }
+  };
+
+  const loadMaterialsForSubjects = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const materialsData: {[subjectId: string]: Material[]} = {};
+
+      for (const subject of subjects) {
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/api/materials/materials?subjectId=${subject._id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          materialsData[subject._id] = data.materials || [];
+        }
+      }
+      
+      setMaterials(materialsData);
+    } catch (error) {
+      console.error('Error loading materials:', error);
+    }
+  };
+
+  const handlePDFUpload = async (subjectId: string, file: File, title: string) => {
+    if (!selectedDeptId || !selectedYear) return;
+
+    setUploadingMaterials(prev => ({ ...prev, [subjectId]: true }));
+    setError('');
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      
+      const formData = new FormData();
+      formData.append('pdf', file);
+      formData.append('title', title);
+      formData.append('subjectId', subjectId);
+      formData.append('facultyId', facultyId);
+      formData.append('departmentId', selectedDeptId);
+      formData.append('year', selectedYear.toString());
+
+      const uploadResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/upload/pdf`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.message || 'Failed to upload PDF');
+      }
+
+      const uploadData = await uploadResponse.json();
+
+      const materialResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/materials`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: title,
+          type: 'pdf',
+          r2Key: uploadData.r2Key,
+          bucket: uploadData.bucket,
+          subjectId: subjectId,
+          facultyId: facultyId,
+          departmentId: selectedDeptId,
+          year: selectedYear
+        }),
+      });
+
+      if (!materialResponse.ok) {
+        const errorData = await materialResponse.json();
+        throw new Error(errorData.message || 'Failed to create material record');
+      }
+
+      const materialData = await materialResponse.json();
+      
+      setMaterials(prev => ({
+        ...prev,
+        [subjectId]: [...(prev[subjectId] || []), materialData.material]
+      }));
+
+      // Reset file input
+      const fileInput = document.getElementById(`pdf-upload-${subjectId}`) as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = '';
+      }
+
+      // Only for PDF materials, open page selection modal
+      if (materialData.material.type === 'pdf') {
+        setPageSelectionMaterial({
+          id: materialData.material._id,
+          subjectId,
+          title: materialData.material.title,
+        });
+        setIsPageSelectionModalOpen(true);
+      }
+
+    } catch (error: any) {
+      setError(error.message || 'Greška pri dodavanju PDF-a');
+    } finally {
+      setUploadingMaterials(prev => ({ ...prev, [subjectId]: false }));
+    }
+  };
+
+  const handleDeleteMaterial = async (materialId: string, subjectId: string) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/materials/${materialId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete material');
+      }
+
+      setMaterials(prev => ({
+        ...prev,
+        [subjectId]: prev[subjectId]?.filter(material => material._id !== materialId) || []
+      }));
+    } catch (error: any) {
+      setError(error.message || 'Greška pri brisanju materijala');
+    }
+  };
+
+  const handleViewMaterial = (material: Material) => {
+    if (material.type === 'pdf' && material.r2Key) {
+      const viewUrl = `${process.env.REACT_APP_API_URL}/api/upload/view/${encodeURIComponent(material.r2Key)}`;
+      window.open(viewUrl, '_blank');
+    } else if (material.url) {
+      window.open(material.url, '_blank');
+    }
+  };
+
+  const openRenameModal = (materialId: string, subjectId: string, currentTitle: string) => {
+    setRenameMaterial({ id: materialId, subjectId, currentTitle });
+    setNewMaterialTitle(currentTitle);
+    setIsRenameModalOpen(true);
+  };
+
+  const handleRenameMaterial = async () => {
+    if (!renameMaterial || !newMaterialTitle.trim()) return;
+    
+    if (newMaterialTitle.trim() === renameMaterial.currentTitle) {
+      setIsRenameModalOpen(false);
+      setRenameMaterial(null);
+      setNewMaterialTitle('');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/materials/${renameMaterial.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: newMaterialTitle.trim()
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to rename material');
+      }
+
+      const data = await response.json();
+      
+      // Update materials state
+      setMaterials(prev => ({
+        ...prev,
+        [renameMaterial.subjectId]: prev[renameMaterial.subjectId]?.map(material => 
+          material._id === renameMaterial.id 
+            ? { ...material, title: data.material.title }
+            : material
+        ) || []
+      }));
+
+      // Close modal
+      setIsRenameModalOpen(false);
+      setRenameMaterial(null);
+      setNewMaterialTitle('');
+      setError('');
+    } catch (error: any) {
+      setError(error.message || 'Greška pri preimenovanju materijala');
+    }
+  };
+
+  const handleStartProcessing = async () => {
+    if (!pageSelectionMaterial) return;
+
+    console.log(`Starting processing for material: ${pageSelectionMaterial.id}, startPage: ${startPage}, maxPages: ${maxPages}`);
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const url = `${process.env.REACT_APP_API_URL}/api/ingestion/process/${pageSelectionMaterial.id}`;
+      console.log('Making request to:', url);
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          startPage,
+          maxPages,
+          tocPage,
+          tocToPage,
+        }),
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error response:', errorData);
+        throw new Error(errorData.message || 'Failed to start processing');
+      }
+
+      const data = await response.json();
+      console.log('Processing started successfully:', data);
+      
+      // Close modal
+      setIsPageSelectionModalOpen(false);
+      setPageSelectionMaterial(null);
+      setStartPage(1);
+      setMaxPages(10);
+      setError('');
+
+      // Show success message
+      alert('Processing started! Check console logs for progress.');
+    } catch (error: any) {
+      console.error('Processing start error:', error);
+      setError(error.message || 'Greška pri pokretanju obrade dokumenta');
     }
   };
 
@@ -581,10 +871,103 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
                             </div>
                           </div>
                           
-                          {/* Materials placeholder */}
-                          <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-3 text-center">
-                            <p className="text-xs text-gray-500">Nema materijala</p>
+                          {/* Materials section */}
+                          <div className="space-y-2">
+                            {materials[subject._id]?.length > 0 ? (
+                              <div className="space-y-2">
+                                {materials[subject._id].map((material) => (
+                                  <div key={material._id} className="flex items-center justify-between bg-gray-50 p-2 rounded text-xs">
+                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-red-600 flex-shrink-0">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                        <polyline points="14,2 14,8 20,8"/>
+                                      </svg>
+                                      <span className="truncate font-medium text-gray-700">{material.title}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="p-1 h-5 w-5 text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                                        onClick={() => handleViewMaterial(material)}
+                                      >
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                          <circle cx="12" cy="12" r="3"/>
+                                        </svg>
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="p-1 h-5 w-5 text-gray-400 hover:text-orange-600 hover:bg-orange-50"
+                                        onClick={() => openRenameModal(material._id, subject._id, material.title)}
+                                      >
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                          <path d="m18.5 2.5-6 6"/>
+                                        </svg>
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="p-1 h-5 w-5 text-gray-400 hover:text-red-600 hover:bg-red-50"
+                                        onClick={() => handleDeleteMaterial(material._id, subject._id)}
+                                      >
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                          <path d="M3 6h18"/>
+                                          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                                          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                                        </svg>
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-3 text-center">
+                                <p className="text-xs text-gray-500">Nema materijala</p>
+                              </div>
+                            )}
+                            
+                            {/* Add PDF button */}
+                            <div className="mt-2">
+                              <input
+                                type="file"
+                                accept=".pdf"
+                                style={{ display: 'none' }}
+                                id={`pdf-upload-${subject._id}`}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const defaultTitle = file.name.replace('.pdf', '');
+                                    handlePDFUpload(subject._id, file, defaultTitle);
+                                  }
+                                  e.target.value = '';
+                                }}
+                              />
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full h-7 text-xs border-dashed border-gray-400 text-gray-600 hover:bg-gray-50 hover:text-gray-700"
+                                disabled={uploadingMaterials[subject._id]}
+                                onClick={() => document.getElementById(`pdf-upload-${subject._id}`)?.click()}
+                              >
+                                {uploadingMaterials[subject._id] ? (
+                                  <>
+                                    <div className="animate-spin rounded-full h-3 w-3 border-b border-gray-600 mr-2"></div>
+                                    Dodavanje...
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
+                                      <path d="M12 5v14m-7-7h14"/>
+                                    </svg>
+                                    Dodaj PDF
+                                  </>
+                                )}
+                              </Button>
                             </div>
+                          </div>
                           </CardContent>
                         </Card>
                       </motion.div>
@@ -796,6 +1179,170 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
           confirmText="Obriši"
           cancelText="Otkaži"
         />
+
+        {/* Rename Material Modal */}
+        <Dialog open={isRenameModalOpen} onOpenChange={setIsRenameModalOpen}>
+          <DialogContent className="sm:max-w-md bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-gray-900">Preimenuj materijal</DialogTitle>
+              <DialogDescription className="text-gray-600">
+                Unesite novi naziv za materijal
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="materialTitle" className="text-sm font-medium text-gray-700">
+                  Naziv materijala
+                </label>
+                <Input
+                  id="materialTitle"
+                  value={newMaterialTitle}
+                  onChange={(e) => setNewMaterialTitle(e.target.value)}
+                  placeholder="Unesite naziv materijala..."
+                  className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-500"
+                  autoFocus
+                />
+              </div>
+              
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                  {error}
+                </div>
+              )}
+              
+              <div className="flex gap-2 justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsRenameModalOpen(false);
+                    setRenameMaterial(null);
+                    setNewMaterialTitle('');
+                    setError('');
+                  }}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                >
+                  Otkaži
+                </Button>
+                <Button
+                  onClick={handleRenameMaterial}
+                  disabled={!newMaterialTitle.trim()}
+                  className="bg-black hover:bg-gray-800 text-white"
+                >
+                  Preimenuj
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Page Selection Modal */}
+        <Dialog open={isPageSelectionModalOpen} onOpenChange={setIsPageSelectionModalOpen}>
+          <DialogContent className="sm:max-w-md bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-gray-900">Izbor stranica za obradu</DialogTitle>
+              <DialogDescription className="text-gray-600">
+                Materijal: {pageSelectionMaterial?.title}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="startPage" className="text-sm font-medium text-gray-700">
+                  Počni od stranice
+                </label>
+                <Input
+                  id="startPage"
+                  type="number"
+                  value={startPage}
+                  onChange={(e) => setStartPage(Math.max(1, parseInt(e.target.value) || 1))}
+                  min="1"
+                  className="bg-white border-gray-300 text-gray-900"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="tocPage" className="text-sm font-medium text-gray-700">
+                    Sadržaj počinje na str.
+                  </label>
+                  <Input
+                    id="tocPage"
+                    type="number"
+                    value={tocPage || ''}
+                    onChange={(e) => setTocPage(e.target.value ? Math.max(1, parseInt(e.target.value) || 1) : undefined)}
+                    min="1"
+                    placeholder="npr. 2"
+                    className="bg-white border-gray-300 text-gray-900"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="tocToPage" className="text-sm font-medium text-gray-700">
+                    Sadržaj završava na str.
+                  </label>
+                  <Input
+                    id="tocToPage"
+                    type="number"
+                    value={tocToPage || ''}
+                    onChange={(e) => setTocToPage(e.target.value ? Math.max(1, parseInt(e.target.value) || 1) : undefined)}
+                    min="1"
+                    placeholder="npr. 4"
+                    className="bg-white border-gray-300 text-gray-900"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                AI će analizirati stranice sadržaja i automatski prepoznati strukture poglavlja
+              </p>
+
+              <div>
+                <label htmlFor="maxPages" className="text-sm font-medium text-gray-700">
+                  Maksimalno stranica (ograničeno na 10 za test)
+                </label>
+                <Input
+                  id="maxPages"
+                  type="number"
+                  value={maxPages}
+                  onChange={(e) => setMaxPages(Math.min(10, Math.max(1, parseInt(e.target.value) || 10)))}
+                  min="1"
+                  max="10"
+                  className="bg-white border-gray-300 text-gray-900"
+                />
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-md text-sm">
+                <p>Obradiće se stranice od {startPage} do {startPage + maxPages - 1}</p>
+                <p className="text-xs mt-1">Ograničeno na maksimalno 10 stranica za testiranje</p>
+              </div>
+              
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                  {error}
+                </div>
+              )}
+              
+              <div className="flex gap-2 justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsPageSelectionModalOpen(false);
+                    setPageSelectionMaterial(null);
+                    setStartPage(1);
+                    setMaxPages(10);
+                    setError('');
+                  }}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                >
+                  Otkaži
+                </Button>
+                <Button
+                  onClick={handleStartProcessing}
+                  className="bg-black hover:bg-gray-800 text-white"
+                >
+                  Pokreni obradu
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );
