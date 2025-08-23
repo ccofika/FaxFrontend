@@ -120,8 +120,8 @@ export function Pricing({
               opacity: { duration: 0.5 },
             }}
             className={cn(
-              `rounded-2xl border-[1px] p-6 bg-background text-center lg:flex lg:flex-col lg:justify-center relative`,
-              plan.isPopular ? "border-primary border-2" : "border-border",
+              `rounded-2xl border-[1px] p-6 bg-zinc-900/50 backdrop-blur-xl text-center lg:flex lg:flex-col lg:justify-center relative`,
+              plan.isPopular ? "border-primary border-2" : "border-zinc-700/50",
               "flex flex-col",
               !plan.isPopular && "mt-5",
               index === 0 || index === 2
@@ -179,7 +179,7 @@ export function Pricing({
                   "transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-1 hover:bg-primary hover:text-primary-foreground",
                   plan.isPopular
                     ? "bg-primary text-primary-foreground"
-                    : "bg-background text-foreground"
+                    : "bg-zinc-800/50 text-white border-zinc-700"
                 )}
               >
                 {plan.buttonText}

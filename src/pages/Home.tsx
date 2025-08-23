@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { chatService } from '../services';
 import styles from './Home.module.css';
@@ -175,6 +175,7 @@ const demoSubjects: Subject[] = [
 const Home: React.FC = () => {
   const { user, fetchProfile } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [message, setMessage] = useState('');
   const [charCount, setCharCount] = useState(0);
   const [selectedMode, setSelectedMode] = useState<ChatMode>('explain');
@@ -327,6 +328,18 @@ const Home: React.FC = () => {
   const selectedModeConfig = chatModes.find(mode => mode.id === selectedMode);
   const isInputEmpty = message.trim().length === 0;
 
+  // Handle navigation state (mode selection from Dashboard/Notes)
+  useEffect(() => {
+    const state = location.state as { selectedMode?: ChatMode; quickQuery?: string } | undefined;
+    if (state?.selectedMode) {
+      setSelectedMode(state.selectedMode);
+    }
+    if (state?.quickQuery) {
+      setMessage(state.quickQuery);
+      setCharCount(state.quickQuery.length);
+    }
+  }, [location.state]);
+
   // Load user profile data and filter subjects
   useEffect(() => {
     const loadData = async () => {
@@ -460,40 +473,38 @@ const Home: React.FC = () => {
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
+        transition={{ duration: 0.3 }}
         className="w-full min-h-screen relative overflow-hidden bg-zinc-950 text-white font-inter"
       >
         {/* NADRKAN Background decorations */}
         <div className="absolute inset-0 bg-gradient-to-br from-zinc-900/60 via-zinc-950 to-zinc-900/40 -z-10" />
         <div className="absolute inset-0 bg-[radial-gradient(2px_2px_at_20px_30px,rgba(255,255,255,0.08),transparent),radial-gradient(2px_2px_at_40px_70px,rgba(255,255,255,0.04),transparent)] bg-repeat bg-[length:150px_150px] pointer-events-none opacity-50" />
         
-        {/* Floating conversation elements animation */}
+        {/* Floating conversation elements animation - reduced */}
         <div className="absolute inset-0 -z-5 pointer-events-none">
-          {[...Array(15)].map((_, i) => (
+          {[...Array(6)].map((_, i) => (
             <motion.div
               key={i}
               className="absolute"
               initial={{
                 x: Math.random() * window.innerWidth,
                 y: Math.random() * window.innerHeight,
-                scale: 0.3 + Math.random() * 0.7,
+                scale: 0.5 + Math.random() * 0.3,
               }}
               animate={{
-                y: [null, Math.random() * -200, Math.random() * 200],
-                x: [null, Math.random() * -100, Math.random() * 100],
-                rotate: [0, Math.random() * 360],
-                opacity: [0.08, 0.20, 0.08],
+                y: [null, Math.random() * -10, Math.random() * 10],
+                opacity: [0.005, 0.015, 0.005],
               }}
               transition={{
-                duration: Math.random() * 25 + 20,
+                duration: Math.random() * 20 + 35,
                 repeat: Infinity,
                 ease: "easeInOut",
-                delay: Math.random() * 10,
+                delay: Math.random() * 5,
               }}
             >
               {[MessageCircle, BookOpen, Sparkles][i % 3] && 
                 React.createElement([MessageCircle, BookOpen, Sparkles][i % 3], {
-                  className: "w-5 h-5 text-white/15"
+                  className: "w-2 h-2 text-white/2"
                 })
               }
             </motion.div>
@@ -505,13 +516,13 @@ const Home: React.FC = () => {
           <motion.div 
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 1, ease: "easeOut" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             className="text-center mb-20 mt-16"
           >
             <motion.div
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.8, type: "spring", bounce: 0.4 }}
+              transition={{ delay: 0.1, duration: 0.4, type: "spring", bounce: 0.4 }}
             >
               <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-br from-white via-gray-100 to-gray-200 bg-clip-text text-transparent leading-tight mb-3 relative">
                 {getPersonalizedGreeting()}
@@ -521,7 +532,7 @@ const Home: React.FC = () => {
                     rotate: [0, 15, -15, 0],
                     scale: [1, 1.2, 1],
                   }}
-                  transition={{ duration: 4, repeat: Infinity, delay: 1.5 }}
+                  transition={{ duration: 20, repeat: Infinity, delay: 1.5 }}
                 >
                   <Sparkles className="w-8 h-8 text-blue-400/70" />
                 </motion.div>
@@ -530,7 +541,7 @@ const Home: React.FC = () => {
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.6 }}
+              transition={{ delay: 0.15, duration: 0.3 }}
               className="text-base font-medium text-gray-300 max-w-xl mx-auto leading-relaxed"
             >
               {getPersonalizedSubtitle()}
@@ -541,7 +552,7 @@ const Home: React.FC = () => {
           <motion.div 
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.6, duration: 0.8 }}
+            transition={{ delay: 0.2, duration: 0.4 }}
             className="mb-16 flex justify-center"
           >
             <motion.div 
@@ -555,7 +566,7 @@ const Home: React.FC = () => {
             }`}
               initial={{ scale: 0.95 }}
               animate={{ scale: 1 }}
-              transition={{ delay: 0.8, duration: 0.6 }}
+              transition={{ delay: 0.25, duration: 0.3 }}
               whileHover={{ scale: 1.02 }}>
               <motion.textarea
                 initial={{ opacity: 0 }}
@@ -577,7 +588,7 @@ const Home: React.FC = () => {
                   <motion.button 
                     className="flex items-center gap-2 px-4 py-2 bg-zinc-800/50 border border-zinc-700/50 hover:border-zinc-600/50 rounded-xl text-gray-400 hover:text-white transition-all duration-300 min-w-32 max-w-48"
                     onClick={handleOpenSubjectModal}
-                    whileHover={{ scale: 1.05 }}
+                    whileHover={{ scale: 1.005 }}
                     whileTap={{ scale: 0.95 }}
                   >
                     <BookOpen className="w-4 h-4" />
@@ -594,7 +605,7 @@ const Home: React.FC = () => {
                       ref={modeButtonRef}
                       className={`flex items-center gap-2 px-4 py-2 bg-zinc-800/50 border border-zinc-700/50 hover:border-blue-500/50 rounded-xl text-white font-medium transition-all duration-300 min-w-24 ${showModeDropdown ? 'bg-blue-500/20 border-blue-500/50' : ''}`}
                       onClick={handleModeButtonClick}
-                      whileHover={{ scale: 1.05 }}
+                      whileHover={{ scale: 1.005 }}
                       whileTap={{ scale: 0.95 }}
                     >
                       <span className="text-sm">{selectedModeConfig?.name}</span>
@@ -615,7 +626,7 @@ const Home: React.FC = () => {
                   
                   <motion.button 
                     className="flex items-center gap-2 px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 hover:border-zinc-600/50 rounded-lg text-gray-400 hover:text-white transition-all duration-300"
-                    whileHover={{ scale: 1.05 }}
+                    whileHover={{ scale: 1.005 }}
                     whileTap={{ scale: 0.95 }}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -625,7 +636,7 @@ const Home: React.FC = () => {
                   </motion.button>
                   <motion.button 
                     className="flex items-center gap-2 px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 hover:border-zinc-600/50 rounded-lg text-gray-400 hover:text-white transition-all duration-300"
-                    whileHover={{ scale: 1.05 }}
+                    whileHover={{ scale: 1.005 }}
                     whileTap={{ scale: 0.95 }}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -642,8 +653,8 @@ const Home: React.FC = () => {
                     className="w-11 h-11 bg-gradient-to-r from-zinc-700 via-zinc-800 to-zinc-900 hover:from-zinc-600 hover:via-zinc-700 hover:to-zinc-800 text-white rounded-xl transition-all duration-300 shadow-lg shadow-black/50 hover:shadow-black/70 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center"
                     onClick={handleSendMessage}
                     disabled={isInputEmpty || isCreatingChat}
-                    whileHover={{ scale: 1.1, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.005 }}
+                    whileTap={{ scale: 0.98 }}
                   >
                     <Send className="w-4 h-4" />
                   </motion.button>
@@ -656,7 +667,7 @@ const Home: React.FC = () => {
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 1.4, duration: 0.8 }}
+            transition={{ delay: 1.4, duration: 0.3 }}
             className="mb-16"
           >
             <motion.h2 
@@ -689,7 +700,7 @@ const Home: React.FC = () => {
                       initial={{ y: 50, opacity: 0, scale: 0.9 }}
                       animate={{ y: 0, opacity: 1, scale: 1 }}
                       exit={{ y: -50, opacity: 0, scale: 0.9 }}
-                      transition={{ delay: 1.8 + (index * 0.1), duration: 0.8, type: "spring" }}
+                      transition={{ delay: 1.8 + (index * 0.1), duration: 0.3, type: "spring" }}
                       whileHover={{ 
                         y: -10, 
                         scale: 1.05,
@@ -697,7 +708,7 @@ const Home: React.FC = () => {
                       }}
                     >
                       <Card 
-                        className="group cursor-pointer transition-all duration-700 text-left backdrop-blur-xl relative overflow-hidden border-zinc-800/50 shadow-xl shadow-black/20 bg-gradient-to-br from-zinc-900/50 via-zinc-800/30 to-zinc-900/40"
+                        className="group cursor-pointer transition-all duration-300 text-left backdrop-blur-xl relative overflow-hidden border-zinc-800/50 shadow-xl shadow-black/20 bg-gradient-to-br from-zinc-900/50 via-zinc-800/30 to-zinc-900/40"
                         onClick={() => navigate(`/chat/${chat.id}`)}
                       >
                         <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
@@ -711,8 +722,8 @@ const Home: React.FC = () => {
                           <div className="flex items-center gap-3 mb-4">
                             <motion.div 
                               className="p-2 bg-gradient-to-br from-zinc-700/50 via-zinc-600/30 to-zinc-700/20 rounded-xl w-fit shadow-lg relative"
-                              whileHover={{ scale: 1.15, rotate: 10 }}
-                              transition={{ type: "spring", stiffness: 300 }}
+                              whileHover={{ scale: 1.01 }}
+                              transition={{ type: "spring", stiffness: 200 }}
                             >
                               <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-xl"></div>
                               <Clock className="w-4 h-4 text-blue-400 relative z-10" />
@@ -738,16 +749,16 @@ const Home: React.FC = () => {
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 2, duration: 0.8 }}
+                  transition={{ delay: 2, duration: 0.3 }}
                   className="col-span-full text-center py-20"
                 >
                   <motion.div 
                     className="mx-auto mb-6 p-6 bg-gradient-to-br from-zinc-800/50 via-zinc-700/30 to-zinc-800/20 rounded-3xl w-fit shadow-lg relative"
                     animate={{ 
-                      scale: [1, 1.1, 1],
-                      rotate: [0, 5, -5, 0] 
+                      scale: [1, 1.005, 1],
+                      rotate: [0, 0.5, -0.5, 0] 
                     }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-3xl"></div>
                     <MessageCircle className="w-16 h-16 text-gray-400 relative z-10" />
@@ -792,8 +803,8 @@ const Home: React.FC = () => {
                   <motion.button 
                     className="w-8 h-8 flex items-center justify-center rounded-lg bg-zinc-800/50 hover:bg-zinc-700/50 border border-zinc-700/50 hover:border-zinc-600/50 transition-all duration-300 text-gray-400 hover:text-white" 
                     onClick={handleCloseSubjectModal}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
+                    whileHover={{ scale: 1.005 }}
+                    whileTap={{ scale: 0.97 }}
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <line x1="18" y1="6" x2="6" y2="18"/>
@@ -843,10 +854,10 @@ const Home: React.FC = () => {
                           <motion.div 
                             className="mx-auto mb-6 p-6 bg-gradient-to-br from-zinc-800/50 via-zinc-700/30 to-zinc-800/20 rounded-3xl w-fit shadow-lg relative"
                             animate={{ 
-                              scale: [1, 1.1, 1],
-                              rotate: [0, 5, -5, 0] 
+                              scale: [1, 1.005, 1],
+                              rotate: [0, 0.5, -0.5, 0] 
                             }}
-                            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                            transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
                           >
                             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-3xl"></div>
                             <BookOpen className="w-16 h-16 text-gray-400 relative z-10" />
@@ -883,8 +894,8 @@ const Home: React.FC = () => {
                                         ? 'bg-blue-500 border-blue-500 text-white' 
                                         : 'bg-transparent'
                                     }`}
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
+                                    whileHover={{ scale: 1.005 }}
+                                    whileTap={{ scale: 0.97 }}
                                   >
                                     <AnimatePresence>
                                       {tempSelectedLessons.some(l => l.id === lesson.id) && (

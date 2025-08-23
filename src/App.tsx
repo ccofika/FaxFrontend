@@ -76,9 +76,9 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <div className={`fixed left-0 top-0 h-screen z-50 transition-all duration-300 ease-in-out bg-gradient-to-b from-background via-background/95 to-background/90 backdrop-blur-xl border-r border-primary/20 shadow-2xl shadow-primary/10 flex flex-col ${isCollapsed ? 'w-16' : 'w-72'} md:${isCollapsed ? 'w-16' : 'w-72'} ${isCollapsed ? '' : 'max-md:w-16'}`}>
+    <div className={`fixed left-0 top-0 h-screen z-50 transition-all duration-300 ease-in-out bg-gradient-to-b from-zinc-950 via-zinc-950/95 to-zinc-950/90 backdrop-blur-xl border-r border-zinc-700/50 shadow-2xl shadow-black/20 flex flex-col ${isCollapsed ? 'w-16' : 'w-72'} md:${isCollapsed ? 'w-16' : 'w-72'} ${isCollapsed ? '' : 'max-md:w-16'}`}>
       {/* Logo and Toggle */}
-      <div className="flex items-center justify-between p-4 border-b border-primary/10">
+      <div className="flex items-center justify-between p-4 border-b border-zinc-700/50">
         {isCollapsed ? (
           // When collapsed, logo acts as expand button
           <button 
@@ -100,10 +100,10 @@ const Sidebar: React.FC = () => {
                   <div className="absolute inset-2 bg-primary rounded-full"></div>
                 </div>
               </div>
-              <span className="text-xl font-bold bg-gradient-to-br from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent max-md:hidden">FAXit</span>
+              <span className="text-xl font-bold bg-gradient-to-br from-white via-gray-100 to-gray-200 bg-clip-text text-transparent max-md:hidden">FAXit</span>
             </div>
             <button 
-              className="w-8 h-8 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-primary/30 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-all duration-300 max-md:hidden" 
+              className="w-8 h-8 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-primary/30 rounded-lg flex items-center justify-center text-gray-400 hover:text-white transition-all duration-300 max-md:hidden" 
               onClick={toggleSidebar}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -118,7 +118,7 @@ const Sidebar: React.FC = () => {
       {!isCollapsed ? (
         <div className="p-4 max-md:hidden">
           <button 
-            className="w-full bg-gradient-to-r from-primary via-primary to-primary/90 hover:from-primary/90 hover:via-primary hover:to-primary text-white rounded-xl px-4 py-3 font-semibold transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:-translate-y-1 hover:scale-105 relative overflow-hidden group flex items-center gap-3"
+            className="w-full bg-gradient-to-r from-zinc-700 via-zinc-800 to-zinc-900 hover:from-zinc-600 hover:via-zinc-700 hover:to-zinc-800 text-white rounded-xl px-4 py-3 font-semibold transition-all duration-200 shadow-lg shadow-black/20 hover:shadow-black/30 hover:-translate-y-0.5 hover:scale-101 relative overflow-hidden group flex items-center gap-3"
             onClick={handleNewChat}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
@@ -131,7 +131,7 @@ const Sidebar: React.FC = () => {
       ) : (
         <div className="p-2 flex justify-center">
           <button 
-            className="w-12 h-12 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 hover:from-primary/30 hover:via-primary/20 hover:to-primary/10 border border-primary/20 hover:border-primary/40 rounded-xl flex items-center justify-center text-primary hover:text-primary/80 transition-all duration-300 shadow-lg hover:shadow-primary/20 hover:scale-110" 
+            className="w-12 h-12 bg-gradient-to-r from-zinc-700/50 via-zinc-800/30 to-zinc-900/20 hover:from-zinc-600/60 hover:via-zinc-700/40 hover:to-zinc-800/30 border border-zinc-700/50 hover:border-zinc-600/70 rounded-xl flex items-center justify-center text-white hover:text-gray-200 transition-all duration-200 shadow-lg hover:shadow-black/20 hover:scale-102" 
             onClick={handleNewChat} 
             title="Novi Chat"
           >
@@ -146,7 +146,7 @@ const Sidebar: React.FC = () => {
       {!isCollapsed ? (
         <div className="px-4 pb-4 max-md:hidden">
           <div className="relative">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
               <circle cx="11" cy="11" r="8"/>
               <path d="m21 21-4.35-4.35"/>
             </svg>
@@ -155,13 +155,13 @@ const Sidebar: React.FC = () => {
               placeholder="Pretraži chatove..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 hover:border-white/20 focus:border-primary/50 rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300"
+              className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 hover:border-white/20 focus:border-primary/50 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300"
             />
           </div>
         </div>
       ) : (
         <div className="p-2 flex justify-center">
-          <button className="w-12 h-12 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-primary/30 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground transition-all duration-300" title="Pretraži chatove">
+          <button className="w-12 h-12 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-primary/30 rounded-xl flex items-center justify-center text-gray-400 hover:text-white transition-all duration-300" title="Pretraži chatove">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="8"/>
               <path d="m21 21-4.35-4.35"/>
@@ -174,11 +174,11 @@ const Sidebar: React.FC = () => {
       {!isCollapsed && (
         <div className="flex-1 flex flex-col px-4 pb-4 overflow-hidden max-md:hidden min-h-0">
           <div className="mb-3">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Chatovi</h3>
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Chatovi</h3>
           </div>
           <div className="flex-1 overflow-y-auto space-y-2 chats-list">
               {isLoadingChats ? (
-                <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">Učitavam chatove...</div>
+                <div className="flex items-center justify-center py-8 text-gray-400 text-sm">Učitavam chatove...</div>
               ) : filteredChats.length > 0 ? (
                 filteredChats.map((chat) => (
                   <div 
@@ -187,7 +187,7 @@ const Sidebar: React.FC = () => {
                     onClick={() => navigate(`/chat/${chat.id}`)}
                   >
                     <div className="space-y-2">
-                      <div className="text-sm font-medium text-foreground group-hover:text-primary transition-colors duration-300 line-clamp-2">{chat.title}</div>
+                      <div className="text-sm font-medium text-white group-hover:text-primary transition-colors duration-300 line-clamp-2">{chat.title}</div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${
                           chat.mode === 'explain' ? 'bg-primary/10 text-primary border-primary/20' :
@@ -203,7 +203,7 @@ const Sidebar: React.FC = () => {
                            chat.mode === 'tests' ? 'Testovi' :
                            chat.mode === 'learning' ? 'Učenje' : chat.mode}
                         </span>
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <span className="text-xs text-gray-400 flex items-center gap-1">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <circle cx="12" cy="12" r="10"/>
                             <polyline points="12,6 12,12 16,14"/>
@@ -215,7 +215,7 @@ const Sidebar: React.FC = () => {
                   </div>
                 ))
               ) : (
-                <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+                <div className="flex flex-col items-center justify-center py-8 text-center text-gray-400">
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mb-3 opacity-50">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                   </svg>
@@ -235,7 +235,7 @@ const Sidebar: React.FC = () => {
             className={`group flex items-center gap-2 p-2 rounded-lg transition-all duration-300 hover:bg-white/10 hover:shadow-lg hover:shadow-primary/10 ${
               location.pathname === '/dashboard' 
                 ? 'bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 text-primary border border-primary/30 shadow-lg shadow-primary/20' 
-                : 'text-muted-foreground hover:text-foreground'
+                : 'text-gray-400 hover:text-white'
             } ${isCollapsed ? 'justify-center' : ''} max-md:justify-center`}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="flex-shrink-0">
@@ -250,7 +250,7 @@ const Sidebar: React.FC = () => {
             className={`group flex items-center gap-2 p-2 rounded-lg transition-all duration-300 hover:bg-white/10 hover:shadow-lg hover:shadow-primary/10 ${
               location.pathname === '/notes' 
                 ? 'bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 text-primary border border-primary/30 shadow-lg shadow-primary/20' 
-                : 'text-muted-foreground hover:text-foreground'
+                : 'text-gray-400 hover:text-white'
             } ${isCollapsed ? 'justify-center' : ''} max-md:justify-center`}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="flex-shrink-0">
@@ -268,7 +268,7 @@ const Sidebar: React.FC = () => {
             className={`group flex items-center gap-2 p-2 rounded-lg transition-all duration-300 hover:bg-white/10 hover:shadow-lg hover:shadow-primary/10 ${
               location.pathname === '/calendar' 
                 ? 'bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 text-primary border border-primary/30 shadow-lg shadow-primary/20' 
-                : 'text-muted-foreground hover:text-foreground'
+                : 'text-gray-400 hover:text-white'
             } ${isCollapsed ? 'justify-center' : ''} max-md:justify-center`}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="flex-shrink-0">
@@ -285,7 +285,7 @@ const Sidebar: React.FC = () => {
             className={`group flex items-center gap-2 p-2 rounded-lg transition-all duration-300 hover:bg-white/10 hover:shadow-lg hover:shadow-primary/10 ${
               location.pathname === '/profile' 
                 ? 'bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 text-primary border border-primary/30 shadow-lg shadow-primary/20' 
-                : 'text-muted-foreground hover:text-foreground'
+                : 'text-gray-400 hover:text-white'
             } ${isCollapsed ? 'justify-center' : ''} max-md:justify-center`}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="flex-shrink-0">
@@ -295,7 +295,7 @@ const Sidebar: React.FC = () => {
             {!isCollapsed && <span className="text-sm font-medium max-md:hidden">Profile</span>}
           </Link>
           
-          <button className={`group flex items-center gap-2 p-2 rounded-lg transition-all duration-300 hover:bg-white/10 hover:shadow-lg hover:shadow-primary/10 text-muted-foreground hover:text-foreground ${isCollapsed ? 'justify-center' : ''} max-md:justify-center`}>
+          <button className={`group flex items-center gap-2 p-2 rounded-lg transition-all duration-300 hover:bg-white/10 hover:shadow-lg hover:shadow-primary/10 text-gray-400 hover:text-white ${isCollapsed ? 'justify-center' : ''} max-md:justify-center`}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="flex-shrink-0">
               <circle cx="12" cy="12" r="3"/>
               <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/>

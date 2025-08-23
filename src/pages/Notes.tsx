@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { TooltipProvider } from '../components/ui/tooltip';
-import { Plus, Search, Edit, Trash2, FileText, BookOpen, Sparkles, Zap } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, FileText, BookOpen, Sparkles, Zap, GraduationCap, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './Notes.module.css';
 
@@ -20,7 +21,56 @@ interface Note {
   tags: string[];
 }
 
+type ChatMode = 'explain' | 'solve' | 'summary' | 'tests' | 'learning';
+
+interface ModeConfig {
+  id: ChatMode;
+  name: string;
+  description: string;
+  color: string;
+  icon: React.ReactNode;
+}
+
+const chatModes: ModeConfig[] = [
+  { 
+    id: 'explain', 
+    name: 'Objasni', 
+    description: 'Detaljno objašnjavanje gradiva', 
+    color: '#4E3CFA', 
+    icon: <BookOpen className="w-6 h-6" />
+  },
+  { 
+    id: 'solve', 
+    name: 'Reši', 
+    description: 'Pronađi rešenja problema', 
+    color: '#F59E0B', 
+    icon: <Zap className="w-6 h-6" />
+  },
+  { 
+    id: 'summary', 
+    name: 'Sažmi', 
+    description: 'Kratak pregled gradiva', 
+    color: '#10B981', 
+    icon: <FileText className="w-6 h-6" />
+  },
+  { 
+    id: 'tests', 
+    name: 'Testovi', 
+    description: 'Generiši testove i kvizove', 
+    color: '#EF4444', 
+    icon: <GraduationCap className="w-6 h-6" />
+  },
+  { 
+    id: 'learning', 
+    name: 'Učenje', 
+    description: 'Interaktivna pomoć u učenju', 
+    color: '#3B82F6', 
+    icon: <TrendingUp className="w-6 h-6" />
+  },
+];
+
 const Notes: React.FC = () => {
+  const navigate = useNavigate();
   // Mock data for styling
   const mockNotes: Note[] = [
     {
@@ -77,6 +127,10 @@ const Notes: React.FC = () => {
     const matchesSubject = selectedSubject === 'Svi predmeti' || note.subject === selectedSubject;
     return matchesSearch && matchesSubject;
   });
+
+  const handleModeClick = (mode: ChatMode) => {
+    navigate('/home', { state: { selectedMode: mode } });
+  };
 
   return (
     <TooltipProvider>
@@ -156,12 +210,12 @@ const Notes: React.FC = () => {
               </motion.p>
             </div>
             <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ delay: 0.6, duration: 0.8, type: "spring", bounce: 0.6 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.5, ease: "easeOut" }}
             >
               <Button 
-                className="group bg-gradient-to-r from-zinc-700 via-zinc-800 to-zinc-900 hover:from-zinc-600 hover:via-zinc-700 hover:to-zinc-800 text-white rounded-xl px-6 py-3 font-semibold transition-all duration-300 shadow-lg shadow-black/50 hover:shadow-black/70 hover:-translate-y-1 relative overflow-hidden"
+                className="group bg-gradient-to-r from-zinc-700 via-zinc-800 to-zinc-900 hover:from-zinc-600 hover:via-zinc-700 hover:to-zinc-800 text-white rounded-xl px-6 py-3 font-semibold transition-all duration-200 shadow-lg shadow-black/30 hover:shadow-black/40 hover:-translate-y-0.5 relative overflow-hidden"
               >
                 <motion.div 
                   className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0"
@@ -215,6 +269,67 @@ const Notes: React.FC = () => {
                 </SelectContent>
               </Select>
             </motion.div>
+          </motion.div>
+
+          {/* NADRKAN AI Modes Section */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.9, duration: 0.8 }}
+            className="mb-16"
+          >
+            <motion.h2 
+              initial={{ x: -30, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 1.1, duration: 0.6 }}
+              className="text-2xl font-bold bg-gradient-to-br from-white via-gray-100 to-gray-200 bg-clip-text text-transparent mb-6"
+            >
+              AI Modovi
+            </motion.h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+              {chatModes.map((mode, index) => (
+                <motion.div
+                  key={mode.id}
+                  initial={{ y: 50, opacity: 0, scale: 0.9 }}
+                  animate={{ y: 0, opacity: 1, scale: 1 }}
+                  transition={{ delay: 1.3 + (index * 0.1), duration: 0.8, type: "spring" }}
+                  whileHover={{ 
+                    y: -10, 
+                    scale: 1.05,
+                    rotateX: 5,
+                  }}
+                >
+                  <Card
+                    className="group cursor-pointer transition-all duration-700 text-center backdrop-blur-xl relative overflow-hidden border-zinc-800/50 shadow-xl shadow-black/20 bg-gradient-to-br from-zinc-900/50 via-zinc-800/30 to-zinc-900/40"
+                    onClick={() => handleModeClick(mode.id)}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                    
+                    {/* Animated glow effect */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 blur-xl"></div>
+                    </div>
+                    
+                    <CardContent className="p-6 relative z-10">
+                      <motion.div 
+                        className="mx-auto mb-4 p-4 bg-gradient-to-br from-zinc-700/50 via-zinc-600/30 to-zinc-700/20 rounded-2xl w-fit shadow-lg relative"
+                        whileHover={{ scale: 1.15, rotate: 10 }}
+                        transition={{ type: "spring", stiffness: 300 }}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-2xl"></div>
+                        <div className="text-blue-400 group-hover:text-blue-300 transition-colors duration-300 relative z-10">
+                          {mode.icon}
+                        </div>
+                      </motion.div>
+                      <h3 className="text-lg font-bold text-white mb-2 group-hover:text-blue-300 transition-colors duration-300">{mode.name}</h3>
+                      <p className="text-sm text-gray-300 text-center leading-relaxed group-hover:text-gray-200 transition-colors duration-300">
+                        {mode.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
           </motion.div>
 
           {/* NADRKAN Notes Grid */}

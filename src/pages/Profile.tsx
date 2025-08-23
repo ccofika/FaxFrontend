@@ -791,7 +791,7 @@ const Profile: React.FC = () => {
               <DialogTrigger asChild>
                 <Button 
                   variant="outline"
-                  className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:border-red-500"
+                  className="border-zinc-700 bg-zinc-800/50 text-gray-100 hover:bg-zinc-700 hover:text-white hover:border-zinc-600"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
@@ -815,7 +815,7 @@ const Profile: React.FC = () => {
                   <div className="flex gap-3">
                     <Button 
                       onClick={handleLogout}
-                      className="flex-1 bg-gradient-to-r from-red-800 via-red-900 to-red-950 hover:from-red-900 hover:via-red-950 hover:to-black text-white shadow-lg"
+                      className="flex-1 bg-gradient-to-r from-zinc-700 via-zinc-800 to-zinc-900 hover:from-zinc-800 hover:via-zinc-900 hover:to-black text-white shadow-lg"
                     >
                       Yes, Logout
                     </Button>
@@ -840,7 +840,7 @@ const Profile: React.FC = () => {
       <button
         type="button"
         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 focus:ring-offset-background ${
-          checked ? 'bg-primary' : 'bg-muted'
+          checked ? 'bg-primary' : 'bg-zinc-700'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
         onClick={() => !disabled && onChange(!checked)}
         disabled={disabled}
