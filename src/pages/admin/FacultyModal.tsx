@@ -83,8 +83,6 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
   const [newMaterialTitle, setNewMaterialTitle] = useState('');
   const [isPageSelectionModalOpen, setIsPageSelectionModalOpen] = useState(false);
   const [pageSelectionMaterial, setPageSelectionMaterial] = useState<{id: string, subjectId: string, title: string} | null>(null);
-  const [startPage, setStartPage] = useState(1);
-  const [maxPages, setMaxPages] = useState(10);
   const [tocPage, setTocPage] = useState<number | undefined>(undefined);
   const [tocToPage, setTocToPage] = useState<number | undefined>(undefined);
 
@@ -561,7 +559,7 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
   const handleStartProcessing = async () => {
     if (!pageSelectionMaterial) return;
 
-    console.log(`Starting processing for material: ${pageSelectionMaterial.id}, startPage: ${startPage}, maxPages: ${maxPages}`);
+    console.log(`Starting processing for material: ${pageSelectionMaterial.id}, tocPage: ${tocPage}, tocToPage: ${tocToPage}`);
 
     try {
       const token = localStorage.getItem('adminToken');
@@ -575,8 +573,6 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          startPage,
-          maxPages,
           tocPage,
           tocToPage,
         }),
@@ -596,12 +592,12 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
       // Close modal
       setIsPageSelectionModalOpen(false);
       setPageSelectionMaterial(null);
-      setStartPage(1);
-      setMaxPages(10);
+      setTocPage(undefined);
+      setTocToPage(undefined);
       setError('');
 
       // Show success message
-      alert('Processing started! Check console logs for progress.');
+      alert('Processing started! The entire book will be processed. Check console logs for progress.');
     } catch (error: any) {
       console.error('Processing start error:', error);
       setError(error.message || 'Greška pri pokretanju obrade dokumenta');
@@ -1235,30 +1231,16 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
           </DialogContent>
         </Dialog>
 
-        {/* Page Selection Modal */}
+        {/* Book Processing Configuration Modal */}
         <Dialog open={isPageSelectionModalOpen} onOpenChange={setIsPageSelectionModalOpen}>
           <DialogContent className="sm:max-w-md bg-white">
             <DialogHeader>
-              <DialogTitle className="text-gray-900">Izbor stranica za obradu</DialogTitle>
+              <DialogTitle className="text-gray-900">Konfiguracija obrade knjige</DialogTitle>
               <DialogDescription className="text-gray-600">
                 Materijal: {pageSelectionMaterial?.title}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <div>
-                <label htmlFor="startPage" className="text-sm font-medium text-gray-700">
-                  Počni od stranice
-                </label>
-                <Input
-                  id="startPage"
-                  type="number"
-                  value={startPage}
-                  onChange={(e) => setStartPage(Math.max(1, parseInt(e.target.value) || 1))}
-                  min="1"
-                  className="bg-white border-gray-300 text-gray-900"
-                />
-              </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="tocPage" className="text-sm font-medium text-gray-700">
@@ -1290,27 +1272,17 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
                 </div>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                AI će analizirati stranice sadržaja i automatski prepoznati strukture poglavlja
+                AI će analizirati stranice sadržaja i automatski prepoznati sve sekcije. Obrada knjige će početi nakon poslednje stranice sadržaja.
               </p>
 
-              <div>
-                <label htmlFor="maxPages" className="text-sm font-medium text-gray-700">
-                  Maksimalno stranica (ograničeno na 10 za test)
-                </label>
-                <Input
-                  id="maxPages"
-                  type="number"
-                  value={maxPages}
-                  onChange={(e) => setMaxPages(Math.min(10, Math.max(1, parseInt(e.target.value) || 10)))}
-                  min="1"
-                  max="10"
-                  className="bg-white border-gray-300 text-gray-900"
-                />
-              </div>
-
-              <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-md text-sm">
-                <p>Obradiće se stranice od {startPage} do {startPage + maxPages - 1}</p>
-                <p className="text-xs mt-1">Ograničeno na maksimalno 10 stranica za testiranje</p>
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
+                <div className="flex items-center">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <span className="font-medium">Celokupna knjiga će biti obrađena</span>
+                </div>
+                <p className="text-xs mt-1">Nema ograničenja na broj stranica - sve sekcije će biti izdvojene i indeksirane</p>
               </div>
               
               {error && (
@@ -1325,8 +1297,8 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
                   onClick={() => {
                     setIsPageSelectionModalOpen(false);
                     setPageSelectionMaterial(null);
-                    setStartPage(1);
-                    setMaxPages(10);
+                    setTocPage(undefined);
+                    setTocToPage(undefined);
                     setError('');
                   }}
                   className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
@@ -1337,7 +1309,7 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
                   onClick={handleStartProcessing}
                   className="bg-black hover:bg-gray-800 text-white"
                 >
-                  Pokreni obradu
+                  Pokreni obradu cele knjige
                 </Button>
               </div>
             </div>
