@@ -6,6 +6,7 @@ import { Input } from '../../components/ui/input';
 import { Card, CardContent } from '../../components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
 import FacultyModal from './FacultyModal';
+import TOCAnalysisModal from './TOCAnalysisModal';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -37,6 +38,25 @@ interface DocumentSection {
   content: string;
   docId: string;
   subjectId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Material {
+  _id: string;
+  title: string;
+  type: 'book' | 'pdf' | 'link' | 'video' | 'notes';
+  status: 'uploaded' | 'processing' | 'ready' | 'failed' | 'toc_ready';
+  subjectId: string;
+  facultyId: string;
+  departmentId: string;
+  year: number;
+  pageCount?: number;
+  hasOCR?: boolean;
+  progress?: {
+    step: string;
+    percent: number;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -87,6 +107,15 @@ const MaterialManagement: React.FC = () => {
   const [tocToPage, setTocToPage] = useState<string>('');
   const [maxPages, setMaxPages] = useState<string>('10');
   const [enableAIAnalysis, setEnableAIAnalysis] = useState<boolean>(false);
+  
+  // TOC Analysis Modal
+  const [isTOCAnalysisModalOpen, setIsTOCAnalysisModalOpen] = useState(false);
+  const [tocAnalysisMaterialId, setTocAnalysisMaterialId] = useState<string>('');
+  
+  // Materials Management
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [loadingMaterials, setLoadingMaterials] = useState(false);
+  const [showMaterials, setShowMaterials] = useState(false);
 
   const loadData = async () => {
     try {
@@ -401,6 +430,37 @@ const MaterialManagement: React.FC = () => {
     }
   };
 
+  const loadMaterials = async () => {
+    setLoadingMaterials(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/materials`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch materials');
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        setMaterials(data.materials || []);
+      }
+    } catch (error: any) {
+      console.error('Error loading materials:', error);
+      setError(error.message || 'Failed to load materials');
+    } finally {
+      setLoadingMaterials(false);
+    }
+  };
+
+  const openTOCAnalysis = (materialId: string) => {
+    setTocAnalysisMaterialId(materialId);
+    setIsTOCAnalysisModalOpen(true);
+  };
+
   const handlePdfFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type === 'application/pdf') {
@@ -548,6 +608,26 @@ const MaterialManagement: React.FC = () => {
                   <polyline points="10,9 9,9 8,9"/>
                 </svg>
                 Test PDF Parsing
+              </Button>
+
+              <Button
+                variant={showMaterials ? "default" : "outline"}
+                onClick={() => {
+                  setShowMaterials(!showMaterials);
+                  if (!showMaterials) {
+                    loadMaterials();
+                  }
+                }}
+                className="border-blue-300 text-blue-700 hover:bg-blue-50"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                  <path d="M8 7h8"/>
+                  <path d="M8 11h8"/>
+                  <path d="M8 15h8"/>
+                </svg>
+                {showMaterials ? 'Hide Materials' : 'Show Materials'}
               </Button>
 
               <Button
@@ -770,6 +850,130 @@ const MaterialManagement: React.FC = () => {
                     </svg>
                     <h3 className="text-lg font-semibold text-gray-700 mb-2">No AI Analysis</h3>
                     <p className="text-gray-500">Process a document with AI to see analysis results</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Materials Management */}
+        {showMaterials && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="mb-8"
+          >
+            <Card className="bg-white shadow-lg border border-gray-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Materials</h2>
+                    <p className="text-sm text-gray-600">Manage and process materials</p>
+                  </div>
+                  <Button onClick={loadMaterials} disabled={loadingMaterials} variant="outline">
+                    {loadingMaterials ? 'Loading...' : 'Refresh'}
+                  </Button>
+                </div>
+
+                {loadingMaterials ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                    <span className="ml-2">Loading materials...</span>
+                  </div>
+                ) : materials.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3">Title</th>
+                          <th className="px-4 py-3">Type</th>
+                          <th className="px-4 py-3">Status</th>
+                          <th className="px-4 py-3">Pages</th>
+                          <th className="px-4 py-3">Progress</th>
+                          <th className="px-4 py-3">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {materials.map((material) => (
+                          <tr key={material._id} className="bg-white border-b hover:bg-gray-50">
+                            <td className="px-4 py-4 font-medium text-gray-900">
+                              {material.title}
+                            </td>
+                            <td className="px-4 py-4">
+                              <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-800 bg-gray-100 rounded-full">
+                                {material.type}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4">
+                              <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
+                                material.status === 'ready' ? 'text-green-800 bg-green-100' :
+                                material.status === 'toc_ready' ? 'text-yellow-800 bg-yellow-100' :
+                                material.status === 'processing' ? 'text-blue-800 bg-blue-100' :
+                                material.status === 'failed' ? 'text-red-800 bg-red-100' :
+                                'text-gray-800 bg-gray-100'
+                              }`}>
+                                {material.status === 'toc_ready' ? 'TOC Ready' : material.status}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4">
+                              {material.pageCount || '-'}
+                            </td>
+                            <td className="px-4 py-4">
+                              {material.progress ? (
+                                <div className="flex items-center">
+                                  <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                    <div
+                                      className="bg-blue-600 h-2 rounded-full"
+                                      style={{ width: `${material.progress.percent}%` }}
+                                    ></div>
+                                  </div>
+                                  <span className="text-xs text-gray-600">
+                                    {material.progress.percent}%
+                                  </span>
+                                </div>
+                              ) : '-'}
+                            </td>
+                            <td className="px-4 py-4">
+                              <div className="flex items-center space-x-2">
+                                {material.status === 'toc_ready' && (
+                                  <Button
+                                    onClick={() => openTOCAnalysis(material._id)}
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                                  >
+                                    TOC Analysis
+                                  </Button>
+                                )}
+                                {material.status === 'uploaded' && (
+                                  <Button
+                                    onClick={() => {/* TODO: Start processing */}}
+                                    size="sm"
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                  >
+                                    Process
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto mb-4 text-gray-400">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14,2 14,8 20,8"/>
+                      <line x1="16" y1="13" x2="8" y2="13"/>
+                      <line x1="16" y1="17" x2="8" y2="17"/>
+                      <polyline points="10,9 9,9 8,9"/>
+                    </svg>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">No Materials</h3>
+                    <p className="text-gray-500">Upload materials to see them here</p>
                   </div>
                 )}
               </CardContent>
@@ -1434,6 +1638,18 @@ const MaterialManagement: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* TOC Analysis Modal */}
+      <TOCAnalysisModal
+        isOpen={isTOCAnalysisModalOpen}
+        onClose={() => setIsTOCAnalysisModalOpen(false)}
+        materialId={tocAnalysisMaterialId}
+        onProcessingStarted={() => {
+          // Refresh data when processing starts
+          loadSections();
+          loadAIAnalysis();
+        }}
+      />
     </div>
   );
 };

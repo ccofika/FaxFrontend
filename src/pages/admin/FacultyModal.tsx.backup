@@ -1,0 +1,3513 @@
+import React, { useState, useEffect } from 'react';
+import { useAdminAuth } from '../../context/admin/AdminAuthContext';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Card, CardContent } from '../../components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../components/ui/dialog';
+import { Badge } from '../../components/ui/badge';
+import { Textarea } from '../../components/ui/textarea';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '../../components/ui/pagination';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { ShimmerButton } from '../../components/ui/shimmer-button';
+import { BentoGrid, BentoCard } from '../../components/ui/bento-grid';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { motion, AnimatePresence } from 'motion/react';
+
+interface Faculty {
+  _id: string;
+  name: string;
+  cityId: string;
+}
+
+interface Department {
+  _id: string;
+  name: string;
+  facultyId: string;
+  availableYears: number[];
+  order: number;
+}
+
+interface Subject {
+  _id: string;
+  name: string;
+  facultyId: string;
+  departmentId: string;
+  year: number;
+  order: number;
+}
+
+interface Material {
+  _id: string;
+  title: string;
+  type: 'book' | 'pdf' | 'link' | 'video' | 'notes';
+  status?: 'uploaded' | 'processing' | 'ready' | 'failed' | 'toc_ready';
+  r2Key?: string;
+  bucket?: string;
+  url?: string;
+  note?: string;
+  subjectId: string | { _id: string; name: string };
+  facultyId: string;
+  departmentId: string;
+  year: number;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface DocumentSection {
+  _id: string;
+  docId: string;
+  sectionId: string;
+  title: string;
+  content?: string;
+  pageStart: number;
+  pageEnd: number;
+  charStart: number;
+  charEnd: number;
+  level: number;
+  path: string;
+  parentSectionId?: string;
+  semanticType?: 'chapter' | 'section' | 'subsection' | 'paragraph';
+  vectorId?: string;
+  totalParts?: number;
+  partNumber?: number;
+  isMainPart?: boolean;
+  shortAbstract?: string;
+  keywords?: string[];
+  queries?: string[];
+  analyzed?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface MaterialAnalysis {
+  _id: string;
+  materialId: string;
+  summary: string;
+  keyTopics: string[];
+  difficulty: 'easy' | 'medium' | 'hard';
+  estimatedReadingTime: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface TocSection {
+  title: string;
+  cleanTitle: string;
+  level: number;
+  pageStart: number;
+  pageEnd: number;
+  parentSectionId?: string;
+  semanticType: 'chapter' | 'section' | 'subsection' | 'paragraph';
+  processed?: boolean;
+}
+
+interface TocAnalysis {
+  _id: string;
+  docId: string;
+  subjectId: string;
+  facultyId: string;
+  departmentId: string;
+  year: number;
+  tocPages: string;
+  sections: TocSection[];
+  totalSections: number;
+  processedSections: number;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  error?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface FacultyModalProps {
+  facultyId: string;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose }) => {
+  const { isAuthenticated } = useAdminAuth();
+
+  const [faculty, setFaculty] = useState<Faculty | null>(null);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [materials, setMaterials] = useState<{[subjectId: string]: Material[]}>({});
+  const [selectedDeptId, setSelectedDeptId] = useState<string>('');
+  const [selectedYear, setSelectedYear] = useState<number>(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // Add states for modals
+  const [isAddingDepartment, setIsAddingDepartment] = useState(false);
+  const [isAddingSubject, setIsAddingSubject] = useState(false);
+  const [newDepartmentName, setNewDepartmentName] = useState('');
+  const [newSubjectName, setNewSubjectName] = useState('');
+  const [isAddDepartmentModalOpen, setIsAddDepartmentModalOpen] = useState(false);
+  const [isAddSubjectModalOpen, setIsAddSubjectModalOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteItem, setDeleteItem] = useState<{type: string, id: string, name: string} | null>(null);
+  
+  // Material states
+  const [uploadingMaterials, setUploadingMaterials] = useState<{[subjectId: string]: boolean}>({});
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [renameMaterial, setRenameMaterial] = useState<{id: string, subjectId: string, currentTitle: string} | null>(null);
+  const [newMaterialTitle, setNewMaterialTitle] = useState('');
+  const [isPageSelectionModalOpen, setIsPageSelectionModalOpen] = useState(false);
+  const [pageSelectionMaterial, setPageSelectionMaterial] = useState<{id: string, subjectId: string, title: string} | null>(null);
+  const [tocPage, setTocPage] = useState<number | undefined>(undefined);
+  const [tocToPage, setTocToPage] = useState<number | undefined>(undefined);
+  
+  // Analysis states
+  const [analyzingMaterials, setAnalyzingMaterials] = useState<{[materialId: string]: boolean}>({});
+  const [analysisStatus, setAnalysisStatus] = useState<{[materialId: string]: any}>({});
+  
+  // Material detail view states
+  const [showMaterialDetail, setShowMaterialDetail] = useState(false);
+  const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
+  const [materialSections, setMaterialSections] = useState<DocumentSection[]>([]);
+  const [materialAnalysis, setMaterialAnalysis] = useState<MaterialAnalysis | null>(null);
+  const [materialTocAnalysis, setMaterialTocAnalysis] = useState<TocAnalysis | null>(null);
+  const [loadingMaterialData, setLoadingMaterialData] = useState(false);
+  const [editingFields, setEditingFields] = useState<{[key: string]: boolean}>({});
+  const [editValues, setEditValues] = useState<{[key: string]: string}>({});
+  
+  // Search and pagination for sections
+  const [sectionsSearchQuery, setSectionsSearchQuery] = useState('');
+  const [sectionsPage, setSectionsPage] = useState(1);
+  const [sectionsPerPage] = useState(10);
+  
+  // Section editing states
+  const [editingSections, setEditingSections] = useState<{[sectionId: string]: {[field: string]: boolean}}>({});
+  const [sectionEditValues, setSectionEditValues] = useState<{[sectionId: string]: {[field: string]: any}}>({});
+  const [expandedSections, setExpandedSections] = useState<{[sectionId: string]: boolean}>({});
+  
+  // AI Analytics search and pagination states
+  const [analyticsSearchQuery, setAnalyticsSearchQuery] = useState('');
+  const [analyticsPage, setAnalyticsPage] = useState(1);
+  const [analyticsPerPage] = useState(10);
+  
+  // Advanced filtering and bulk actions
+  const [selectedSections, setSelectedSections] = useState<Set<string>>(new Set());
+  const [selectedAnalytics, setSelectedAnalytics] = useState<Set<string>>(new Set());
+  const [quickFilters, setQuickFilters] = useState({
+    sections: { analyzed: false, unanalyzed: false, hasKeywords: false, hasQueries: false },
+    analytics: { hasAbstract: false, hasKeywords: false, level: 'all' }
+  });
+  const [sortBy, setSortBy] = useState({ sections: 'title', analytics: 'title', direction: 'asc' });
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'compact'>('compact');
+  const [splitView, setSplitView] = useState(false);
+  const [bulkEditMode, setBulkEditMode] = useState(false);
+  const [showQuickEdit, setShowQuickEdit] = useState<{[key: string]: boolean}>({});
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
+  
+  // Active tab state
+  const [activeTab, setActiveTab] = useState('info');
+  
+  // TOC Analysis editing states
+  const [isEditingTOC, setIsEditingTOC] = useState(false);
+  const [editedTOCSections, setEditedTOCSections] = useState<any[]>([]);
+  const [isSavingTOC, setIsSavingTOC] = useState(false);
+  const [isContinuingProcess, setIsContinuingProcess] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated || !facultyId || !isOpen) return;
+
+    loadData();
+  }, [facultyId, isAuthenticated, isOpen]);
+
+  useEffect(() => {
+    if (selectedDeptId && selectedYear) {
+      loadSubjects();
+    } else {
+      setSubjects([]);
+      setMaterials({});
+    }
+  }, [selectedDeptId, selectedYear]);
+
+  useEffect(() => {
+    if (subjects.length > 0) {
+      loadMaterialsForSubjects();
+    }
+  }, [subjects]);
+
+  const loadData = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      
+      // Load faculty details
+      const facultyResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/faculties/${facultyId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!facultyResponse.ok) {
+        throw new Error('Failed to load faculty');
+      }
+      
+      const facultyData = await facultyResponse.json();
+      setFaculty(facultyData.faculty);
+
+      // Load departments
+      const deptResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/departments?facultyId=${facultyId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!deptResponse.ok) {
+        throw new Error('Failed to load departments');
+      }
+      
+      const deptData = await deptResponse.json();
+      setDepartments(deptData.departments);
+      
+      // Set default selection if not already set
+      if (deptData.departments.length > 0 && !selectedDeptId) {
+        const firstDept = deptData.departments[0];
+        setSelectedDeptId(firstDept._id);
+        setSelectedYear(firstDept.availableYears[0] || 1);
+      }
+      
+    } catch (error) {
+      console.error('Error loading data:', error);
+      setError('Greška pri učitavanju podataka');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadSubjects = async () => {
+    if (!selectedDeptId || !selectedYear) return;
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/materials/subjects?facultyId=${facultyId}&departmentId=${selectedDeptId}&year=${selectedYear}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error('Failed to load subjects');
+      }
+      
+      const data = await response.json();
+      setSubjects(data.subjects);
+    } catch (error) {
+      console.error('Error loading subjects:', error);
+    }
+  };
+
+  const handleDepartmentSelect = (deptId: string) => {
+    setSelectedDeptId(deptId);
+    const dept = departments.find(d => d._id === deptId);
+    if (dept && dept.availableYears.length > 0) {
+      setSelectedYear(dept.availableYears[0]);
+    }
+  };
+
+  const handleYearSelect = (year: number) => {
+    setSelectedYear(year);
+  };
+
+  const handleAddDepartment = async () => {
+    if (!newDepartmentName.trim()) {
+      setError('Naziv smera je obavezan');
+      return;
+    }
+
+    setIsAddingDepartment(true);
+    setError('');
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/departments`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newDepartmentName.trim(),
+          facultyId: facultyId,
+          availableYears: [1, 2, 3, 4]
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create department');
+      }
+
+      const data = await response.json();
+      setDepartments(prev => [...prev, data.department]);
+      setNewDepartmentName('');
+      setIsAddDepartmentModalOpen(false);
+      setError('');
+      
+      // Select the new department
+      setSelectedDeptId(data.department._id);
+      setSelectedYear(1);
+    } catch (error: any) {
+      setError(error.message || 'Greška pri dodavanju smera');
+    } finally {
+      setIsAddingDepartment(false);
+    }
+  };
+
+  const handleAddSubject = async () => {
+    if (!newSubjectName.trim()) {
+      setError('Naziv predmeta je obavezan');
+      return;
+    }
+
+    setIsAddingSubject(true);
+    setError('');
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/subjects`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newSubjectName.trim(),
+          facultyId: facultyId,
+          departmentId: selectedDeptId,
+          year: selectedYear
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create subject');
+      }
+
+      const data = await response.json();
+      setSubjects(prev => [...prev, data.subject]);
+      setNewSubjectName('');
+      setIsAddSubjectModalOpen(false);
+      setError('');
+    } catch (error: any) {
+      setError(error.message || 'Greška pri dodavanju predmeta');
+    } finally {
+      setIsAddingSubject(false);
+    }
+  };
+
+  const getAvailableYears = () => {
+    const selectedDept = departments.find(d => d._id === selectedDeptId);
+    return selectedDept ? selectedDept.availableYears : [1, 2, 3, 4];
+  };
+
+  const handleDeleteDepartment = (departmentId: string, departmentName: string) => {
+    setDeleteItem({ type: 'department', id: departmentId, name: departmentName });
+    setDeleteConfirmOpen(true);
+  };
+
+  const executeDeleteDepartment = async (departmentId: string) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/departments/${departmentId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete department');
+      }
+
+      setDepartments(prev => prev.filter(dept => dept._id !== departmentId));
+      
+      // If deleted department was selected, reset selection
+      if (selectedDeptId === departmentId) {
+        const remainingDepts = departments.filter(dept => dept._id !== departmentId);
+        if (remainingDepts.length > 0) {
+          setSelectedDeptId(remainingDepts[0]._id);
+          setSelectedYear(remainingDepts[0].availableYears[0] || 1);
+        } else {
+          setSelectedDeptId('');
+          setSelectedYear(1);
+          setSubjects([]);
+        }
+      }
+    } catch (error: any) {
+      setError(error.message || 'Greška pri brisanju smera');
+    }
+  };
+
+  const handleDeleteSubject = (subjectId: string, subjectName: string) => {
+    setDeleteItem({ type: 'subject', id: subjectId, name: subjectName });
+    setDeleteConfirmOpen(true);
+  };
+
+  const executeDeleteSubject = async (subjectId: string) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/subjects/${subjectId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete subject');
+      }
+
+      setSubjects(prev => prev.filter(subject => subject._id !== subjectId));
+    } catch (error: any) {
+      setError(error.message || 'Greška pri brisanju predmeta');
+    }
+  };
+
+  const loadMaterialsForSubjects = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const materialsData: {[subjectId: string]: Material[]} = {};
+
+      for (const subject of subjects) {
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/api/materials/materials?subjectId=${subject._id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          materialsData[subject._id] = data.materials || [];
+        }
+      }
+      
+      setMaterials(materialsData);
+    } catch (error) {
+      console.error('Error loading materials:', error);
+    }
+  };
+
+  const handlePDFUpload = async (subjectId: string, file: File, title: string) => {
+    if (!selectedDeptId || !selectedYear) return;
+
+    setUploadingMaterials(prev => ({ ...prev, [subjectId]: true }));
+    setError('');
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      
+      const formData = new FormData();
+      formData.append('pdf', file);
+      formData.append('title', title);
+      formData.append('subjectId', subjectId);
+      formData.append('facultyId', facultyId);
+      formData.append('departmentId', selectedDeptId);
+      formData.append('year', selectedYear.toString());
+
+      const uploadResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/upload/pdf`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.message || 'Failed to upload PDF');
+      }
+
+      const uploadData = await uploadResponse.json();
+
+      const materialResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/materials`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: title,
+          type: 'pdf',
+          r2Key: uploadData.r2Key,
+          bucket: uploadData.bucket,
+          subjectId: subjectId,
+          facultyId: facultyId,
+          departmentId: selectedDeptId,
+          year: selectedYear
+        }),
+      });
+
+      if (!materialResponse.ok) {
+        const errorData = await materialResponse.json();
+        throw new Error(errorData.message || 'Failed to create material record');
+      }
+
+      const materialData = await materialResponse.json();
+      
+      setMaterials(prev => ({
+        ...prev,
+        [subjectId]: [...(prev[subjectId] || []), materialData.material]
+      }));
+
+      // Reset file input
+      const fileInput = document.getElementById(`pdf-upload-${subjectId}`) as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = '';
+      }
+
+      // Only for PDF materials, open page selection modal
+      if (materialData.material.type === 'pdf') {
+        setPageSelectionMaterial({
+          id: materialData.material._id,
+          subjectId,
+          title: materialData.material.title,
+        });
+        setIsPageSelectionModalOpen(true);
+      }
+
+    } catch (error: any) {
+      setError(error.message || 'Greška pri dodavanju PDF-a');
+    } finally {
+      setUploadingMaterials(prev => ({ ...prev, [subjectId]: false }));
+    }
+  };
+
+  const handleDeleteMaterial = async (materialId: string, subjectId: string) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/${materialId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete material');
+      }
+
+      setMaterials(prev => ({
+        ...prev,
+        [subjectId]: prev[subjectId]?.filter(material => material._id !== materialId) || []
+      }));
+    } catch (error: any) {
+      setError(error.message || 'Greška pri brisanju materijala');
+    }
+  };
+
+  const handleViewMaterial = (material: Material) => {
+    if (material.type === 'pdf' && material.r2Key) {
+      const viewUrl = `${process.env.REACT_APP_API_URL}/api/upload/view/${encodeURIComponent(material.r2Key)}`;
+      window.open(viewUrl, '_blank');
+    } else if (material.url) {
+      window.open(material.url, '_blank');
+    }
+  };
+
+  const openRenameModal = (materialId: string, subjectId: string, currentTitle: string) => {
+    setRenameMaterial({ id: materialId, subjectId, currentTitle });
+    setNewMaterialTitle(currentTitle);
+    setIsRenameModalOpen(true);
+  };
+
+  const handleRenameMaterial = async () => {
+    if (!renameMaterial || !newMaterialTitle.trim()) return;
+    
+    if (newMaterialTitle.trim() === renameMaterial.currentTitle) {
+      setIsRenameModalOpen(false);
+      setRenameMaterial(null);
+      setNewMaterialTitle('');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/materials/${renameMaterial.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: newMaterialTitle.trim()
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to rename material');
+      }
+
+      const data = await response.json();
+      
+      // Update materials state
+      setMaterials(prev => ({
+        ...prev,
+        [renameMaterial.subjectId]: prev[renameMaterial.subjectId]?.map(material => 
+          material._id === renameMaterial.id 
+            ? { ...material, title: data.material.title }
+            : material
+        ) || []
+      }));
+
+      // Close modal
+      setIsRenameModalOpen(false);
+      setRenameMaterial(null);
+      setNewMaterialTitle('');
+      setError('');
+    } catch (error: any) {
+      setError(error.message || 'Greška pri preimenovanju materijala');
+    }
+  };
+
+  const handleStartProcessing = async () => {
+    if (!pageSelectionMaterial) return;
+
+    console.log(`Starting processing for material: ${pageSelectionMaterial.id}, tocPage: ${tocPage}, tocToPage: ${tocToPage}`);
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const url = `${process.env.REACT_APP_API_URL}/api/ingestion/process/${pageSelectionMaterial.id}`;
+      console.log('Making request to:', url);
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tocPage,
+          tocToPage,
+        }),
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error response:', errorData);
+        throw new Error(errorData.message || 'Failed to start processing');
+      }
+
+      const data = await response.json();
+      console.log('Processing started successfully:', data);
+      
+      // Close modal
+      setIsPageSelectionModalOpen(false);
+      setPageSelectionMaterial(null);
+      setTocPage(undefined);
+      setTocToPage(undefined);
+      setError('');
+
+      // Show success message
+      alert('Processing started! The entire book will be processed. Check console logs for progress.');
+    } catch (error: any) {
+      console.error('Processing start error:', error);
+      setError(error.message || 'Greška pri pokretanju obrade dokumenta');
+    }
+  };
+
+  const handleAnalyzeMaterial = async (materialId: string) => {
+    setAnalyzingMaterials(prev => ({ ...prev, [materialId]: true }));
+    setError('');
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/${materialId}/analyze`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to start analysis');
+      }
+
+      const data = await response.json();
+      console.log('Analysis completed:', data);
+      
+      // Show success message with details
+      alert(`AI Analysis completed successfully!\nProcessed: ${data.data.processedSections} sections\nSkipped: ${data.data.skippedSections} sections\nTotal: ${data.data.totalSections} sections`);
+      
+      // Update analysis status
+      await checkAnalysisStatus(materialId);
+      
+    } catch (error: any) {
+      console.error('Analysis error:', error);
+      
+      // Check if it was aborted (409 status code)
+      if (error.response?.status === 409 && error.response?.data?.aborted) {
+        const abortData = error.response.data;
+        alert(`AI Analysis was aborted by user.\nProcessed: ${abortData.data.processedSections} sections out of ${abortData.data.totalSections} total before abort.`);
+        setError('AI analiza je prekinuta od strane korisnika');
+      } else {
+        setError(error.message || 'Greška pri AI analizi materijala');
+        alert(`AI Analysis failed: ${error.message}`);
+      }
+    } finally {
+      setAnalyzingMaterials(prev => ({ ...prev, [materialId]: false }));
+    }
+  };
+
+  const checkAnalysisStatus = async (materialId: string) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/${materialId}/analysis-status`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAnalysisStatus(prev => ({ ...prev, [materialId]: data.status }));
+      }
+    } catch (error) {
+      console.error('Error checking analysis status:', error);
+    }
+  };
+
+  // Check analysis status for all materials when they load
+  useEffect(() => {
+    const checkAllStatuses = async () => {
+      for (const subjectId in materials) {
+        for (const material of materials[subjectId] || []) {
+          await checkAnalysisStatus(material._id);
+        }
+      }
+    };
+    
+    if (Object.keys(materials).length > 0) {
+      checkAllStatuses();
+    }
+  }, [materials]);
+
+  const handleOpenMaterial = async (material: Material) => {
+    setSelectedMaterial(material);
+    setLoadingMaterialData(true);
+    
+    // Initialize edit values with material data
+    setEditValues({
+      title: material.title,
+      note: material.note || '',
+    });
+    
+    // Reset search and pagination
+    setSectionsSearchQuery('');
+    setSectionsPage(1);
+    
+    try {
+      await Promise.all([
+        loadMaterialSections(material._id),
+        loadMaterialAnalysis(material._id),
+        loadMaterialTocAnalysis(material._id)
+      ]);
+      setShowMaterialDetail(true);
+    } catch (error) {
+      console.error('Error loading material data:', error);
+      setError('Greška pri učitavanju podataka materijala');
+    } finally {
+      setLoadingMaterialData(false);
+    }
+  };
+
+  const loadMaterialSections = async (materialId: string) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/materials/${materialId}/sections`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        setMaterialSections(data.sections || []);
+      }
+    } catch (error) {
+      console.error('Error loading material sections:', error);
+    }
+  };
+
+  const loadMaterialAnalysis = async (materialId: string) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/materials/${materialId}/analysis`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        setMaterialAnalysis(data.analysis);
+      }
+    } catch (error) {
+      console.error('Error loading material analysis:', error);
+    }
+  };
+
+  const loadMaterialTocAnalysis = async (materialId: string) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/materials/${materialId}/toc-analysis`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        setMaterialTocAnalysis(data.tocAnalysis);
+      }
+    } catch (error) {
+      console.error('Error loading material TOC analysis:', error);
+    }
+  };
+
+  const handleBackToMain = () => {
+    setShowMaterialDetail(false);
+    setSelectedMaterial(null);
+    setMaterialSections([]);
+    setMaterialAnalysis(null);
+    setMaterialTocAnalysis(null);
+    setEditingFields({});
+    setEditValues({});
+    setSectionsSearchQuery('');
+    setSectionsPage(1);
+    setEditingSections({});
+    setSectionEditValues({});
+    setExpandedSections({});
+  };
+
+  const handleEditField = (fieldKey: string, value: string) => {
+    setEditingFields(prev => ({ ...prev, [fieldKey]: true }));
+    setEditValues(prev => ({ ...prev, [fieldKey]: value }));
+  };
+
+  const handleSaveField = async (fieldKey: string) => {
+    if (!selectedMaterial) return;
+    
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/materials/${selectedMaterial._id}/field`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            field: fieldKey,
+            value: editValues[fieldKey]
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setSelectedMaterial(data.material);
+        
+        // Update materials state
+        const subjectId = typeof selectedMaterial.subjectId === 'object' ? selectedMaterial.subjectId._id : selectedMaterial.subjectId;
+        setMaterials(prev => ({
+          ...prev,
+          [subjectId]: prev[subjectId]?.map(material => 
+            material._id === selectedMaterial._id 
+              ? { ...material, [fieldKey]: data.material[fieldKey] }
+              : material
+          ) || []
+        }));
+        
+        setEditingFields(prev => ({ ...prev, [fieldKey]: false }));
+      }
+    } catch (error) {
+      console.error('Error saving field:', error);
+      setError('Greška pri čuvanju podataka');
+    }
+  };
+
+  const handleCancelEdit = (fieldKey: string) => {
+    if (!selectedMaterial) return;
+    setEditingFields(prev => ({ ...prev, [fieldKey]: false }));
+    setEditValues(prev => ({ 
+      ...prev, 
+      [fieldKey]: fieldKey === 'title' ? selectedMaterial.title : selectedMaterial.note || ''
+    }));
+  };
+
+  // Old filtering function removed - using advanced one below
+
+  const getPaginatedSections = () => {
+    const filtered = getFilteredSections();
+    const startIndex = (sectionsPage - 1) * sectionsPerPage;
+    return filtered.slice(startIndex, startIndex + sectionsPerPage);
+  };
+
+  const getTotalPages = () => {
+    return Math.ceil(getFilteredSections().length / sectionsPerPage);
+  };
+
+  // Section editing functions
+  const handleEditSection = (sectionId: string, field: string, value: any) => {
+    setEditingSections(prev => ({
+      ...prev,
+      [sectionId]: { ...prev[sectionId], [field]: true }
+    }));
+    setSectionEditValues(prev => ({
+      ...prev,
+      [sectionId]: { ...prev[sectionId], [field]: value }
+    }));
+  };
+
+  const handleSaveSection = async (sectionId: string, field: string) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const value = sectionEditValues[sectionId]?.[field];
+      
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/materials/section/${sectionId}/field`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            field: field,
+            value: value
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Update sections state
+        setMaterialSections(prev => 
+          prev.map(section => 
+            section._id === sectionId 
+              ? { ...section, [field]: data.section[field] }
+              : section
+          )
+        );
+        
+        setEditingSections(prev => ({
+          ...prev,
+          [sectionId]: { ...prev[sectionId], [field]: false }
+        }));
+      }
+    } catch (error) {
+      console.error('Error saving section:', error);
+      setError('Greška pri čuvanju sekcije');
+    }
+  };
+
+  const handleCancelSectionEdit = (sectionId: string, field: string) => {
+    const section = materialSections.find(s => s._id === sectionId);
+    if (!section) return;
+    
+    setEditingSections(prev => ({
+      ...prev,
+      [sectionId]: { ...prev[sectionId], [field]: false }
+    }));
+    
+    setSectionEditValues(prev => ({
+      ...prev,
+      [sectionId]: { 
+        ...prev[sectionId], 
+        [field]: field === 'keywords' || field === 'queries' 
+          ? (section as any)[field] || [] 
+          : (section as any)[field] || ''
+      }
+    }));
+  };
+
+  const toggleSectionExpand = (sectionId: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
+
+  // Get AI analytics data per section with advanced filtering
+  const getAiAnalyticsBySection = () => {
+    let filtered = materialSections.filter(s => s.analyzed && s.isMainPart !== false);
+    
+    // Apply search filter
+    if (analyticsSearchQuery.trim()) {
+      const query = analyticsSearchQuery.toLowerCase();
+      filtered = filtered.filter(section => 
+        section.title.toLowerCase().includes(query) ||
+        section.shortAbstract?.toLowerCase().includes(query) ||
+        section.keywords?.some(keyword => keyword.toLowerCase().includes(query))
+      );
+    }
+    
+    // Apply quick filters
+    if (quickFilters.analytics.hasAbstract) {
+      filtered = filtered.filter(s => s.shortAbstract && s.shortAbstract.length > 0);
+    }
+    
+    if (quickFilters.analytics.hasKeywords) {
+      filtered = filtered.filter(s => s.keywords && s.keywords.length > 0);
+    }
+    
+    if (quickFilters.analytics.level !== 'all') {
+      const levelFilter = quickFilters.analytics.level;
+      if (levelFilter === '4') {
+        filtered = filtered.filter(s => s.level >= 4);
+      } else {
+        filtered = filtered.filter(s => s.level === parseInt(levelFilter));
+      }
+    }
+    
+    // Sort results
+    filtered.sort((a, b) => {
+      let aVal, bVal;
+      switch (sortBy.analytics) {
+        case 'pageStart':
+          aVal = a.pageStart;
+          bVal = b.pageStart;
+          break;
+        case 'level':
+          aVal = a.level;
+          bVal = b.level;
+          break;
+        default:
+          aVal = a.title.toLowerCase();
+          bVal = b.title.toLowerCase();
+      }
+      
+      if (sortBy.direction === 'desc') {
+        return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+      }
+      return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+    });
+    
+    return filtered;
+  };
+
+  // Get paginated AI analytics data
+  const getPaginatedAiAnalytics = () => {
+    const filteredData = getAiAnalyticsBySection();
+    const startIndex = (analyticsPage - 1) * analyticsPerPage;
+    const endIndex = startIndex + analyticsPerPage;
+    return filteredData.slice(startIndex, endIndex);
+  };
+
+  // Get total pages for AI analytics
+  const getAnalyticsTotalPages = () => {
+    return Math.ceil(getAiAnalyticsBySection().length / analyticsPerPage);
+  };
+
+  // Get AI analytics data from sections (bulk - legacy)
+  const getAiAnalytics = () => {
+    const sections = materialSections.filter(s => s.analyzed && s.isMainPart !== false);
+    const shortAbstracts = sections.filter(s => s.shortAbstract).map(s => s.shortAbstract!);
+    const keywordsSet = new Set(sections.flatMap(s => s.keywords || []));
+    const keywords = Array.from(keywordsSet);
+    const queriesSet = new Set(sections.flatMap(s => s.queries || []));
+    const queries = Array.from(queriesSet);
+    
+    return {
+      shortAbstracts,
+      keywords,
+      queries,
+      totalAnalyzedSections: sections.length
+    };
+  };
+
+  if (isLoading) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (!faculty) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
+          <div className="text-center py-20">
+            <p className="text-gray-600">Fakultet nije pronađen</p>
+            <Button onClick={onClose} className="mt-4 bg-black hover:bg-gray-800 text-white">
+              Zatvori
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Advanced filtering and sorting functions
+  const getFilteredSections = () => {
+    let filtered = materialSections.filter(section => {
+      const matchesSearch = !sectionsSearchQuery.trim() || 
+        section.title.toLowerCase().includes(sectionsSearchQuery.toLowerCase()) ||
+        section.shortAbstract?.toLowerCase().includes(sectionsSearchQuery.toLowerCase()) ||
+        section.keywords?.some(k => k.toLowerCase().includes(sectionsSearchQuery.toLowerCase()));
+      
+      const matchesFilters = 
+        (!quickFilters.sections.analyzed || section.analyzed) &&
+        (!quickFilters.sections.unanalyzed || !section.analyzed) &&
+        (!quickFilters.sections.hasKeywords || (section.keywords && section.keywords.length > 0)) &&
+        (!quickFilters.sections.hasQueries || (section.queries && section.queries.length > 0));
+      
+      return matchesSearch && matchesFilters;
+    });
+
+    // Sort sections
+    filtered.sort((a, b) => {
+      let aVal, bVal;
+      switch (sortBy.sections) {
+        case 'pageStart':
+          aVal = a.pageStart;
+          bVal = b.pageStart;
+          break;
+        case 'level':
+          aVal = a.level;
+          bVal = b.level;
+          break;
+        case 'analyzed':
+          aVal = a.analyzed ? 1 : 0;
+          bVal = b.analyzed ? 1 : 0;
+          break;
+        default:
+          aVal = a.title.toLowerCase();
+          bVal = b.title.toLowerCase();
+      }
+      
+      if (sortBy.direction === 'desc') {
+        return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+      }
+      return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+    });
+
+    return filtered;
+  };
+
+  // Bulk operations
+  const handleBulkAction = async (action: 'analyze' | 'delete' | 'export') => {
+    const selectedIds = Array.from(selectedSections);
+    if (selectedIds.length === 0) return;
+    
+    switch (action) {
+      case 'analyze':
+        for (const id of selectedIds) {
+          // Trigger analysis for selected sections
+        }
+        break;
+      case 'delete':
+        // Delete selected sections
+        break;
+      case 'export':
+        // Export selected sections
+        break;
+    }
+    setSelectedSections(new Set());
+  };
+
+  // Quick edit toggle
+  const toggleQuickEdit = (sectionId: string) => {
+    setShowQuickEdit(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
+
+  // TOC Analysis functions
+  const startEditingTOC = () => {
+    if (!materialTocAnalysis) return;
+    setEditedTOCSections([...materialTocAnalysis.sections]);
+    setIsEditingTOC(true);
+  };
+
+  const cancelEditingTOC = () => {
+    setIsEditingTOC(false);
+    setEditedTOCSections([]);
+  };
+
+  const updateTOCSection = (index: number, field: string, value: any) => {
+    const updated = [...editedTOCSections];
+    updated[index] = { ...updated[index], [field]: value };
+    setEditedTOCSections(updated);
+  };
+
+  const addTOCSection = () => {
+    const newSection = {
+      title: 'Nova sekcija',
+      cleanTitle: 'Nova sekcija',
+      level: 1,
+      pageStart: 1,
+      pageEnd: 1,
+      semanticType: 'section',
+      processed: false
+    };
+    setEditedTOCSections([...editedTOCSections, newSection]);
+  };
+
+  const removeTOCSection = (index: number) => {
+    const updated = editedTOCSections.filter((_, i) => i !== index);
+    setEditedTOCSections(updated);
+  };
+
+  const saveTOCAnalysis = async () => {
+    if (!selectedMaterial) return;
+    
+    setIsSavingTOC(true);
+    setError('');
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/ingestion/toc-analysis/${selectedMaterial._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          sections: editedTOCSections
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save TOC analysis: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        // Refresh TOC analysis data
+        await loadMaterialTocAnalysis(selectedMaterial._id);
+        setIsEditingTOC(false);
+        alert(`TOC analysis updated with ${data.updatedSections} sections`);
+      } else {
+        throw new Error(data.message || 'Failed to save TOC analysis');
+      }
+    } catch (err) {
+      console.error('Error saving TOC analysis:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save TOC analysis');
+    } finally {
+      setIsSavingTOC(false);
+    }
+  };
+
+  const continueProcessing = async () => {
+    if (!selectedMaterial) return;
+    
+    setIsContinuingProcess(true);
+    setError('');
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/ingestion/continue-after-toc/${selectedMaterial._id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to continue processing: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        alert('Processing continued successfully - using reviewed TOC data');
+        // Refresh material data
+        await loadMaterialTocAnalysis(selectedMaterial._id);
+      } else {
+        throw new Error(data.message || 'Failed to continue processing');
+      }
+    } catch (err) {
+      console.error('Error continuing processing:', err);
+      setError(err instanceof Error ? err.message : 'Failed to continue processing');
+    } finally {
+      setIsContinuingProcess(false);
+    }
+  };
+
+  return (
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="w-[98vw] h-[98vh] max-w-[98vw] max-h-[98vh] overflow-y-auto p-0 bg-white [&>button]:hidden">
+        {/* Header */}
+        <motion.div 
+          className="bg-white border-b border-gray-200 px-6 py-4"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                onClick={onClose}
+                className="p-2 hover:bg-gray-100 text-gray-700 hover:text-gray-900"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 12H5m7-7l-7 7 7 7"/>
+                </svg>
+              </Button>
+              <h1 className="text-xl font-bold text-gray-900">{faculty.name}</h1>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Button
+                className="bg-black hover:bg-gray-800 text-white"
+                onClick={() => setIsAddSubjectModalOpen(true)}
+                disabled={!selectedDeptId}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
+                  <path d="M12 5v14m-7-7h14"/>
+                </svg>
+                Dodaj Predmet
+              </Button>
+            </div>
+          </div>
+
+          {/* Department and Year Selection */}
+          <div className="mt-4 space-y-4">
+            {/* Department Chips */}
+            <motion.div 
+              className="flex flex-wrap items-center gap-2"
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: {},
+                visible: {
+                  transition: {
+                    staggerChildren: 0.1
+                  }
+                }
+              }}
+            >
+              <span className="text-sm font-medium text-gray-700 mr-2">Smer:</span>
+              {departments.map((dept) => (
+                <motion.div
+                  key={dept._id}
+                  variants={{
+                    hidden: { opacity: 0, x: -10 },
+                    visible: { opacity: 1, x: 0 }
+                  }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <div className="flex items-center gap-1">
+                    <Badge
+                      variant={selectedDeptId === dept._id ? "default" : "outline"}
+                      className={`cursor-pointer px-3 py-1 ${
+                        selectedDeptId === dept._id
+                          ? 'bg-black text-white hover:bg-gray-800'
+                          : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900'
+                      }`}
+                      onClick={() => handleDepartmentSelect(dept._id)}
+                    >
+                      {dept.name}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-1 h-6 w-6 text-gray-400 hover:text-red-600 hover:bg-red-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteDepartment(dept._id, dept.name);
+                      }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M3 6h18"/>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                      </svg>
+                    </Button>
+                  </div>
+                </motion.div>
+              ))}
+              
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, x: -10 },
+                  visible: { opacity: 1, x: 0 }
+                }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Badge
+                  variant="outline"
+                  className="cursor-pointer px-3 py-1 bg-white border-dashed border-gray-400 text-black hover:bg-gray-50"
+                  onClick={() => setIsAddDepartmentModalOpen(true)}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-1">
+                    <path d="M12 5v14m-7-7h14"/>
+                  </svg>
+                  Dodaj Smer
+                </Badge>
+              </motion.div>
+            </motion.div>
+
+            {/* Year Chips */}
+            <AnimatePresence>
+              {selectedDeptId && (
+                <motion.div 
+                  className="flex flex-wrap items-center gap-2"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  variants={{
+                    hidden: {},
+                    visible: {
+                      transition: {
+                        staggerChildren: 0.1
+                      }
+                    }
+                  }}
+                >
+                  <span className="text-sm font-medium text-gray-700 mr-2">Godina:</span>
+                  {getAvailableYears().map((year) => (
+                    <motion.div
+                      key={year}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.2, delay: year * 0.1 }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Badge
+                        variant={selectedYear === year ? "default" : "outline"}
+                        className={`cursor-pointer px-3 py-1 ${
+                          selectedYear === year
+                            ? 'bg-black text-white hover:bg-gray-800'
+                            : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900'
+                        }`}
+                        onClick={() => handleYearSelect(year)}
+                      >
+                        Godina {year}
+                      </Badge>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
+
+        {/* Material Detail View */}
+        <AnimatePresence>
+          {showMaterialDetail && selectedMaterial && (
+            <motion.div
+              className="absolute inset-0 bg-white z-50 flex flex-col"
+              initial={{ opacity: 0, x: '100%' }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: '100%' }}
+              transition={{ duration: 0.4, ease: 'easeInOut' }}
+            >
+              {/* Material Detail Header */}
+              <motion.div 
+                className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0"
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+              >
+                <div className="flex justify-between items-center">
+                  <motion.div 
+                    className="flex items-center gap-3"
+                    initial={{ x: -20 }}
+                    animate={{ x: 0 }}
+                    transition={{ duration: 0.3, delay: 0.2 }}
+                  >
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Button
+                        variant="ghost"
+                        onClick={handleBackToMain}
+                        className="p-2 hover:bg-gray-100 text-gray-700 hover:text-gray-900"
+                      >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M19 12H5m7-7l-7 7 7 7"/>
+                        </svg>
+                      </Button>
+                    </motion.div>
+                    
+                    <motion.h1 
+                      className="text-xl font-bold text-gray-900"
+                      layoutId={`material-title-${selectedMaterial._id}`}
+                    >
+                      {selectedMaterial.title}
+                    </motion.h1>
+                  </motion.div>
+
+                  <motion.div 
+                    className="flex items-center gap-2"
+                    initial={{ x: 20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ duration: 0.3, delay: 0.3 }}
+                  >
+                    <ShimmerButton
+                      className="h-8 w-8 p-1"
+                      background="rgba(59, 130, 246, 0.8)"
+                      onClick={() => handleViewMaterial(selectedMaterial)}
+                      title="View material"
+                      borderRadius="8px"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                    </ShimmerButton>
+                    <ShimmerButton
+                      className="h-8 w-8 p-1"
+                      background="rgba(249, 115, 22, 0.8)"
+                      onClick={() => openRenameModal(selectedMaterial._id, typeof selectedMaterial.subjectId === 'object' ? selectedMaterial.subjectId._id : selectedMaterial.subjectId, selectedMaterial.title)}
+                      title="Rename material"
+                      borderRadius="8px"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="m18.5 2.5-6 6"/>
+                      </svg>
+                    </ShimmerButton>
+                    <ShimmerButton
+                      className="h-8 w-8 p-1"
+                      background="rgba(147, 51, 234, 0.8)"
+                      onClick={() => handleAnalyzeMaterial(selectedMaterial._id)}
+                      disabled={analyzingMaterials[selectedMaterial._id]}
+                      title="AI Analyze material"
+                      borderRadius="8px"
+                    >
+                      {analyzingMaterials[selectedMaterial._id] ? (
+                        <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
+                      ) : (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                          <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                      )}
+                    </ShimmerButton>
+                    <ShimmerButton
+                      className="h-8 w-8 p-1"
+                      background="rgba(239, 68, 68, 0.8)"
+                      onClick={() => handleDeleteMaterial(selectedMaterial._id, typeof selectedMaterial.subjectId === 'object' ? selectedMaterial.subjectId._id : selectedMaterial.subjectId)}
+                      title="Delete material"
+                      borderRadius="8px"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M3 6h18"/>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                      </svg>
+                    </ShimmerButton>
+                  </motion.div>
+                </div>
+              </motion.div>
+
+              {/* Material Detail Content - New Tab Layout */}
+              <div className="flex-1 flex flex-col">
+                {loadingMaterialData ? (
+                  <div className="flex items-center justify-center py-20">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                  </div>
+                ) : (
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+                    {/* Tab Navigation */}
+                    <div className="border-b border-gray-200 px-6 bg-white">
+                      <TabsList className="grid grid-cols-4 w-full max-w-2xl mx-auto h-12">
+                        <TabsTrigger value="info" className="flex items-center gap-2">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M12 1v6m0 6v6"/>
+                            <path d="m21 12-6 0m-6 0-6 0"/>
+                          </svg>
+                          Osnovni info
+                        </TabsTrigger>
+                        <TabsTrigger value="toc" className="flex items-center gap-2">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M3 12h18m-9-9v18"/>
+                          </svg>
+                          TOC Analiza
+                        </TabsTrigger>
+                        <TabsTrigger value="sections" className="flex items-center gap-2">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14,2 14,8 20,8"/>
+                          </svg>
+                          Sekcije ({materialSections.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="analytics" className="flex items-center gap-2">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M9 19c-5 0-7-2-7-5v-4c0-3 2-5 7-5 2 0 3.5.5 4.5 1.5C16 8.5 17.5 10 17.5 12s-1.5 3.5-4 2.5c-1-0.5-2.5-1-4.5-1z"/>
+                            <path d="M15 9.5c.5-1 1.5-1.5 2.5-1.5 3 0 5 2 5 5s-2 5-5 5c-1 0-2-.5-2.5-1.5"/>
+                          </svg>
+                          AI Analytics ({getAiAnalyticsBySection().length})
+                        </TabsTrigger>
+                      </TabsList>
+                    </div>
+
+                    {/* Tab Content */}
+                    <div className="flex-1">
+                      
+                      {/* Basic Info Tab */}
+                      <TabsContent value="info" className="h-full overflow-y-auto p-0 m-0">
+                        <div className="h-full overflow-y-auto p-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Section 1: Basic Material Info */}
+                      <motion.div 
+                        className="col-span-full lg:col-span-1 bg-white rounded-xl border border-gray-200 p-6 shadow-sm"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.4, delay: 0.3 }}
+                      >
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-blue-600">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14,2 14,8 20,8"/>
+                          </svg>
+                          Osnovni podaci
+                        </h2>
+                        <div className="space-y-4">
+                          {/* Title */}
+                          <div>
+                            <label className="text-sm font-medium text-gray-700 mb-1 block">Naziv</label>
+                            {editingFields.title ? (
+                              <div className="flex gap-2">
+                                <Textarea
+                                  value={editValues.title || ''}
+                                  onChange={(e) => setEditValues(prev => ({ ...prev, title: e.target.value }))}
+                                  className="flex-1 min-h-[40px] resize-none"
+                                  autoFocus
+                                />
+                                <div className="flex flex-col gap-1">
+                                  <Button size="sm" onClick={() => handleSaveField('title')} className="h-8">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M20 6L9 17l-5-5"/>
+                                    </svg>
+                                  </Button>
+                                  <Button size="sm" variant="outline" onClick={() => handleCancelEdit('title')} className="h-8">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M18 6L6 18M6 6l12 12"/>
+                                    </svg>
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-900 flex-1">{selectedMaterial.title}</span>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  onClick={() => handleEditField('title', selectedMaterial.title)}
+                                  className="p-1 h-6 w-6"
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                    <path d="m18.5 2.5-6 6"/>
+                                  </svg>
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Type */}
+                          <div>
+                            <label className="text-sm font-medium text-gray-700 mb-1 block">Tip</label>
+                            <Badge variant="outline" className="capitalize">{selectedMaterial.type}</Badge>
+                          </div>
+                          
+                          {/* URL */}
+                          {selectedMaterial.url && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-700 mb-1 block">URL</label>
+                              <a href={selectedMaterial.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 text-sm break-all">
+                                {selectedMaterial.url}
+                              </a>
+                            </div>
+                          )}
+                          
+                          {/* Note */}
+                          <div>
+                            <label className="text-sm font-medium text-gray-700 mb-1 block">Beleška</label>
+                            {editingFields.note ? (
+                              <div className="space-y-2">
+                                <Textarea
+                                  value={editValues.note || ''}
+                                  onChange={(e) => setEditValues(prev => ({ ...prev, note: e.target.value }))}
+                                  placeholder="Dodaj belešku..."
+                                  className="min-h-[80px]"
+                                  autoFocus
+                                />
+                                <div className="flex gap-2">
+                                  <Button size="sm" onClick={() => handleSaveField('note')}>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M20 6L9 17l-5-5"/>
+                                    </svg>
+                                  </Button>
+                                  <Button size="sm" variant="outline" onClick={() => handleCancelEdit('note')}>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M18 6L6 18M6 6l12 12"/>
+                                    </svg>
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-start gap-2">
+                                <span className="text-gray-600 flex-1 text-sm">{selectedMaterial.note || 'Nema beleške'}</span>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  onClick={() => handleEditField('note', selectedMaterial.note || '')}
+                                  className="p-1 h-6 w-6"
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                    <path d="m18.5 2.5-6 6"/>
+                                  </svg>
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Technical Details */}
+                          <details className="mt-4">
+                            <summary className="text-sm font-medium text-gray-700 cursor-pointer hover:text-gray-900 mb-2">
+                              Tehnički detalji
+                            </summary>
+                            <div className="space-y-2 text-xs text-gray-500 bg-gray-50 p-3 rounded">
+                              <div><span className="font-medium">ID:</span> {selectedMaterial._id}</div>
+                              <div><span className="font-medium">Subject ID:</span> {typeof selectedMaterial.subjectId === 'object' ? selectedMaterial.subjectId._id : selectedMaterial.subjectId}</div>
+                              <div><span className="font-medium">Faculty ID:</span> {selectedMaterial.facultyId}</div>
+                              <div><span className="font-medium">Department ID:</span> {selectedMaterial.departmentId}</div>
+                              <div><span className="font-medium">Godina:</span> {selectedMaterial.year}</div>
+                              <div><span className="font-medium">Redosled:</span> {selectedMaterial.order}</div>
+                              {selectedMaterial.r2Key && <div><span className="font-medium">R2 Key:</span> {selectedMaterial.r2Key}</div>}
+                              {selectedMaterial.bucket && <div><span className="font-medium">Bucket:</span> {selectedMaterial.bucket}</div>}
+                              <div><span className="font-medium">Kreiran:</span> {new Date(selectedMaterial.createdAt).toLocaleDateString('sr-RS')}</div>
+                              <div><span className="font-medium">Ažuriran:</span> {new Date(selectedMaterial.updatedAt).toLocaleDateString('sr-RS')}</div>
+                            </div>
+                          </details>
+                        </div>
+                      </motion.div>
+                        </div>
+                        </div>
+                      </TabsContent>
+
+                      {/* TOC Analysis Tab */}
+                      <TabsContent value="toc" className="h-full overflow-y-auto p-0 m-0">
+                        <div className="h-full overflow-y-auto p-6">
+                        {/* Section 2: AI TOC Analysis */}
+                      <motion.div 
+                        className="col-span-full lg:col-span-1 bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl border border-orange-200 p-6 shadow-sm"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.4, delay: 0.4 }}
+                      >
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-orange-600">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <path d="M8 9h8M8 13h8M8 17h5"/>
+                          </svg>
+                          AI TOC Analiza
+                        </h2>
+                        {materialTocAnalysis ? (
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-sm font-medium text-gray-700 mb-1 block">Status</label>
+                                <Badge 
+                                  variant={materialTocAnalysis.status === 'completed' ? 'default' : 
+                                          materialTocAnalysis.status === 'processing' ? 'secondary' : 'destructive'}
+                                  className="capitalize"
+                                >
+                                  {materialTocAnalysis.status}
+                                </Badge>
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium text-gray-700 mb-1 block">TOC Stranice</label>
+                                <span className="text-sm text-gray-600">{materialTocAnalysis.tocPages}</span>
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-sm font-medium text-gray-700 mb-1 block">Ukupne sekcije</label>
+                                <span className="text-sm text-gray-600 font-semibold">{materialTocAnalysis.totalSections}</span>
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium text-gray-700 mb-1 block">Obrađene sekcije</label>
+                                <span className="text-sm text-gray-600 font-semibold">{materialTocAnalysis.processedSections}</span>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                                <div className="flex items-center justify-between mb-3">
+                                  <h3 className="text-lg font-semibold text-black">
+                                    TOC Sekcije ({isEditingTOC ? editedTOCSections.length : materialTocAnalysis.sections.length})
+                                  </h3>
+                                  <div className="flex gap-2">
+                                    {!isEditingTOC ? (
+                                      <Button 
+                                        onClick={startEditingTOC}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2"
+                                      >
+                                        ✏️ Edituj Sekcije
+                                      </Button>
+                                    ) : (
+                                      <>
+                                        <Button 
+                                          onClick={addTOCSection}
+                                          className="bg-green-600 hover:bg-green-700 text-white font-medium px-3 py-2"
+                                        >
+                                          ➕ Dodaj
+                                        </Button>
+                                        <Button 
+                                          onClick={() => {
+                                            setIsEditingTOC(false);
+                                            setEditedTOCSections([...materialTocAnalysis.sections]);
+                                          }}
+                                          variant="outline"
+                                          className="text-black border-gray-400 hover:bg-gray-100 font-medium px-3 py-2"
+                                        >
+                                          ❌ Otkaži
+                                        </Button>
+                                        <Button 
+                                          onClick={saveTOCAnalysis}
+                                          disabled={isSavingTOC}
+                                          className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2"
+                                        >
+                                          {isSavingTOC ? '💾 Čuva...' : '💾 Sačuvaj'}
+                                        </Button>
+                                      </>
+                                    )}
+                                  </div>
+                              </div>
+                              
+                              {isEditingTOC && (
+                                <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
+                                  <p className="text-sm text-black font-medium">
+                                    💡 Saveti za editovanje:
+                                  </p>
+                                  <ul className="text-xs text-black mt-1 space-y-1">
+                                    <li>• Proverite da stranice nisu preklapajuće</li>
+                                    <li>• Koristite jasne naslove za bolje pretraživanje</li>
+                                    <li>• Nivo 1 = Poglavlje, Nivo 2 = Sekcija, itd.</li>
+                                  </ul>
+                                </div>
+                              )}
+                              
+                              <div className="max-h-96 overflow-y-auto space-y-3 border border-gray-200 rounded-lg p-2">
+                                {(isEditingTOC ? editedTOCSections : materialTocAnalysis.sections).map((section, index) => (
+                                  <div key={index} className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm">
+                                    {isEditingTOC ? (
+                                      <div className="space-y-4">
+                                        {/* Header reda sa brojem */}
+                                        <div className="flex items-center justify-between pb-2 border-b border-gray-200">
+                                          <span className="text-sm font-bold text-black bg-gray-100 px-2 py-1 rounded">
+                                            Sekcija #{index + 1}
+                                          </span>
+                                          <Button 
+                                            onClick={() => removeTOCSection(index)}
+                                            variant="ghost" 
+                                            size="sm"
+                                            className="text-red-600 hover:text-white hover:bg-red-600 font-medium"
+                                          >
+                                            🗑️ Ukloni
+                                          </Button>
+                                        </div>
+                                        
+                                        {/* Glavni naslov - veći input */}
+                                        <div>
+                                          <label className="block text-sm font-medium text-black mb-1">📖 Naslov Sekcije</label>
+                                          <input
+                                            type="text"
+                                            value={section.title}
+                                            onChange={(e) => updateTOCSection(index, 'title', e.target.value)}
+                                            className="w-full text-black text-sm border-2 border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                                            placeholder="Unesite naslov sekcije..."
+                                          />
+                                        </div>
+                                        
+                                        {/* Čist naslov */}
+                                        <div>
+                                          <label className="block text-sm font-medium text-black mb-1">🔤 Čist Naslov</label>
+                                          <input
+                                            type="text"
+                                            value={section.cleanTitle}
+                                            onChange={(e) => updateTOCSection(index, 'cleanTitle', e.target.value)}
+                                            className="w-full text-black text-sm border-2 border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                                            placeholder="Naziv za pretraživanje..."
+                                          />
+                                        </div>
+                                        
+                                        {/* Grid sa parametrima */}
+                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                                          <div>
+                                            <label className="block text-sm font-medium text-black mb-1">📊 Nivo</label>
+                                            <select
+                                              value={section.level}
+                                              onChange={(e) => updateTOCSection(index, 'level', parseInt(e.target.value) || 1)}
+                                              className="w-full text-black text-sm border-2 border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500"
+                                            >
+                                              <option value={1}>1 - Poglavlje</option>
+                                              <option value={2}>2 - Sekcija</option>
+                                              <option value={3}>3 - Podsekcija</option>
+                                              <option value={4}>4 - Pasus</option>
+                                              <option value={5}>5 - Stavka</option>
+                                            </select>
+                                          </div>
+                                          
+                                          <div>
+                                            <label className="block text-sm font-medium text-black mb-1">📄 Od stranice</label>
+                                            <input
+                                              type="number"
+                                              min="1"
+                                              value={section.pageStart}
+                                              onChange={(e) => updateTOCSection(index, 'pageStart', parseInt(e.target.value) || 1)}
+                                              className="w-full text-black text-sm border-2 border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500"
+                                            />
+                                          </div>
+                                          
+                                          <div>
+                                            <label className="block text-sm font-medium text-black mb-1">📄 Do stranice</label>
+                                            <input
+                                              type="number"
+                                              min="1"
+                                              value={section.pageEnd}
+                                              onChange={(e) => updateTOCSection(index, 'pageEnd', parseInt(e.target.value) || 1)}
+                                              className="w-full text-black text-sm border-2 border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500"
+                                            />
+                                          </div>
+                                          
+                                          <div>
+                                            <label className="block text-sm font-medium text-black mb-1">🏷️ Tip</label>
+                                            <select
+                                              value={section.semanticType}
+                                              onChange={(e) => updateTOCSection(index, 'semanticType', e.target.value)}
+                                              className="w-full text-black text-sm border-2 border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500"
+                                            >
+                                              <option value="chapter">Poglavlje</option>
+                                              <option value="section">Sekcija</option>
+                                              <option value="subsection">Podsekcija</option>
+                                              <option value="paragraph">Pasus</option>
+                                            </select>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-start justify-between gap-4">
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-2 mb-2">
+                                            <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
+                                              Nivo {section.level}
+                                            </span>
+                                            <span className="bg-gray-100 text-black text-xs font-medium px-2 py-1 rounded-full">
+                                              str. {section.pageStart}-{section.pageEnd}
+                                            </span>
+                                          </div>
+                                          <h4 className="text-base font-semibold text-black mb-1 leading-tight">{section.title}</h4>
+                                          {section.cleanTitle !== section.title && (
+                                            <p className="text-sm text-gray-600 italic">Čist naslov: {section.cleanTitle}</p>
+                                          )}
+                                        </div>
+                                        <div className="flex flex-col gap-1 items-end">
+                                          <Badge 
+                                            variant={section.processed ? 'default' : 'secondary'} 
+                                            className="text-xs font-medium"
+                                          >
+                                            {section.processed ? '✅ Obrađeno' : '⏳ Na čekanju'}
+                                          </Badge>
+                                          <Badge variant="outline" className="text-xs capitalize font-medium text-black">
+                                            {section.semanticType === 'chapter' ? 'Poglavlje' :
+                                             section.semanticType === 'section' ? 'Sekcija' :
+                                             section.semanticType === 'subsection' ? 'Podsekcija' : 'Pasus'}
+                                          </Badge>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                                
+                                {(isEditingTOC ? editedTOCSections : materialTocAnalysis.sections).length === 0 && (
+                                  <div className="text-center py-8 text-gray-500">
+                                    <p className="text-black font-medium">Nema sekcija u TOC analizi</p>
+                                    <p className="text-sm text-gray-600 mt-1">Dodajte sekcije da biste nastavili</p>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {selectedMaterial?.status === 'toc_ready' && !isEditingTOC && (
+                                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                                  <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                                      <span className="text-white font-bold">✓</span>
+                                    </div>
+                                    <div>
+                                      <h4 className="text-black font-semibold">TOC je spreman za obradu</h4>
+                                      <p className="text-sm text-gray-700">Proverite sekcije i nastavite sa obradom dokumenta</p>
+                                    </div>
+                                  </div>
+                                  <Button 
+                                    onClick={continueProcessing}
+                                    disabled={isContinuingProcess}
+                                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 text-base"
+                                  >
+                                    {isContinuingProcess ? '🚀 Pokretanje obrade...' : '🚀 Nastavi sa obradom dokumenta'}
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {materialTocAnalysis.error && (
+                              <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded text-sm">
+                                <span className="font-medium">Greška:</span> {materialTocAnalysis.error}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8">
+                            <div className="text-gray-400 mb-2">
+                              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <path d="M8 9h8M8 13h8M8 17h5"/>
+                              </svg>
+                            </div>
+                            <p className="text-sm text-gray-500">Nema TOC analize</p>
+                            <p className="text-xs text-gray-400 mt-1">Potrebna obrada dokumenta</p>
+                          </div>
+                        )}
+                      </motion.div>
+                        </div>
+                      </TabsContent>
+
+                      {/* Document Sections Tab */}
+                      <TabsContent value="sections" className="p-0 m-0">
+                        <div>
+                        {/* Section 3: Document Sections - Enhanced with full editing */}
+                      <motion.div 
+                        className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6 shadow-sm"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.5 }}
+                      >
+                        {/* Advanced Controls Toolbar */}
+                        <div className="space-y-4 mb-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-600">
+                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                  <polyline points="14,2 14,8 20,8"/>
+                                </svg>
+                                Sekcije dokumenta ({getFilteredSections().length})
+                              </h2>
+                              <div className="flex items-center gap-2 text-sm">
+                                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                                  {getFilteredSections().filter(s => s.analyzed).length} analizirano
+                                </Badge>
+                                <Badge variant="outline">
+                                  {getFilteredSections().filter(s => !s.analyzed).length} neanalizirano
+                                </Badge>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setViewMode(viewMode === 'compact' ? 'list' : 'compact')}
+                                className="text-xs text-black border-gray-300 hover:bg-gray-50"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-1">
+                                  <rect x="3" y="4" width="18" height="4"/>
+                                  <rect x="3" y="12" width="18" height="4"/>
+                                  <rect x="3" y="20" width="18" height="4"/>
+                                </svg>
+                                {viewMode === 'compact' ? 'Lista' : 'Kompakt'}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={bulkEditMode ? 'default' : 'outline'}
+                                onClick={() => setBulkEditMode(!bulkEditMode)}
+                                className={bulkEditMode ? 'text-black bg-blue-600' : 'text-black border-gray-300 hover:bg-gray-50'}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-1">
+                                  <path d="M9 12l2 2 4-4"/>
+                                </svg>
+                                Multi-select
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          {/* Enhanced Search and Quick Filters */}
+                          <div className="flex flex-col lg:flex-row gap-3">
+                            <div className="flex-1 relative">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                <circle cx="11" cy="11" r="8"/>
+                                <path d="m21 21-4.35-4.35"/>
+                              </svg>
+                              <Input
+                                value={sectionsSearchQuery}
+                                onChange={(e) => {
+                                  setSectionsSearchQuery(e.target.value);
+                                  setSectionsPage(1);
+                                }}
+                                placeholder="Pretraži sekcije po naslovu, sadržaju, ključnim rečima..."
+                                className="pl-10 bg-white text-gray-900 border-gray-300 focus:border-green-500"
+                              />
+                              {sectionsSearchQuery && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setSectionsSearchQuery('');
+                                    setSectionsPage(1);
+                                  }}
+                                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M18 6L6 18M6 6l12 12"/>
+                                  </svg>
+                                </Button>
+                              )}
+                            </div>
+                            
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Button
+                                variant={quickFilters.sections.analyzed ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setQuickFilters(prev => ({
+                                  ...prev,
+                                  sections: { ...prev.sections, analyzed: !prev.sections.analyzed, unanalyzed: false }
+                                }))}
+                                className={quickFilters.sections.analyzed ? 'bg-green-600 text-black border-green-600' : 'bg-white text-black border-gray-300 hover:bg-gray-50'}
+                              >
+                                ✓ Analizirano
+                              </Button>
+                              <Button
+                                variant={quickFilters.sections.unanalyzed ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setQuickFilters(prev => ({
+                                  ...prev,
+                                  sections: { ...prev.sections, unanalyzed: !prev.sections.unanalyzed, analyzed: false }
+                                }))}
+                                className={quickFilters.sections.unanalyzed ? 'bg-orange-600 text-black border-orange-600' : 'bg-white text-black border-gray-300 hover:bg-gray-50'}
+                              >
+                                ✗ Neanalizirano
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Sort and Bulk Actions Bar */}
+                          <div className="flex items-center justify-between py-2 border-t border-green-200">
+                            <div className="flex items-center gap-3">
+                              <span className="text-sm font-medium text-gray-600">Sortiraj:</span>
+                              <select
+                                value={sortBy.sections}
+                                onChange={(e) => setSortBy(prev => ({ ...prev, sections: e.target.value }))}
+                                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm bg-white text-black focus:border-green-500"
+                              >
+                                <option value="title">Naslov</option>
+                                <option value="pageStart">Stranica</option>
+                                <option value="level">Nivo</option>
+                                <option value="analyzed">Status analize</option>
+                              </select>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSortBy(prev => ({ ...prev, direction: prev.direction === 'asc' ? 'desc' : 'asc' }))}
+                                className="px-2 text-black border-gray-300 hover:bg-gray-50"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform ${sortBy.direction === 'desc' ? 'rotate-180' : ''}`}>
+                                  <path d="m3 16 4 4 4-4"/>
+                                  <path d="M7 20V4"/>
+                                </svg>
+                              </Button>
+                            </div>
+
+                            {selectedSections.size > 0 && (
+                              <div className="flex items-center gap-3 bg-blue-50 px-4 py-2 rounded-lg border border-blue-200">
+                                <span className="text-sm text-blue-800 font-medium">
+                                  {selectedSections.size} izabrano
+                                </span>
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleBulkAction('analyze')}
+                                    className="bg-green-600 hover:bg-green-700 text-black border-green-600 text-xs px-3 py-1"
+                                  >
+                                    🔍 Analiziraj
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setSelectedSections(new Set())}
+                                    className="bg-white text-black border-gray-300 hover:bg-gray-100 text-xs px-2 py-1"
+                                  >
+                                    ✕
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {getFilteredSections().length > 0 ? (
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                              {getPaginatedSections().map((section, index) => (
+                                <motion.div
+                                  key={section._id}
+                                  className={`bg-white rounded-lg border border-green-200 shadow-sm cursor-pointer hover:shadow-md transition-all p-3 ${expandedCard === section._id ? 'col-span-full' : ''}`}
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                                  onClick={() => {
+                                  if (!bulkEditMode) {
+                                    setExpandedCard(expandedCard === section._id ? null : section._id);
+                                  }
+                                }}
+                                >
+                                  {expandedCard === section._id ? (
+                                    /* Expanded View with Editing */
+                                    <>
+                                      {/* Section Header */}
+                                      <div className="p-4 border-b border-green-100">
+                                        <div className="flex items-start justify-between gap-3">
+                                          {bulkEditMode && (
+                                            <div className="mt-1">
+                                              <input
+                                                type="checkbox"
+                                                checked={selectedSections.has(section._id)}
+                                                onChange={(e) => {
+                                                  const newSelected = new Set(selectedSections);
+                                                  if (e.target.checked) {
+                                                    newSelected.add(section._id);
+                                                  } else {
+                                                    newSelected.delete(section._id);
+                                                  }
+                                                  setSelectedSections(newSelected);
+                                                }}
+                                                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                                onClick={(e) => e.stopPropagation()}
+                                              />
+                                            </div>
+                                          )}
+                                          <div className="flex-1">
+                                            {/* Title Editing */}
+                                            <div className="mb-2">
+                                              {editingSections[section._id]?.title ? (
+                                                <div className="flex gap-2 items-start">
+                                                  <Textarea
+                                                    value={sectionEditValues[section._id]?.title || ''}
+                                                    onChange={(e) => setSectionEditValues(prev => ({
+                                                      ...prev,
+                                                      [section._id]: { ...prev[section._id], title: e.target.value }
+                                                    }))}
+                                                    className="flex-1 min-h-[60px] text-sm font-medium bg-white text-gray-900 border-gray-300"
+                                                    autoFocus
+                                                    onClick={(e) => e.stopPropagation()}
+                                                  />
+                                                  <div className="flex flex-col gap-1">
+                                                    <Button size="sm" onClick={(e) => {e.stopPropagation(); handleSaveSection(section._id, 'title');}} className="h-8">
+                                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <path d="M20 6L9 17l-5-5"/>
+                                                      </svg>
+                                                    </Button>
+                                                    <Button size="sm" variant="outline" onClick={(e) => {e.stopPropagation(); handleCancelSectionEdit(section._id, 'title');}} className="h-8 bg-white border-gray-300 text-black hover:bg-gray-100">
+                                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <path d="M18 6L6 18M6 6l12 12"/>
+                                                      </svg>
+                                                    </Button>
+                                                  </div>
+                                                </div>
+                                              ) : (
+                                                <div className="flex items-start gap-2">
+                                                  <h3 className="font-semibold text-gray-900 text-base flex-1">{section.title}</h3>
+                                                  <Button 
+                                                    size="sm" 
+                                                    variant="ghost" 
+                                                    onClick={(e) => {e.stopPropagation(); handleEditSection(section._id, 'title', section.title);}}
+                                                    className="p-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                  >
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                                      <path d="m18.5 2.5-6 6"/>
+                                                    </svg>
+                                                  </Button>
+                                                </div>
+                                              )}
+                                            </div>
+                                            <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+                                              <span><span className="font-medium">Path:</span> {section.path}</span>
+                                              <span><span className="font-medium">ID:</span> {section.sectionId}</span>
+                                              <span><span className="font-medium">Chars:</span> {section.charStart}-{section.charEnd}</span>
+                                              {section.vectorId && <span><span className="font-medium">Vector:</span> {section.vectorId}</span>}
+                                            </div>
+                                          </div>
+                                          <div className="flex flex-col gap-1 items-end">
+                                            <Badge variant="outline" className="text-xs">
+                                              str. {section.pageStart}-{section.pageEnd}
+                                            </Badge>
+                                            <Badge variant="secondary" className="text-xs">
+                                              nivo {section.level}
+                                            </Badge>
+                                            {section.semanticType && (
+                                              <Badge variant="outline" className="text-xs capitalize">
+                                                {section.semanticType}
+                                              </Badge>
+                                            )}
+                                            {section.analyzed && (
+                                              <Badge variant="default" className="text-xs bg-green-600">
+                                                AI ✓
+                                              </Badge>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      
+                                      {/* Section Content */}
+                                      <div className="p-4">
+                                        <div className="space-y-4">
+                                          <div>
+                                            <div className="flex items-center justify-between mb-2">
+                                              <label className="text-sm font-medium text-gray-700">Sadržaj sekcije</label>
+                                              <Button 
+                                                size="sm" 
+                                                variant="ghost"
+                                                onClick={(e) => {e.stopPropagation(); toggleSectionExpand(section._id);}}
+                                                className="text-xs"
+                                              >
+                                                {expandedSections[section._id] ? 'Skupi' : 'Proširi'}
+                                              </Button>
+                                            </div>
+                                            
+                                            {editingSections[section._id]?.content ? (
+                                              <div className="space-y-2">
+                                                <Textarea
+                                                  value={sectionEditValues[section._id]?.content || ''}
+                                                  onChange={(e) => setSectionEditValues(prev => ({
+                                                    ...prev,
+                                                    [section._id]: { ...prev[section._id], content: e.target.value }
+                                                  }))}
+                                                  className="min-h-[200px] text-sm leading-relaxed bg-white text-gray-900 border-gray-300"
+                                                  placeholder="Sadržaj sekcije..."
+                                                  autoFocus
+                                                  onClick={(e) => e.stopPropagation()}
+                                                />
+                                                <div className="flex gap-2">
+                                                  <Button size="sm" onClick={(e) => {e.stopPropagation(); handleSaveSection(section._id, 'content');}}>
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                      <path d="M20 6L9 17l-5-5"/>
+                                                    </svg>
+                                                    Sačuvaj
+                                                  </Button>
+                                                  <Button size="sm" variant="outline" onClick={(e) => {e.stopPropagation(); handleCancelSectionEdit(section._id, 'content');}} className="bg-white border-gray-300 text-black hover:bg-gray-100">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                      <path d="M18 6L6 18M6 6l12 12"/>
+                                                    </svg>
+                                                    Otkaži
+                                                  </Button>
+                                                </div>
+                                              </div>
+                                            ) : (
+                                              <div className="group relative">
+                                                <div 
+                                                  className={`text-sm text-gray-700 leading-relaxed bg-gray-50 p-3 rounded border cursor-pointer hover:bg-gray-100 transition-colors ${
+                                                    expandedSections[section._id] ? '' : 'max-h-32 overflow-hidden'
+                                                  }`}
+                                                  onClick={(e) => {e.stopPropagation(); handleEditSection(section._id, 'content', section.content || '');}}
+                                                >
+                                                  {section.content || (
+                                                    <span className="text-gray-400 italic">Nema sadržaja - kliknite da dodate</span>
+                                                  )}
+                                                </div>
+                                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                  <Button 
+                                                    size="sm" 
+                                                    variant="ghost"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      handleEditSection(section._id, 'content', section.content || '');
+                                                    }}
+                                                    className="h-6 w-6 p-1 bg-white shadow-sm"
+                                                  >
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                                      <path d="m18.5 2.5-6 6"/>
+                                                    </svg>
+                                                  </Button>
+                                                </div>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </>
+                                  ) : (
+                                    /* Simple Compact Card View */
+                                    <div className="flex flex-col h-full">
+                                      <div className="flex items-start gap-2 mb-3">
+                                        {bulkEditMode && (
+                                          <input
+                                            type="checkbox"
+                                            checked={selectedSections.has(section._id)}
+                                            onChange={(e) => {
+                                              const newSelected = new Set(selectedSections);
+                                              if (e.target.checked) {
+                                                newSelected.add(section._id);
+                                              } else {
+                                                newSelected.delete(section._id);
+                                              }
+                                              setSelectedSections(newSelected);
+                                            }}
+                                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 mt-1"
+                                            onClick={(e) => e.stopPropagation()}
+                                          />
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                          <h4 className="font-medium text-gray-900 text-sm truncate mb-2">{section.title}</h4>
+                                          <div className="flex items-center gap-2">
+                                            <Badge variant={section.analyzed ? 'default' : 'secondary'} className="text-xs">
+                                              {section.analyzed ? '✓' : '✗'}
+                                            </Badge>
+                                            <span className="text-xs text-gray-500">Str. {section.pageStart}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </motion.div>
+                              ))}
+                            </div>
+                            
+                            {/* Pagination */}
+                            {getTotalPages() > 1 && (
+                              <div className="flex justify-center mt-6">
+                                <Pagination>
+                                  <PaginationContent>
+                                    <PaginationItem>
+                                      <PaginationPrevious 
+                                        onClick={() => setSectionsPage(p => Math.max(1, p - 1))}
+                                        className={sectionsPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-gray-100"}
+                                      />
+                                    </PaginationItem>
+                                    {Array.from({length: getTotalPages()}, (_, i) => i + 1).map((page) => (
+                                      <PaginationItem key={page}>
+                                        <PaginationLink
+                                          onClick={() => setSectionsPage(page)}
+                                          isActive={page === sectionsPage}
+                                          className="cursor-pointer hover:bg-gray-100 text-black hover:text-black"
+                                        >
+                                          {page}
+                                        </PaginationLink>
+                                      </PaginationItem>
+                                    ))}
+                                    <PaginationItem>
+                                      <PaginationNext 
+                                        onClick={() => setSectionsPage(p => Math.min(getTotalPages(), p + 1))}
+                                        className={sectionsPage === getTotalPages() ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-gray-100"}
+                                      />
+                                    </PaginationItem>
+                                  </PaginationContent>
+                                </Pagination>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8">
+                            <div className="text-gray-400 mb-2">
+                              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14,2 14,8 20,8"/>
+                              </svg>
+                            </div>
+                            <p className="text-sm text-gray-500">
+                              {sectionsSearchQuery ? 'Nema rezultata pretrage' : 'Nema obrađenih sekcija'}
+                            </p>
+                            {sectionsSearchQuery && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSectionsSearchQuery('');
+                                  setSectionsPage(1);
+                                }}
+                                className="mt-2"
+                              >
+                                Obriši pretragu
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </motion.div>
+                        </div>
+                      </TabsContent>
+
+                      {/* AI Analytics Tab */}
+                      <TabsContent value="analytics" className="h-full overflow-y-auto p-0 m-0">
+                        <div className="h-full overflow-y-auto">
+                          <motion.div 
+                            className="col-span-full bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-200 p-6 shadow-sm"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: 0.2 }}
+                          >
+                            {/* Advanced AI Analytics Toolbar */}
+                            <div className="space-y-4 mb-6">
+                              {/* Header with Stats */}
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-purple-600">
+                                      <path d="M9 19c-5 0-7-2-7-5v-4c0-3 2-5 7-5 2 0 3.5.5 4.5 1.5C16 8.5 17.5 10 17.5 12s-1.5 3.5-4 2.5c-1-0.5-2.5-1-4.5-1z"/>
+                                      <path d="M15 9.5c.5-1 1.5-1.5 2.5-1.5 3 0 5 2 5 5s-2 5-5 5c-1 0-2-.5-2.5-1.5"/>
+                                    </svg>
+                                    AI Analytics ({getAiAnalyticsBySection().length})
+                                  </h2>
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                                      {getAiAnalyticsBySection().filter(s => s.shortAbstract).length} sa sažetkom
+                                    </Badge>
+                                    <Badge variant="outline" className="bg-white text-black border-gray-300">
+                                      {getAiAnalyticsBySection().filter(s => s.keywords && s.keywords.length > 0).length} sa ključnim rečima
+                                    </Badge>
+                                  </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setViewMode(viewMode === 'compact' ? 'list' : 'compact')}
+                                    className="text-xs bg-white text-black border-gray-300 hover:bg-gray-50"
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-1">
+                                      <rect x="3" y="4" width="18" height="4"/>
+                                      <rect x="3" y="12" width="18" height="4"/>
+                                      <rect x="3" y="20" width="18" height="4"/>
+                                    </svg>
+                                    {viewMode === 'compact' ? 'Lista' : 'Kompakt'}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant={bulkEditMode ? 'default' : 'outline'}
+                                    onClick={() => setBulkEditMode(!bulkEditMode)}
+                                    className={bulkEditMode ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-black border-gray-300 hover:bg-gray-50'}
+                                  >
+                                    Multi-select
+                                  </Button>
+                                </div>
+                              </div>
+
+                              {/* Enhanced Search and Quick Filters */}
+                              <div className="flex flex-col lg:flex-row gap-3">
+                                <div className="flex-1 relative">
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                    <circle cx="11" cy="11" r="8"/>
+                                    <path d="m21 21-4.35-4.35"/>
+                                  </svg>
+                                  <Input
+                                    value={analyticsSearchQuery}
+                                    onChange={(e) => {
+                                      setAnalyticsSearchQuery(e.target.value);
+                                      setAnalyticsPage(1);
+                                    }}
+                                    placeholder="Pretraži AI analize po naslovu, sažetku, ključnim rečima..."
+                                    className="pl-10 bg-white text-black border-gray-300 focus:border-purple-500"
+                                  />
+                                  {analyticsSearchQuery && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => {
+                                        setAnalyticsSearchQuery('');
+                                        setAnalyticsPage(1);
+                                      }}
+                                      className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 text-gray-500 hover:text-black"
+                                    >
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M18 6L6 18M6 6l12 12"/>
+                                      </svg>
+                                    </Button>
+                                  )}
+                                </div>
+                                
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <Button
+                                    variant={quickFilters.analytics.hasAbstract ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => setQuickFilters(prev => ({
+                                      ...prev,
+                                      analytics: { ...prev.analytics, hasAbstract: !prev.analytics.hasAbstract }
+                                    }))}
+                                    className={quickFilters.analytics.hasAbstract ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-black border-gray-300 hover:bg-gray-50'}
+                                  >
+                                    📄 Sa sažetkom
+                                  </Button>
+                                  <Button
+                                    variant={quickFilters.analytics.hasKeywords ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => setQuickFilters(prev => ({
+                                      ...prev,
+                                      analytics: { ...prev.analytics, hasKeywords: !prev.analytics.hasKeywords }
+                                    }))}
+                                    className={quickFilters.analytics.hasKeywords ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-black border-gray-300 hover:bg-gray-50'}
+                                  >
+                                    🏷️ Sa ključnim rečima
+                                  </Button>
+                                  <select
+                                    value={quickFilters.analytics.level}
+                                    onChange={(e) => setQuickFilters(prev => ({
+                                      ...prev,
+                                      analytics: { ...prev.analytics, level: e.target.value }
+                                    }))}
+                                    className="px-3 py-1.5 border border-gray-300 rounded-md text-sm bg-white text-black focus:border-purple-500"
+                                  >
+                                    <option value="all">Svi nivoi</option>
+                                    <option value="1">Nivo 1</option>
+                                    <option value="2">Nivo 2</option>
+                                    <option value="3">Nivo 3</option>
+                                    <option value="4">Nivo 4+</option>
+                                  </select>
+                                </div>
+                              </div>
+
+                              {/* Sort and Bulk Actions Bar */}
+                              <div className="flex items-center justify-between py-2 border-t border-purple-200">
+                                <div className="flex items-center gap-3">
+                                  <span className="text-sm font-medium text-gray-600">Sortiraj:</span>
+                                  <select
+                                    value={sortBy.analytics}
+                                    onChange={(e) => setSortBy(prev => ({ ...prev, analytics: e.target.value }))}
+                                    className="px-3 py-1.5 border border-gray-300 rounded-md text-sm bg-white text-black focus:border-purple-500"
+                                  >
+                                    <option value="title">Naslov</option>
+                                    <option value="pageStart">Stranica</option>
+                                    <option value="level">Nivo</option>
+                                  </select>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setSortBy(prev => ({ ...prev, direction: prev.direction === 'asc' ? 'desc' : 'asc' }))}
+                                    className="px-2 bg-white text-black border-gray-300 hover:bg-gray-50"
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform ${sortBy.direction === 'desc' ? 'rotate-180' : ''}`}>
+                                      <path d="m3 16 4 4 4-4"/>
+                                      <path d="M7 20V4"/>
+                                    </svg>
+                                  </Button>
+                                </div>
+
+                                {selectedAnalytics.size > 0 && (
+                                  <div className="flex items-center gap-3 bg-blue-50 px-4 py-2 rounded-lg border border-blue-200">
+                                    <span className="text-sm text-blue-800 font-medium">
+                                      {selectedAnalytics.size} izabrano
+                                    </span>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        size="sm"
+                                        onClick={() => handleBulkAction('export')}
+                                        className="bg-purple-600 hover:bg-purple-700 text-white border-purple-600 text-xs px-3 py-1"
+                                      >
+                                        📊 Izvezi
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setSelectedAnalytics(new Set())}
+                                        className="bg-white text-black border-gray-300 hover:bg-gray-100 text-xs px-2 py-1"
+                                      >
+                                        ✕
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                        
+                            {getAiAnalyticsBySection().length === 0 ? (
+                              <div className="text-center py-12">
+                                <div className="text-gray-400 mb-4">
+                                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto">
+                                    <path d="M9 19c-5 0-7-2-7-5v-4c0-3 2-5 7-5 2 0 3.5.5 4.5 1.5C16 8.5 17.5 10 17.5 12s-1.5 3.5-4 2.5c-1-0.5-2.5-1-4.5-1z"/>
+                                    <path d="M15 9.5c.5-1 1.5-1.5 2.5-1.5 3 0 5 2 5 5s-2 5-5 5c-1 0-2-.5-2.5-1.5"/>
+                                  </svg>
+                                </div>
+                                <h3 className="text-lg font-medium text-gray-900 mb-2">Nema AI Analytics podataka</h3>
+                                <p className="text-sm text-gray-500 mb-4">Sekcije moraju biti analizirane da bi se prikazali AI podaci</p>
+                                {selectedMaterial && (
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => handleAnalyzeMaterial(selectedMaterial._id)}
+                                    disabled={analyzingMaterials[selectedMaterial._id]}
+                                    className="bg-white text-black border-gray-300 hover:bg-gray-50"
+                                  >
+                                    {analyzingMaterials[selectedMaterial._id] ? (
+                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2 animate-spin">
+                                        <path d="M21 12a9 9 0 11-6.219-8.56"/>
+                                      </svg>
+                                    ) : (
+                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
+                                        <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                      </svg>
+                                    )}
+                                    Pokreni AI analizu
+                                  </Button>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="space-y-6">
+                                <div className="flex justify-between items-center bg-white p-4 rounded border border-purple-200">
+                                  <div className="text-center flex-1">
+                                    <span className="text-2xl font-bold text-purple-600">{getAiAnalyticsBySection().length}</span>
+                                    <p className="text-sm text-gray-600">analiziranih sekcija sa AI podacima</p>
+                                  </div>
+                                  {analyticsSearchQuery && (
+                                    <div className="text-center flex-1">
+                                      <span className="text-lg font-semibold text-gray-800">{getPaginatedAiAnalytics().length}</span>
+                                      <p className="text-sm text-gray-600">rezultata pretrage</p>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Analytics Results */}
+                                <div className={viewMode === 'compact' ? 'space-y-2' : 'space-y-4'}>
+                                  {getPaginatedAiAnalytics().map((section, index) => (
+                                    <div key={section._id} className={`bg-white rounded-lg border border-purple-200 shadow-sm hover:shadow-md transition-shadow ${viewMode === 'compact' ? 'p-3' : 'p-4'}`}>
+                                      {viewMode === 'compact' ? (
+                                        /* Compact AI Analytics View */
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-3 flex-1">
+                                            {bulkEditMode && (
+                                              <input
+                                                type="checkbox"
+                                                checked={selectedAnalytics.has(section._id)}
+                                                onChange={(e) => {
+                                                  const newSelected = new Set(selectedAnalytics);
+                                                  if (e.target.checked) {
+                                                    newSelected.add(section._id);
+                                                  } else {
+                                                    newSelected.delete(section._id);
+                                                  }
+                                                  setSelectedAnalytics(newSelected);
+                                                }}
+                                                className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500"
+                                              />
+                                            )}
+                                            <div className="flex-1">
+                                              <div className="flex items-center gap-2 mb-1">
+                                                <h4 className="font-medium text-gray-900 text-sm">{section.title}</h4>
+                                                <span className="text-xs text-gray-500">Str. {section.pageStart}</span>
+                                                <Badge variant="outline" className="ml-2 bg-white text-black border-gray-300 text-xs">
+                                                  Nivo {section.level}
+                                                </Badge>
+                                              </div>
+                                              {section.shortAbstract && (
+                                                <p className="text-xs text-gray-600 truncate">{section.shortAbstract}</p>
+                                              )}
+                                              {(section.keywords?.length ?? 0) > 0 && (
+                                                <div className="flex gap-1 mt-1">
+                                                  {section.keywords!.slice(0, 3).map((keyword, idx) => (
+                                                    <Badge key={idx} variant="secondary" className="text-xs bg-purple-50 text-purple-700">
+                                                      {keyword}
+                                                    </Badge>
+                                                  ))}
+                                                  {section.keywords!.length > 3 && (
+                                                    <span className="text-xs text-gray-500">+{section.keywords!.length - 3}</span>
+                                                  )}
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        /* Full AI Analytics View */
+                                        <>
+                                      <div className="flex justify-between items-start mb-3">
+                                        {/* Multi-select checkbox */}
+                                        {bulkEditMode && (
+                                          <div className="mr-3 mt-1">
+                                            <input
+                                              type="checkbox"
+                                              checked={selectedAnalytics.has(section._id)}
+                                              onChange={(e) => {
+                                                const newSelected = new Set(selectedAnalytics);
+                                                if (e.target.checked) {
+                                                  newSelected.add(section._id);
+                                                } else {
+                                                  newSelected.delete(section._id);
+                                                }
+                                                setSelectedAnalytics(newSelected);
+                                              }}
+                                              className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500"
+                                            />
+                                          </div>
+                                        )}
+                                        <h4 className="font-semibold text-gray-900 flex-1 pr-4">{section.title}</h4>
+                                        <div className="flex items-center gap-2 text-xs text-gray-500 flex-shrink-0">
+                                          <span>Str. {section.pageStart}</span>
+                                          {section.pageEnd !== section.pageStart && <span>- {section.pageEnd}</span>}
+                                          <Badge variant="outline" className="ml-2 bg-white text-black border-gray-300">
+                                            Nivo {section.level}
+                                          </Badge>
+                                        </div>
+                                      </div>
+                                      
+                                      {section.shortAbstract && (
+                                        <div className="mb-3">
+                                          <span className="text-xs font-medium text-purple-600 uppercase tracking-wide">Sažetak:</span>
+                                          <p className="text-sm text-gray-700 mt-1 leading-relaxed">{section.shortAbstract}</p>
+                                        </div>
+                                      )}
+                                      
+                                      {(section.keywords?.length ?? 0) > 0 && (
+                                        <div className="mb-3">
+                                          <span className="text-xs font-medium text-purple-600 uppercase tracking-wide">Ključne reči:</span>
+                                          <div className="flex flex-wrap gap-1 mt-2">
+                                            {section.keywords!.map((keyword, idx) => (
+                                              <Badge key={idx} variant="secondary" className="text-xs bg-purple-50 text-purple-700 hover:bg-purple-100">
+                                                {keyword}
+                                              </Badge>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      
+                                      {section.queries && section.queries.length > 0 && (
+                                        <div className="mb-2">
+                                          <span className="text-xs font-medium text-purple-600 uppercase tracking-wide">Upiti:</span>
+                                          <div className="flex flex-wrap gap-1 mt-2">
+                                            {section.queries.map((query, idx) => (
+                                              <Badge key={idx} variant="outline" className="text-xs text-blue-700 border-blue-200 bg-white">
+                                                {query}
+                                              </Badge>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      
+                                      <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                                        <span className="text-xs text-gray-500">ID: {section.sectionId}</span>
+                                        <span className="text-xs text-gray-500">
+                                          {section.semanticType && (
+                                            <Badge variant="outline" className="text-xs bg-white text-black border-gray-300">
+                                              {section.semanticType}
+                                            </Badge>
+                                          )}
+                                        </span>
+                                      </div>
+                                        </>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                                
+                                {/* Pagination for AI Analytics */}
+                                {getAnalyticsTotalPages() > 1 && (
+                                  <div className="flex justify-center">
+                                    <Pagination>
+                                      <PaginationContent>
+                                        <PaginationItem>
+                                          <PaginationPrevious
+                                            onClick={() => setAnalyticsPage(prev => Math.max(1, prev - 1))}
+                                            className={analyticsPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer hover:bg-gray-100 text-black hover:text-black'}
+                                          />
+                                        </PaginationItem>
+                                        {Array.from({length: getAnalyticsTotalPages()}, (_, i) => i + 1).map((page) => (
+                                          <PaginationItem key={page}>
+                                            <PaginationLink
+                                              onClick={() => setAnalyticsPage(page)}
+                                              isActive={page === analyticsPage}
+                                              className="cursor-pointer hover:bg-gray-100 text-black hover:text-black"
+                                            >
+                                              {page}
+                                            </PaginationLink>
+                                          </PaginationItem>
+                                        ))}
+                                        <PaginationItem>
+                                          <PaginationNext
+                                            onClick={() => setAnalyticsPage(prev => Math.min(getAnalyticsTotalPages(), prev + 1))}
+                                            className={analyticsPage === getAnalyticsTotalPages() ? 'pointer-events-none opacity-50' : 'cursor-pointer hover:bg-gray-100 text-black hover:text-black'}
+                                          />
+                                        </PaginationItem>
+                                      </PaginationContent>
+                                    </Pagination>
+                                  </div>
+                                )}
+                                
+                                {/* Clear search button */}
+                                {analyticsSearchQuery && (
+                                  <div className="text-center">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setAnalyticsSearchQuery('');
+                                        setAnalyticsPage(1);
+                                      }}
+                                      className="bg-white text-black border-gray-300 hover:bg-gray-50"
+                                    >
+                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                      </svg>
+                                      Obriši pretragu
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </motion.div>
+                        </div>
+                      </TabsContent>
+                    
+                    </div>
+                  </Tabs>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Main Content */}
+        <motion.div 
+          className={`overflow-y-auto px-6 py-4 transition-all duration-400 ${showMaterialDetail ? 'pointer-events-none opacity-0' : ''}`}
+          style={{ maxHeight: 'calc(90vh - 200px)' }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: showMaterialDetail ? 0 : 1 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+        >
+          <AnimatePresence mode="wait">
+            {selectedDeptId && selectedYear ? (
+              <motion.div 
+                key={`${selectedDeptId}-${selectedYear}`}
+                className="space-y-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Predmeti - {departments.find(d => d._id === selectedDeptId)?.name} - Godina {selectedYear}
+                </h3>
+                
+                {subjects.length > 0 ? (
+                  <motion.div 
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "-50px" }}
+                    variants={{
+                      hidden: {},
+                      visible: {
+                        transition: {
+                          staggerChildren: 0.1
+                        }
+                      }
+                    }}
+                  >
+                    {subjects.map((subject) => (
+                      <motion.div
+                        key={`${subject._id}-${selectedDeptId}-${selectedYear}`}
+                        variants={{
+                          hidden: { opacity: 0, y: 20 },
+                          visible: { opacity: 1, y: 0 }
+                        }}
+                        initial="hidden"
+                        animate="visible"
+                        whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                      >
+                        <Card className="border border-gray-200 hover:shadow-md transition-shadow bg-white">
+                          <CardContent className="p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-medium text-gray-900 text-sm">{subject.name}</h4>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="p-1 h-6 w-6 text-gray-400 hover:text-red-600 hover:bg-red-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteSubject(subject._id, subject.name);
+                                }}
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M3 6h18"/>
+                                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                                </svg>
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          {/* Materials section */}
+                          <div className="space-y-2">
+                            {materials[subject._id]?.length > 0 ? (
+                              <div className="space-y-2">
+                                {materials[subject._id].map((material) => (
+                                  <div key={material._id} className="flex items-center justify-between bg-gray-50 p-2 rounded text-xs">
+                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-red-600 flex-shrink-0">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                        <polyline points="14,2 14,8 20,8"/>
+                                      </svg>
+                                      <span className="truncate font-medium text-gray-700">{material.title}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <ShimmerButton
+                                        className="p-1 h-5 w-5 text-xs font-medium"
+                                        background="rgba(59, 130, 246, 0.8)"
+                                        onClick={() => handleOpenMaterial(material)}
+                                        title="Open material details"
+                                      >
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                          <path d="m14 2 6 6"/>
+                                        </svg>
+                                      </ShimmerButton>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-3 text-center">
+                                <p className="text-xs text-gray-500">Nema materijala</p>
+                              </div>
+                            )}
+                            
+                            {/* Add PDF button */}
+                            <div className="mt-2">
+                              <input
+                                type="file"
+                                accept=".pdf"
+                                style={{ display: 'none' }}
+                                id={`pdf-upload-${subject._id}`}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const defaultTitle = file.name.replace('.pdf', '');
+                                    handlePDFUpload(subject._id, file, defaultTitle);
+                                  }
+                                  e.target.value = '';
+                                }}
+                              />
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full h-7 text-xs border-dashed border-gray-400 bg-white text-black hover:bg-gray-50"
+                                disabled={uploadingMaterials[subject._id]}
+                                onClick={() => document.getElementById(`pdf-upload-${subject._id}`)?.click()}
+                              >
+                                {uploadingMaterials[subject._id] ? (
+                                  <>
+                                    <div className="animate-spin rounded-full h-3 w-3 border-b border-gray-600 mr-2"></div>
+                                    Dodavanje...
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
+                                      <path d="M12 5v14m-7-7h14"/>
+                                    </svg>
+                                    Dodaj PDF
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Card className="border-2 border-dashed border-gray-300 bg-gray-50">
+                      <CardContent className="p-8 text-center">
+                      <svg
+                        width="48"
+                        height="48"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className="mx-auto mb-4 text-gray-400"
+                      >
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14,2 14,8 20,8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <polyline points="10,9 9,9 8,9"/>
+                      </svg>
+                      <p className="text-gray-600 mb-2">Nema predmeta</p>
+                        <p className="text-sm text-gray-500">Dodaj prvi predmet za ovaj smer i godinu</p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+              >
+                <Card className="border-2 border-dashed border-gray-300 bg-gray-50">
+                  <CardContent className="p-12 text-center">
+                <svg
+                  width="64"
+                  height="64"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="mx-auto mb-4 text-gray-400"
+                >
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14,2 14,8 20,8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10,9 9,9 8,9"/>
+                </svg>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Izaberi smer i godinu</h3>
+                    <p className="text-gray-600">Prvo dodaj smerove, zatim izaberi smer i godinu da vidiš predmete</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Add Department Modal */}
+        <Dialog open={isAddDepartmentModalOpen} onOpenChange={setIsAddDepartmentModalOpen}>
+          <DialogContent className="sm:max-w-md bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-gray-900">Dodaj novi smer</DialogTitle>
+              <DialogDescription className="text-gray-600">
+                Dodavanje smera za fakultet: {faculty.name}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="departmentName" className="text-sm font-medium text-gray-700">
+                  Naziv smera
+                </label>
+                <Input
+                  id="departmentName"
+                  value={newDepartmentName}
+                  onChange={(e) => setNewDepartmentName(e.target.value)}
+                  placeholder="Unesite naziv smera..."
+                  className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-500"
+                  disabled={isAddingDepartment}
+                  autoFocus
+                />
+              </div>
+              
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                  {error}
+                </div>
+              )}
+              
+              <div className="flex gap-2 justify-end">
+                <Button 
+                  variant="outline" 
+                  disabled={isAddingDepartment}
+                  onClick={() => {
+                    setIsAddDepartmentModalOpen(false);
+                    setNewDepartmentName('');
+                    setError('');
+                  }}
+                  className="bg-white text-black border-gray-300 hover:bg-gray-50"
+                >
+                  Otkaži
+                </Button>
+                <Button
+                  onClick={handleAddDepartment}
+                  disabled={isAddingDepartment || !newDepartmentName.trim()}
+                  className="bg-black hover:bg-gray-800 text-white"
+                >
+                  {isAddingDepartment ? 'Dodavanje...' : 'Dodaj'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Subject Modal */}
+        <Dialog open={isAddSubjectModalOpen} onOpenChange={setIsAddSubjectModalOpen}>
+          <DialogContent className="sm:max-w-md bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-gray-900">Dodaj novi predmet</DialogTitle>
+              <DialogDescription className="text-gray-600">
+                Smer: {departments.find(d => d._id === selectedDeptId)?.name} - Godina: {selectedYear}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="subjectName" className="text-sm font-medium text-gray-700">
+                  Naziv predmeta
+                </label>
+                <Input
+                  id="subjectName"
+                  value={newSubjectName}
+                  onChange={(e) => setNewSubjectName(e.target.value)}
+                  placeholder="Unesite naziv predmeta..."
+                  className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-500"
+                  disabled={isAddingSubject}
+                  autoFocus
+                />
+              </div>
+              
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                  {error}
+                </div>
+              )}
+              
+              <div className="flex gap-2 justify-end">
+                <Button 
+                  variant="outline" 
+                  disabled={isAddingSubject}
+                  onClick={() => {
+                    setIsAddSubjectModalOpen(false);
+                    setNewSubjectName('');
+                    setError('');
+                  }}
+                  className="bg-white text-black border-gray-300 hover:bg-gray-50"
+                >
+                  Otkaži
+                </Button>
+                <Button
+                  onClick={handleAddSubject}
+                  disabled={isAddingSubject || !newSubjectName.trim() || !selectedDeptId}
+                  className="bg-black hover:bg-gray-800 text-white"
+                >
+                  {isAddingSubject ? 'Dodavanje...' : 'Dodaj'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmDialog
+          isOpen={deleteConfirmOpen}
+          onClose={() => {
+            setDeleteConfirmOpen(false);
+            setDeleteItem(null);
+          }}
+          onConfirm={async () => {
+            if (deleteItem) {
+              if (deleteItem.type === 'department') {
+                await executeDeleteDepartment(deleteItem.id);
+              } else if (deleteItem.type === 'subject') {
+                await executeDeleteSubject(deleteItem.id);
+              }
+            }
+            setDeleteConfirmOpen(false);
+            setDeleteItem(null);
+          }}
+          title={`Obriši ${
+            deleteItem?.type === 'department' ? 'smer' : 
+            deleteItem?.type === 'subject' ? 'predmet' : ''
+          }`}
+          description={`Da li ste sigurni da želite da obrišete ${
+            deleteItem?.type === 'department' ? 'smer' : 
+            deleteItem?.type === 'subject' ? 'predmet' : ''
+          } "${deleteItem?.name}"?${
+            deleteItem?.type === 'department' ? ' Ova akcija će obrisati i sve predmete ovog smera.' : ''
+          }`}
+          confirmText="Obriši"
+          cancelText="Otkaži"
+        />
+
+        {/* Rename Material Modal */}
+        <Dialog open={isRenameModalOpen} onOpenChange={setIsRenameModalOpen}>
+          <DialogContent className="sm:max-w-md bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-gray-900">Preimenuj materijal</DialogTitle>
+              <DialogDescription className="text-gray-600">
+                Unesite novi naziv za materijal
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="materialTitle" className="text-sm font-medium text-gray-700">
+                  Naziv materijala
+                </label>
+                <Input
+                  id="materialTitle"
+                  value={newMaterialTitle}
+                  onChange={(e) => setNewMaterialTitle(e.target.value)}
+                  placeholder="Unesite naziv materijala..."
+                  className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-500"
+                  autoFocus
+                />
+              </div>
+              
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                  {error}
+                </div>
+              )}
+              
+              <div className="flex gap-2 justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsRenameModalOpen(false);
+                    setRenameMaterial(null);
+                    setNewMaterialTitle('');
+                    setError('');
+                  }}
+                  className="bg-white text-black border-gray-300 hover:bg-gray-50"
+                >
+                  Otkaži
+                </Button>
+                <Button
+                  onClick={handleRenameMaterial}
+                  disabled={!newMaterialTitle.trim()}
+                  className="bg-black hover:bg-gray-800 text-white"
+                >
+                  Preimenuj
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Book Processing Configuration Modal */}
+        <Dialog open={isPageSelectionModalOpen} onOpenChange={setIsPageSelectionModalOpen}>
+          <DialogContent className="sm:max-w-md bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-gray-900">Konfiguracija obrade knjige</DialogTitle>
+              <DialogDescription className="text-gray-600">
+                Materijal: {pageSelectionMaterial?.title}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="tocPage" className="text-sm font-medium text-gray-700">
+                    Sadržaj počinje na str.
+                  </label>
+                  <Input
+                    id="tocPage"
+                    type="number"
+                    value={tocPage || ''}
+                    onChange={(e) => setTocPage(e.target.value ? Math.max(1, parseInt(e.target.value) || 1) : undefined)}
+                    min="1"
+                    placeholder="npr. 2"
+                    className="bg-white border-gray-300 text-gray-900"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="tocToPage" className="text-sm font-medium text-gray-700">
+                    Sadržaj završava na str.
+                  </label>
+                  <Input
+                    id="tocToPage"
+                    type="number"
+                    value={tocToPage || ''}
+                    onChange={(e) => setTocToPage(e.target.value ? Math.max(1, parseInt(e.target.value) || 1) : undefined)}
+                    min="1"
+                    placeholder="npr. 4"
+                    className="bg-white border-gray-300 text-gray-900"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                AI će analizirati stranice sadržaja i automatski prepoznati sve sekcije. Obrada knjige će početi nakon poslednje stranice sadržaja.
+              </p>
+
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
+                <div className="flex items-center">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <span className="font-medium">Celokupna knjiga će biti obrađena</span>
+                </div>
+                <p className="text-xs mt-1">Nema ograničenja na broj stranica - sve sekcije će biti izdvojene i indeksirane</p>
+              </div>
+              
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                  {error}
+                </div>
+              )}
+              
+              <div className="flex gap-2 justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsPageSelectionModalOpen(false);
+                    setPageSelectionMaterial(null);
+                    setTocPage(undefined);
+                    setTocToPage(undefined);
+                    setError('');
+                  }}
+                  className="bg-white text-black border-gray-300 hover:bg-gray-50"
+                >
+                  Otkaži
+                </Button>
+                <Button
+                  onClick={handleStartProcessing}
+                  className="bg-black hover:bg-gray-800 text-white"
+                >
+                  Pokreni obradu cele knjige
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+      </Dialog>
+  );
+};
+
+export default FacultyModal;
