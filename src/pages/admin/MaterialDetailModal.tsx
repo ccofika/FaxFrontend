@@ -562,6 +562,104 @@ const MaterialDetailModal: React.FC<MaterialDetailModalProps> = ({
     return Math.ceil(getAiAnalyticsBySection().length / analyticsPerPage);
   };
 
+  // Delete all sections for material
+  const handleDeleteAllSections = async () => {
+    if (!material) return;
+    
+    const confirmed = window.confirm(
+      `Da li ste sigurni da želite da obrišete sve sekcije za materijal "${material.title}"?\n\n` +
+      'Ovo će:\n' +
+      '• Obrisati sve sekcije dokumenta\n' +
+      '• Obrisati sve chunks\n' +
+      '• Resetovati TOC analizu status\n' +
+      '• Očistiti vector podatke\n\n' +
+      'Ova akcija se ne može poništiti!'
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/${material._id}/sections`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`✅ Successfully deleted sections:`, data);
+        
+        // Clear local state
+        setMaterialSections([]);
+        
+        // Reload all material data to reflect changes
+        await loadMaterialData();
+        
+        // Update parent component if callback provided
+        if (onMaterialUpdate) {
+          onMaterialUpdate({ ...material, status: 'toc_ready' });
+        }
+        
+        alert(`Uspešno obrisano ${data.deletedSections} sekcija i ${data.deletedChunks} chunk-ova.\nTOC analiza je resetovana za ponovnu obradu.\nSada možete nastaviti sa obradom dokumenta.`);
+      } else {
+        const errorData = await response.json();
+        console.error('Error deleting sections:', errorData);
+        alert(`Greška pri brisanju sekcija: ${errorData.message}`);
+      }
+    } catch (error) {
+      console.error('Error deleting sections:', error);
+      alert('Greška pri brisanju sekcija. Molimo pokušajte ponovo.');
+    }
+  };
+
+  // Reset TOC processing status - mark all sections as unprocessed
+  const handleResetTocStatus = async () => {
+    if (!material) return;
+    
+    const confirmed = window.confirm(
+      `Da li ste sigurni da želite da resetujete status TOC analize za materijal "${material.title}"?\n\n` +
+      'Ovo će:\n' +
+      '• Označiti sve sekcije kao "Na čekanju"\n' +
+      '• Resetovati broj obrađenih sekcija na 0\n' +
+      '• Omogućiti ponovan nastavak obrade dokumenta\n\n' +
+      'Ova akcija se ne može poništiti!'
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/${material._id}/reset-toc-status`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`✅ Successfully reset TOC status:`, data);
+        
+        // Reload all material data to reflect changes including material status
+        await loadMaterialData();
+        
+        // Update parent component if callback provided
+        if (onMaterialUpdate) {
+          onMaterialUpdate({ ...material, status: 'toc_ready' });
+        }
+        
+        alert(`Uspešno resetovan status TOC analize.\n${data.totalSections} sekcija označeno kao "Na čekanju".\nSada možete nastaviti sa obradom dokumenta.`);
+      } else {
+        const errorData = await response.json();
+        console.error('Error resetting TOC status:', errorData);
+        alert(`Greška pri resetovanju TOC statusa: ${errorData.message}`);
+      }
+    } catch (error) {
+      console.error('Error resetting TOC status:', error);
+      alert('Greška pri resetovanju TOC statusa. Molimo pokušajte ponovo.');
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -715,7 +813,7 @@ const MaterialDetailModal: React.FC<MaterialDetailModalProps> = ({
                     {material.status && (
                       <div>
                         <span className="text-sm font-medium text-black">Status:</span>
-                        <Badge variant="secondary" className="ml-2 text-black">{material.status}</Badge>
+                        <Badge variant="secondary" className="ml-2 text-white">{material.status}</Badge>
                       </div>
                     )}
                   </div>
@@ -833,7 +931,7 @@ const MaterialDetailModal: React.FC<MaterialDetailModalProps> = ({
                           <Badge 
                             variant={materialTocAnalysis.status === 'completed' ? 'default' : 
                                     materialTocAnalysis.status === 'processing' ? 'secondary' : 'destructive'}
-                            className="text-black"
+                            className="text-white"
                           >
                             {materialTocAnalysis.status}
                           </Badge>
@@ -858,7 +956,7 @@ const MaterialDetailModal: React.FC<MaterialDetailModalProps> = ({
                       {materialTocAnalysis.sections && materialTocAnalysis.sections.length > 0 && (
                         <div>
                           <label className="text-sm font-medium text-black mb-2 block">Sekcije TOC-a</label>
-                          <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-md">
+                          <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-md">
                             <table className="w-full text-sm">
                               <thead className="bg-gray-50 sticky top-0">
                                 <tr>
@@ -879,7 +977,7 @@ const MaterialDetailModal: React.FC<MaterialDetailModalProps> = ({
                                     <td className="p-2">
                                       <Badge 
                                         variant={section.processed ? 'default' : 'secondary'}
-                                        className="text-xs text-black"
+                                        className="text-xs text-white"
                                       >
                                         {section.processed ? 'Obrađeno' : 'Na čekanju'}
                                       </Badge>
@@ -910,6 +1008,25 @@ const MaterialDetailModal: React.FC<MaterialDetailModalProps> = ({
                         >
                           {isContinuingProcess ? '🚀 Pokretanje obrade...' : '🚀 Nastavi sa obradom dokumenta'}
                         </Button>
+                        
+                        {materialTocAnalysis && (
+                          <div className="space-y-2 mt-2">
+                            <Button 
+                              onClick={handleResetTocStatus}
+                              disabled={!materialTocAnalysis || materialTocAnalysis.processedSections === 0}
+                              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 text-base"
+                            >
+                              🔄 Resetuj status TOC sekcija
+                            </Button>
+                            <Button 
+                              onClick={handleDeleteAllSections}
+                              disabled={materialSections.length === 0}
+                              className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 text-base"
+                            >
+                              🗑️ Resetuj proces - obriši sve sekcije
+                            </Button>
+                          </div>
+                        )}
                       </div>
 
                       {materialTocAnalysis.error && (
@@ -949,6 +1066,23 @@ const MaterialDetailModal: React.FC<MaterialDetailModalProps> = ({
                         >
                           {isContinuingProcess ? '🚀 Pokretanje obrade...' : '🚀 Pokreni obradu dokumenta'}
                         </Button>
+                        
+                        {materialSections.length > 0 && (
+                          <div className="space-y-2 mt-2">
+                            <Button 
+                              onClick={handleResetTocStatus}
+                              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 text-base"
+                            >
+                              🔄 Resetuj status TOC sekcija
+                            </Button>
+                            <Button 
+                              onClick={handleDeleteAllSections}
+                              className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 text-base"
+                            >
+                              🗑️ Resetuj proces - obriši sve sekcije
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1022,6 +1156,15 @@ const MaterialDetailModal: React.FC<MaterialDetailModalProps> = ({
                           className="text-xs text-black"
                         >
                           Neanalizirano
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteAllSections()}
+                          disabled={materialSections.length === 0}
+                          className="text-xs bg-red-600 hover:bg-red-700 text-white"
+                        >
+                          🗑️ Obriši sve sekcije
                         </Button>
                       </div>
                     </div>
