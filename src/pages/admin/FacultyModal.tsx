@@ -5,7 +5,9 @@ import { Input } from '../../components/ui/input';
 import { Card, CardContent } from '../../components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 import { Badge } from '../../components/ui/badge';
+import { ShimmerButton } from '../../components/ui/shimmer-button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import MaterialDetailModal from './MaterialDetailModal';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface Faculty {
@@ -35,11 +37,12 @@ interface Material {
   _id: string;
   title: string;
   type: 'book' | 'pdf' | 'link' | 'video' | 'notes';
+  status?: 'uploaded' | 'processing' | 'ready' | 'failed' | 'toc_ready';
   r2Key?: string;
   bucket?: string;
   url?: string;
   note?: string;
-  subjectId: string;
+  subjectId: string | { _id: string; name: string };
   facultyId: string;
   departmentId: string;
   year: number;
@@ -47,6 +50,7 @@ interface Material {
   createdAt: string;
   updatedAt: string;
 }
+
 
 interface FacultyModalProps {
   facultyId: string;
@@ -83,10 +87,16 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
   const [newMaterialTitle, setNewMaterialTitle] = useState('');
   const [isPageSelectionModalOpen, setIsPageSelectionModalOpen] = useState(false);
   const [pageSelectionMaterial, setPageSelectionMaterial] = useState<{id: string, subjectId: string, title: string} | null>(null);
-  const [startPage, setStartPage] = useState(1);
-  const [maxPages, setMaxPages] = useState(10);
   const [tocPage, setTocPage] = useState<number | undefined>(undefined);
   const [tocToPage, setTocToPage] = useState<number | undefined>(undefined);
+  
+  // Analysis states
+  const [analyzingMaterials, setAnalyzingMaterials] = useState<{[materialId: string]: boolean}>({});
+  const [analysisStatus, setAnalysisStatus] = useState<{[materialId: string]: any}>({});
+  
+  // Material detail modal states
+  const [showMaterialDetail, setShowMaterialDetail] = useState(false);
+  const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated || !facultyId || !isOpen) return;
@@ -471,7 +481,7 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
   const handleDeleteMaterial = async (materialId: string, subjectId: string) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/materials/${materialId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/${materialId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -561,7 +571,7 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
   const handleStartProcessing = async () => {
     if (!pageSelectionMaterial) return;
 
-    console.log(`Starting processing for material: ${pageSelectionMaterial.id}, startPage: ${startPage}, maxPages: ${maxPages}`);
+    console.log(`Starting processing for material: ${pageSelectionMaterial.id}, tocPage: ${tocPage}, tocToPage: ${tocToPage}`);
 
     try {
       const token = localStorage.getItem('adminToken');
@@ -575,8 +585,6 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          startPage,
-          maxPages,
           tocPage,
           tocToPage,
         }),
@@ -596,17 +604,142 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
       // Close modal
       setIsPageSelectionModalOpen(false);
       setPageSelectionMaterial(null);
-      setStartPage(1);
-      setMaxPages(10);
+      setTocPage(undefined);
+      setTocToPage(undefined);
       setError('');
 
       // Show success message
-      alert('Processing started! Check console logs for progress.');
+      alert('Processing started! The entire book will be processed. Check console logs for progress.');
     } catch (error: any) {
       console.error('Processing start error:', error);
       setError(error.message || 'Greška pri pokretanju obrade dokumenta');
     }
   };
+
+  const handleAnalyzeMaterial = async (materialId: string) => {
+    setAnalyzingMaterials(prev => ({ ...prev, [materialId]: true }));
+    setError('');
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/${materialId}/analyze`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to start analysis');
+      }
+
+      const data = await response.json();
+      console.log('Analysis completed:', data);
+      
+      // Show success message with details
+      alert(`AI Analysis completed successfully!\nProcessed: ${data.data.processedSections} sections\nSkipped: ${data.data.skippedSections} sections\nTotal: ${data.data.totalSections} sections`);
+      
+      // Update analysis status
+      await checkAnalysisStatus(materialId);
+      
+    } catch (error: any) {
+      console.error('Analysis error:', error);
+      
+      // Check if it was aborted (409 status code)
+      if (error.response?.status === 409 && error.response?.data?.aborted) {
+        const abortData = error.response.data;
+        alert(`AI Analysis was aborted by user.\nProcessed: ${abortData.data.processedSections} sections out of ${abortData.data.totalSections} total before abort.`);
+        setError('AI analiza je prekinuta od strane korisnika');
+      } else {
+        setError(error.message || 'Greška pri AI analizi materijala');
+        alert(`AI Analysis failed: ${error.message}`);
+      }
+    } finally {
+      setAnalyzingMaterials(prev => ({ ...prev, [materialId]: false }));
+    }
+  };
+
+  const checkAnalysisStatus = async (materialId: string) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/materials/${materialId}/analysis-status`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAnalysisStatus(prev => ({ ...prev, [materialId]: data.status }));
+      }
+    } catch (error) {
+      console.error('Error checking analysis status:', error);
+    }
+  };
+
+  // Check analysis status for all materials when they load
+  useEffect(() => {
+    const checkAllStatuses = async () => {
+      for (const subjectId in materials) {
+        for (const material of materials[subjectId] || []) {
+          await checkAnalysisStatus(material._id);
+        }
+      }
+    };
+    
+    if (Object.keys(materials).length > 0) {
+      checkAllStatuses();
+    }
+  }, [materials]);
+
+  const handleOpenMaterial = (material: Material) => {
+    openMaterialDetail(material);
+  };
+
+  const openMaterialDetail = (material: Material) => {
+    setSelectedMaterial(material);
+    setShowMaterialDetail(true);
+  };
+
+  const closeMaterialDetail = () => {
+    setShowMaterialDetail(false);
+    setSelectedMaterial(null);
+  };
+
+  const handleMaterialUpdate = (updatedMaterial: Material) => {
+    const subjectId = typeof updatedMaterial.subjectId === 'object' ? updatedMaterial.subjectId._id : updatedMaterial.subjectId;
+    setMaterials(prev => ({
+      ...prev,
+      [subjectId]: prev[subjectId]?.map(material => 
+        material._id === updatedMaterial._id 
+          ? updatedMaterial 
+          : material
+      ) || []
+    }));
+    setSelectedMaterial(updatedMaterial);
+  };
+
+  const handleMaterialDelete = (deletedMaterialId: string) => {
+    if (!selectedMaterial) return;
+    const subjectId = typeof selectedMaterial.subjectId === 'object' ? selectedMaterial.subjectId._id : selectedMaterial.subjectId;
+    setMaterials(prev => ({
+      ...prev,
+      [subjectId]: prev[subjectId]?.filter(material => material._id !== deletedMaterialId) || []
+    }));
+  };
+
+
+
+
+
+
+
+
+
+
 
   if (isLoading) {
     return (
@@ -635,9 +768,12 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
     );
   }
 
+
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden p-0 bg-white [&>button]:hidden">
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="w-[98vw] h-[98vh] max-w-[98vw] max-h-[98vh] overflow-y-auto p-0 bg-white [&>button]:hidden">
         {/* Header */}
         <motion.div 
           className="bg-white border-b border-gray-200 px-6 py-4"
@@ -741,7 +877,7 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
               >
                 <Badge
                   variant="outline"
-                  className="cursor-pointer px-3 py-1 bg-white border-dashed border-gray-400 text-gray-600 hover:bg-gray-50"
+                  className="cursor-pointer px-3 py-1 bg-white border-dashed border-gray-400 text-black hover:bg-gray-50"
                   onClick={() => setIsAddDepartmentModalOpen(true)}
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-1">
@@ -799,12 +935,23 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
           </div>
         </motion.div>
 
+        {/* Material Detail Modal */}
+        {showMaterialDetail && selectedMaterial && (
+          <MaterialDetailModal
+            material={selectedMaterial}
+            isOpen={showMaterialDetail}
+            onClose={closeMaterialDetail}
+            onMaterialUpdate={handleMaterialUpdate}
+            onMaterialDelete={handleMaterialDelete}
+          />
+        )}
+
         {/* Main Content */}
         <motion.div 
-          className="overflow-y-auto px-6 py-4" 
+          className={`overflow-y-auto px-6 py-4 transition-all duration-400 ${showMaterialDetail ? 'pointer-events-none opacity-0' : ''}`}
           style={{ maxHeight: 'calc(90vh - 200px)' }}
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          animate={{ opacity: showMaterialDetail ? 0 : 1 }}
           transition={{ duration: 0.4, delay: 0.2 }}
         >
           <AnimatePresence mode="wait">
@@ -885,40 +1032,17 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
                                       <span className="truncate font-medium text-gray-700">{material.title}</span>
                                     </div>
                                     <div className="flex items-center gap-1">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="p-1 h-5 w-5 text-gray-400 hover:text-blue-600 hover:bg-blue-50"
-                                        onClick={() => handleViewMaterial(material)}
+                                      <ShimmerButton
+                                        className="p-1 h-5 w-5 text-xs font-medium"
+                                        background="rgba(59, 130, 246, 0.8)"
+                                        onClick={() => handleOpenMaterial(material)}
+                                        title="Open material details"
                                       >
                                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                          <circle cx="12" cy="12" r="3"/>
+                                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                          <path d="m14 2 6 6"/>
                                         </svg>
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="p-1 h-5 w-5 text-gray-400 hover:text-orange-600 hover:bg-orange-50"
-                                        onClick={() => openRenameModal(material._id, subject._id, material.title)}
-                                      >
-                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                          <path d="m18.5 2.5-6 6"/>
-                                        </svg>
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="p-1 h-5 w-5 text-gray-400 hover:text-red-600 hover:bg-red-50"
-                                        onClick={() => handleDeleteMaterial(material._id, subject._id)}
-                                      >
-                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                          <path d="M3 6h18"/>
-                                          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-                                          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-                                        </svg>
-                                      </Button>
+                                      </ShimmerButton>
                                     </div>
                                   </div>
                                 ))}
@@ -948,7 +1072,7 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="w-full h-7 text-xs border-dashed border-gray-400 text-gray-600 hover:bg-gray-50 hover:text-gray-700"
+                                className="w-full h-7 text-xs border-dashed border-gray-400 bg-white text-black hover:bg-gray-50"
                                 disabled={uploadingMaterials[subject._id]}
                                 onClick={() => document.getElementById(`pdf-upload-${subject._id}`)?.click()}
                               >
@@ -1035,6 +1159,8 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
             )}
           </AnimatePresence>
         </motion.div>
+        </DialogContent>
+      </Dialog>
 
         {/* Add Department Modal */}
         <Dialog open={isAddDepartmentModalOpen} onOpenChange={setIsAddDepartmentModalOpen}>
@@ -1076,7 +1202,7 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
                     setNewDepartmentName('');
                     setError('');
                   }}
-                  className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                  className="bg-white text-black border-gray-300 hover:bg-gray-50"
                 >
                   Otkaži
                 </Button>
@@ -1132,7 +1258,7 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
                     setNewSubjectName('');
                     setError('');
                   }}
-                  className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                  className="bg-white text-black border-gray-300 hover:bg-gray-50"
                 >
                   Otkaži
                 </Button>
@@ -1219,7 +1345,7 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
                     setNewMaterialTitle('');
                     setError('');
                   }}
-                  className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                  className="bg-white text-black border-gray-300 hover:bg-gray-50"
                 >
                   Otkaži
                 </Button>
@@ -1235,30 +1361,16 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
           </DialogContent>
         </Dialog>
 
-        {/* Page Selection Modal */}
+        {/* Book Processing Configuration Modal */}
         <Dialog open={isPageSelectionModalOpen} onOpenChange={setIsPageSelectionModalOpen}>
           <DialogContent className="sm:max-w-md bg-white">
             <DialogHeader>
-              <DialogTitle className="text-gray-900">Izbor stranica za obradu</DialogTitle>
+              <DialogTitle className="text-gray-900">Konfiguracija obrade knjige</DialogTitle>
               <DialogDescription className="text-gray-600">
                 Materijal: {pageSelectionMaterial?.title}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <div>
-                <label htmlFor="startPage" className="text-sm font-medium text-gray-700">
-                  Počni od stranice
-                </label>
-                <Input
-                  id="startPage"
-                  type="number"
-                  value={startPage}
-                  onChange={(e) => setStartPage(Math.max(1, parseInt(e.target.value) || 1))}
-                  min="1"
-                  className="bg-white border-gray-300 text-gray-900"
-                />
-              </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="tocPage" className="text-sm font-medium text-gray-700">
@@ -1290,27 +1402,17 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
                 </div>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                AI će analizirati stranice sadržaja i automatski prepoznati strukture poglavlja
+                AI će analizirati stranice sadržaja i automatski prepoznati sve sekcije. Obrada knjige će početi nakon poslednje stranice sadržaja.
               </p>
 
-              <div>
-                <label htmlFor="maxPages" className="text-sm font-medium text-gray-700">
-                  Maksimalno stranica (ograničeno na 10 za test)
-                </label>
-                <Input
-                  id="maxPages"
-                  type="number"
-                  value={maxPages}
-                  onChange={(e) => setMaxPages(Math.min(10, Math.max(1, parseInt(e.target.value) || 10)))}
-                  min="1"
-                  max="10"
-                  className="bg-white border-gray-300 text-gray-900"
-                />
-              </div>
-
-              <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-md text-sm">
-                <p>Obradiće se stranice od {startPage} do {startPage + maxPages - 1}</p>
-                <p className="text-xs mt-1">Ograničeno na maksimalno 10 stranica za testiranje</p>
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
+                <div className="flex items-center">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <span className="font-medium">Celokupna knjiga će biti obrađena</span>
+                </div>
+                <p className="text-xs mt-1">Nema ograničenja na broj stranica - sve sekcije će biti izdvojene i indeksirane</p>
               </div>
               
               {error && (
@@ -1325,11 +1427,11 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
                   onClick={() => {
                     setIsPageSelectionModalOpen(false);
                     setPageSelectionMaterial(null);
-                    setStartPage(1);
-                    setMaxPages(10);
+                    setTocPage(undefined);
+                    setTocToPage(undefined);
                     setError('');
                   }}
-                  className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                  className="bg-white text-black border-gray-300 hover:bg-gray-50"
                 >
                   Otkaži
                 </Button>
@@ -1337,14 +1439,13 @@ const FacultyModal: React.FC<FacultyModalProps> = ({ facultyId, isOpen, onClose 
                   onClick={handleStartProcessing}
                   className="bg-black hover:bg-gray-800 text-white"
                 >
-                  Pokreni obradu
+                  Pokreni obradu cele knjige
                 </Button>
               </div>
             </div>
           </DialogContent>
-        </Dialog>
-      </DialogContent>
-    </Dialog>
+      </Dialog>
+    </>
   );
 };
 

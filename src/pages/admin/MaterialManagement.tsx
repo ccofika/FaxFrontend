@@ -6,6 +6,7 @@ import { Input } from '../../components/ui/input';
 import { Card, CardContent } from '../../components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
 import FacultyModal from './FacultyModal';
+import TOCAnalysisModal from './TOCAnalysisModal';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -37,6 +38,25 @@ interface DocumentSection {
   content: string;
   docId: string;
   subjectId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Material {
+  _id: string;
+  title: string;
+  type: 'book' | 'pdf' | 'link' | 'video' | 'notes';
+  status: 'uploaded' | 'processing' | 'ready' | 'failed' | 'toc_ready';
+  subjectId: string;
+  facultyId: string;
+  departmentId: string;
+  year: number;
+  pageCount?: number;
+  hasOCR?: boolean;
+  progress?: {
+    step: string;
+    percent: number;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -78,6 +98,24 @@ const MaterialManagement: React.FC = () => {
   const [showAIAnalysis, setShowAIAnalysis] = useState(false);
   const [aiAnalysisResult, setAiAnalysisResult] = useState<AIAnalysisResult | null>(null);
   const [loadingAIAnalysis, setLoadingAIAnalysis] = useState(false);
+  const [isAborting, setIsAborting] = useState(false);
+  const [isPdfTestModalOpen, setIsPdfTestModalOpen] = useState(false);
+  const [selectedPdfFile, setSelectedPdfFile] = useState<File | null>(null);
+  const [isTestingPdf, setIsTestingPdf] = useState(false);
+  const [pdfTestResult, setPdfTestResult] = useState<any>(null);
+  const [tocFromPage, setTocFromPage] = useState<string>('');
+  const [tocToPage, setTocToPage] = useState<string>('');
+  const [maxPages, setMaxPages] = useState<string>('10');
+  const [enableAIAnalysis, setEnableAIAnalysis] = useState<boolean>(false);
+  
+  // TOC Analysis Modal
+  const [isTOCAnalysisModalOpen, setIsTOCAnalysisModalOpen] = useState(false);
+  const [tocAnalysisMaterialId, setTocAnalysisMaterialId] = useState<string>('');
+  
+  // Materials Management
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [loadingMaterials, setLoadingMaterials] = useState(false);
+  const [showMaterials, setShowMaterials] = useState(false);
 
   const loadData = async () => {
     try {
@@ -355,6 +393,149 @@ const MaterialManagement: React.FC = () => {
     }
   };
 
+  const abortCurrentProcess = async () => {
+    setIsAborting(true);
+    setError('');
+    
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/ingestion/abort`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to abort process');
+      }
+
+      const data = await response.json();
+      console.log('Process aborted successfully:', data);
+      
+      // Show success message
+      alert('Process aborted successfully! Current processing has been stopped.');
+      
+      // Optionally refresh the data
+      loadSections();
+      loadAIAnalysis();
+      
+    } catch (error: any) {
+      console.error('Error aborting process:', error);
+      setError(error.message || 'Greška pri prekidanju procesa');
+    } finally {
+      setIsAborting(false);
+    }
+  };
+
+  const loadMaterials = async () => {
+    setLoadingMaterials(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/materials`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch materials');
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        setMaterials(data.materials || []);
+      }
+    } catch (error: any) {
+      console.error('Error loading materials:', error);
+      setError(error.message || 'Failed to load materials');
+    } finally {
+      setLoadingMaterials(false);
+    }
+  };
+
+  const openTOCAnalysis = (materialId: string) => {
+    setTocAnalysisMaterialId(materialId);
+    setIsTOCAnalysisModalOpen(true);
+  };
+
+  const handlePdfFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type === 'application/pdf') {
+      setSelectedPdfFile(file);
+      setPdfTestResult(null);
+      setError('');
+    } else {
+      setError('Please select a valid PDF file');
+      setSelectedPdfFile(null);
+    }
+  };
+
+  const testPdfParsing = async () => {
+    if (!selectedPdfFile) {
+      setError('Please select a PDF file first');
+      return;
+    }
+
+    // Validate TOC pages if AI analysis is enabled
+    if (enableAIAnalysis) {
+      if (!tocFromPage || !tocToPage) {
+        setError('Please specify TOC page range for AI analysis (e.g., from 2 to 4)');
+        return;
+      }
+      
+      const fromNum = parseInt(tocFromPage);
+      const toNum = parseInt(tocToPage);
+      
+      if (isNaN(fromNum) || isNaN(toNum) || fromNum < 1 || toNum < fromNum) {
+        setError('Invalid TOC page range. "To page" must be greater than or equal to "From page"');
+        return;
+      }
+    }
+
+    setIsTestingPdf(true);
+    setError('');
+    setPdfTestResult(null);
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const formData = new FormData();
+      formData.append('pdf', selectedPdfFile);
+      
+      // Add additional parameters
+      formData.append('maxPages', maxPages || '10');
+      
+      if (enableAIAnalysis && tocFromPage && tocToPage) {
+        formData.append('tocPages', `${tocFromPage}-${tocToPage}`);
+      }
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/ingestion/test-pdf-parsing`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to test PDF parsing');
+      }
+
+      const data = await response.json();
+      setPdfTestResult(data.data);
+      console.log('PDF parsing test result:', data);
+
+    } catch (error: any) {
+      console.error('Error testing PDF parsing:', error);
+      setError(error.message || 'Failed to PDF parsing');
+    } finally {
+      setIsTestingPdf(false);
+    }
+  };
+
   const handleFacultyClick = (facultyId: string) => {
     setSelectedFacultyId(facultyId);
     setIsFacultyModalOpen(true);
@@ -414,6 +595,54 @@ const MaterialManagement: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsPdfTestModalOpen(true)}
+                className="border-orange-300 text-orange-700 hover:bg-orange-50"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14,2 14,8 20,8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10,9 9,9 8,9"/>
+                </svg>
+                Test PDF Parsing
+              </Button>
+
+              <Button
+                variant={showMaterials ? "default" : "outline"}
+                onClick={() => {
+                  setShowMaterials(!showMaterials);
+                  if (!showMaterials) {
+                    loadMaterials();
+                  }
+                }}
+                className="border-blue-300 text-blue-700 hover:bg-blue-50"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                  <path d="M8 7h8"/>
+                  <path d="M8 11h8"/>
+                  <path d="M8 15h8"/>
+                </svg>
+                {showMaterials ? 'Hide Materials' : 'Show Materials'}
+              </Button>
+
+              <Button
+                variant="destructive"
+                onClick={abortCurrentProcess}
+                disabled={isAborting}
+                className="bg-red-600 hover:bg-red-700 text-white border-red-600"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="m15 9-6 6m0-6l6 6"/>
+                </svg>
+                {isAborting ? 'Prekidanje...' : 'Abort Process'}
+              </Button>
+
               <Button
                 variant={showAIAnalysis ? "default" : "outline"}
                 onClick={() => {
@@ -621,6 +850,130 @@ const MaterialManagement: React.FC = () => {
                     </svg>
                     <h3 className="text-lg font-semibold text-gray-700 mb-2">No AI Analysis</h3>
                     <p className="text-gray-500">Process a document with AI to see analysis results</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Materials Management */}
+        {showMaterials && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="mb-8"
+          >
+            <Card className="bg-white shadow-lg border border-gray-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Materials</h2>
+                    <p className="text-sm text-gray-600">Manage and process materials</p>
+                  </div>
+                  <Button onClick={loadMaterials} disabled={loadingMaterials} variant="outline">
+                    {loadingMaterials ? 'Loading...' : 'Refresh'}
+                  </Button>
+                </div>
+
+                {loadingMaterials ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                    <span className="ml-2">Loading materials...</span>
+                  </div>
+                ) : materials.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3">Title</th>
+                          <th className="px-4 py-3">Type</th>
+                          <th className="px-4 py-3">Status</th>
+                          <th className="px-4 py-3">Pages</th>
+                          <th className="px-4 py-3">Progress</th>
+                          <th className="px-4 py-3">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {materials.map((material) => (
+                          <tr key={material._id} className="bg-white border-b hover:bg-gray-50">
+                            <td className="px-4 py-4 font-medium text-gray-900">
+                              {material.title}
+                            </td>
+                            <td className="px-4 py-4">
+                              <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-800 bg-gray-100 rounded-full">
+                                {material.type}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4">
+                              <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
+                                material.status === 'ready' ? 'text-green-800 bg-green-100' :
+                                material.status === 'toc_ready' ? 'text-yellow-800 bg-yellow-100' :
+                                material.status === 'processing' ? 'text-blue-800 bg-blue-100' :
+                                material.status === 'failed' ? 'text-red-800 bg-red-100' :
+                                'text-gray-800 bg-gray-100'
+                              }`}>
+                                {material.status === 'toc_ready' ? 'TOC Ready' : material.status}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4">
+                              {material.pageCount || '-'}
+                            </td>
+                            <td className="px-4 py-4">
+                              {material.progress ? (
+                                <div className="flex items-center">
+                                  <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                    <div
+                                      className="bg-blue-600 h-2 rounded-full"
+                                      style={{ width: `${material.progress.percent}%` }}
+                                    ></div>
+                                  </div>
+                                  <span className="text-xs text-gray-600">
+                                    {material.progress.percent}%
+                                  </span>
+                                </div>
+                              ) : '-'}
+                            </td>
+                            <td className="px-4 py-4">
+                              <div className="flex items-center space-x-2">
+                                {material.status === 'toc_ready' && (
+                                  <Button
+                                    onClick={() => openTOCAnalysis(material._id)}
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                                  >
+                                    TOC Analysis
+                                  </Button>
+                                )}
+                                {material.status === 'uploaded' && (
+                                  <Button
+                                    onClick={() => {/* TODO: Start processing */}}
+                                    size="sm"
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                  >
+                                    Process
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto mb-4 text-gray-400">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14,2 14,8 20,8"/>
+                      <line x1="16" y1="13" x2="8" y2="13"/>
+                      <line x1="16" y1="17" x2="8" y2="17"/>
+                      <polyline points="10,9 9,9 8,9"/>
+                    </svg>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">No Materials</h3>
+                    <p className="text-gray-500">Upload materials to see them here</p>
                   </div>
                 )}
               </CardContent>
@@ -1046,6 +1399,256 @@ const MaterialManagement: React.FC = () => {
         description={`Da li ste sigurni da želite da obrišete ${deleteItem?.type === 'city' ? 'grad' : 'fakultet'} "${deleteItem?.name}"? ${deleteItem?.type === 'city' ? 'Ova akcija će obrisati i sve fakultete u gradu.' : 'Ova akcija će obrisati i sve smerove i predmete fakulteta.'}`}
         confirmText="Obriši"
         cancelText="Otkaži"
+      />
+
+      {/* PDF Parsing Test Modal */}
+      <Dialog open={isPdfTestModalOpen} onOpenChange={setIsPdfTestModalOpen}>
+        <DialogContent className="max-w-4xl bg-white max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-gray-900">PDF Text Extraction & AI TOC Analysis Test</DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Upload a PDF file to test page-by-page text extraction and optionally analyze Table of Contents with AI to extract sections and page ranges
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* File Upload */}
+            <div className="space-y-2">
+              <label htmlFor="pdfFile" className="text-sm font-medium text-gray-700">
+                Select PDF File
+              </label>
+              <input
+                id="pdfFile"
+                type="file"
+                accept=".pdf"
+                onChange={handlePdfFileSelect}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
+              {selectedPdfFile && (
+                <p className="text-sm text-gray-600">
+                  Selected: {selectedPdfFile.name} ({Math.round(selectedPdfFile.size / 1024)} KB)
+                </p>
+              )}
+            </div>
+
+            {/* Extraction Settings */}
+            <div className="space-y-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
+              <h3 className="font-semibold text-gray-900">Extraction Settings</h3>
+              
+              <div className="space-y-2">
+                <label htmlFor="maxPages" className="text-sm font-medium text-gray-700">
+                  Maximum Pages to Extract
+                </label>
+                <input
+                  id="maxPages"
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={maxPages}
+                  onChange={(e) => setMaxPages(e.target.value)}
+                  className="w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+                <p className="text-xs text-gray-500">Number of pages to extract for testing (1-50)</p>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <input
+                    id="enableAI"
+                    type="checkbox"
+                    checked={enableAIAnalysis}
+                    onChange={(e) => setEnableAIAnalysis(e.target.checked)}
+                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                  />
+                  <label htmlFor="enableAI" className="text-sm font-medium text-gray-700">
+                    Enable AI TOC Analysis
+                  </label>
+                </div>
+                
+                {enableAIAnalysis && (
+                  <div className="pl-6 space-y-3">
+                    <p className="text-sm text-gray-600">
+                      Specify which pages contain the Table of Contents for AI analysis
+                    </p>
+                    <div className="flex items-center space-x-3">
+                      <div className="flex-1">
+                        <label htmlFor="tocFromPage" className="text-sm font-medium text-gray-700">
+                          TOC From Page
+                        </label>
+                        <input
+                          id="tocFromPage"
+                          type="number"
+                          min="1"
+                          value={tocFromPage}
+                          onChange={(e) => setTocFromPage(e.target.value)}
+                          placeholder="e.g., 2"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label htmlFor="tocToPage" className="text-sm font-medium text-gray-700">
+                          TOC To Page
+                        </label>
+                        <input
+                          id="tocToPage"
+                          type="number"
+                          min="1"
+                          value={tocToPage}
+                          onChange={(e) => setTocToPage(e.target.value)}
+                          placeholder="e.g., 4"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Example: Pages 2-4 means the TOC spans from page 2 to page 4 (inclusive)
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                {error}
+              </div>
+            )}
+
+            {/* Test Button */}
+            <div className="flex gap-3">
+              <Button
+                onClick={testPdfParsing}
+                disabled={!selectedPdfFile || isTestingPdf}
+                className="bg-orange-600 hover:bg-orange-700 text-white"
+              >
+                {isTestingPdf ? 'Processing...' : 'Test PDF Parsing'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsPdfTestModalOpen(false);
+                  setSelectedPdfFile(null);
+                  setPdfTestResult(null);
+                  setError('');
+                  setTocFromPage('');
+                  setTocToPage('');
+                  setMaxPages('10');
+                  setEnableAIAnalysis(false);
+                }}
+                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                Close
+              </Button>
+            </div>
+
+            {/* Results */}
+            {pdfTestResult && (
+              <div className="space-y-4">
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
+                  ✅ Successfully extracted text from {pdfTestResult.pageCount} pages ({pdfTestResult.combinedLength} characters total)
+                  {pdfTestResult.tocAnalysis && (
+                    <div className="mt-2 text-sm">
+                      🤖 AI analyzed TOC from pages {pdfTestResult.tocAnalysis.tocPages} and found {pdfTestResult.tocAnalysis.sectionsFound} sections
+                    </div>
+                  )}
+                </div>
+
+                {/* AI TOC Analysis Results */}
+                {pdfTestResult.tocAnalysis && (
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-gray-900">🤖 AI TOC Analysis Results:</h3>
+                    
+                    {pdfTestResult.tocAnalysis.aiAnalysis?.error ? (
+                      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+                        ❌ AI Analysis Error: {pdfTestResult.tocAnalysis.aiAnalysis.error}
+                      </div>
+                    ) : pdfTestResult.tocAnalysis.aiAnalysis?.sections?.length > 0 ? (
+                      <div className="border border-gray-200 rounded-lg">
+                        <div className="bg-blue-50 px-4 py-2 border-b border-gray-200">
+                          <span className="font-medium text-blue-900">
+                            Found {pdfTestResult.tocAnalysis.aiAnalysis.sections.length} sections with page ranges:
+                          </span>
+                        </div>
+                        <div className="max-h-80 overflow-y-auto">
+                          {pdfTestResult.tocAnalysis.aiAnalysis.sections.map((section: any, index: number) => (
+                            <div key={index} className="px-4 py-3 border-b border-gray-100 hover:bg-gray-50">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="font-medium text-gray-900" style={{ paddingLeft: `${(section.level - 1) * 20}px` }}>
+                                    {section.title}
+                                  </div>
+                                  <div className="text-sm text-gray-600 mt-1">
+                                    Level: {section.level} | Type: {section.semanticType}
+                                    {section.pageStart && section.pageEnd && (
+                                      <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium">
+                                        Pages {section.pageStart}-{section.pageEnd}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-md">
+                        ⚠️ AI analysis completed but no sections were found in the TOC
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Page-by-page results */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-gray-900">Individual Pages:</h3>
+                  {pdfTestResult.pages.map((page: any, index: number) => (
+                    <div key={index} className="border border-gray-200 rounded-lg">
+                      <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
+                        <span className="font-medium text-gray-900">Page {page.pageNumber}</span>
+                        <span className="text-sm text-gray-600">{page.textLength} characters</span>
+                      </div>
+                      <div className="p-4">
+                        <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono bg-gray-50 p-3 rounded border max-h-48 overflow-y-auto">
+                          {page.text || '(No text extracted)'}
+                        </pre>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Combined text */}
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-gray-900">Combined Text (All Pages):</h3>
+                  <div className="border border-gray-200 rounded-lg">
+                    <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono bg-gray-50 p-4 rounded max-h-96 overflow-y-auto">
+                      {pdfTestResult.combinedText}
+                    </pre>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {isTestingPdf && (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+                <span className="ml-3 text-gray-600">Extracting text from PDF...</span>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* TOC Analysis Modal */}
+      <TOCAnalysisModal
+        isOpen={isTOCAnalysisModalOpen}
+        onClose={() => setIsTOCAnalysisModalOpen(false)}
+        materialId={tocAnalysisMaterialId}
+        onProcessingStarted={() => {
+          // Refresh data when processing starts
+          loadSections();
+          loadAIAnalysis();
+        }}
       />
     </div>
   );

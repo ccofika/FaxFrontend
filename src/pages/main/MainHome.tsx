@@ -397,7 +397,17 @@ const MainHome: React.FC = () => {
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <BentoGrid />
+            <BentoGrid>
+              {/* Placeholder content */}
+              <div className="col-span-2 bg-gradient-to-br from-zinc-800/50 to-zinc-900/50 p-6 rounded-xl border border-zinc-700">
+                <h3 className="text-xl font-semibold text-white mb-2">AI Tutor</h3>
+                <p className="text-zinc-300 text-sm">Personalizovana pomoć za svaki predmet</p>
+              </div>
+              <div className="col-span-1 bg-gradient-to-br from-zinc-800/50 to-zinc-900/50 p-6 rounded-xl border border-zinc-700">
+                <h3 className="text-xl font-semibold text-white mb-2">Brze Pretrage</h3>
+                <p className="text-zinc-300 text-sm">Pronađi odgovore u sekundi</p>
+              </div>
+            </BentoGrid>
           </motion.div>
         </div>
       </motion.section>
