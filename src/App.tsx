@@ -13,7 +13,7 @@ import {
   Login,
   Register
 } from './pages/main';
-import { AdminLogin, AdminDashboard, MaterialManagement, FacultyOverlay } from './pages/admin';
+import { AdminLogin, AdminDashboard, MaterialManagement, FacultyOverlay, AIResponseAdmin } from './pages/admin';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AdminAuthProvider } from './context/admin/AdminAuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -439,6 +439,11 @@ function App() {
           <Route path="/admin/materials/faculty/:facultyId" element={
             <ProtectedAdminRoute>
               <FacultyOverlay />
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/ai-response" element={
+            <ProtectedAdminRoute>
+              <AIResponseAdmin />
             </ProtectedAdminRoute>
           } />
         </Routes>

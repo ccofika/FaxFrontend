@@ -150,6 +150,18 @@ const AdminDashboard: React.FC = () => {
                 </svg>
                 Statistike sistema
               </Button>
+
+              <Button 
+                variant="outline" 
+                className="w-full border-gray-300 text-gray-700 hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700 justify-start"
+                onClick={() => navigate('/admin/ai-response')}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
+                  <path d="M9 19c-5 0-7-2-7-5v-4c0-3 2-5 7-5 2 0 3.5.5 4.5 1.5C16 8.5 17.5 10 17.5 12s-1.5 3.5-4 2.5c-1-0.5-2.5-1-4.5-1z"/>
+                  <path d="M15 9.5c.5-1 1.5-1.5 2.5-1.5 3 0 5 2 5 5s-2 5-5 5c-1 0-2-.5-2.5-1.5"/>
+                </svg>
+                AI Response Admin
+              </Button>
             </CardContent>
           </Card>
 
